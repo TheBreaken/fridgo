@@ -175,6 +175,41 @@ Fälle, die für diese App besonders zählen:
 Golden-Tests fallen auf Linux (CI) und macOS (lokal) unterschiedlich aus. Vor dem ersten
 Golden-Test nachfragen, in welcher Umgebung die Referenzbilder entstehen.
 
+## Aufgaben
+
+Der Weg zu Version 1 steht in `tasks/tasks.json`. Eine Session bearbeitet genau eine Aufgabe.
+
+| Feld                 | Bedeutung                                                     |
+| -------------------- | ------------------------------------------------------------- |
+| `id`                 | `T` und drei Ziffern, fortlaufend, wird nie neu vergeben      |
+| `type`               | einer der Commit-Types aus den globalen Vorgaben              |
+| `priority`           | `high`, `medium` oder `low`                                   |
+| `status`             | `open` oder `done`                                            |
+| `dependsOn`          | IDs der Aufgaben, die vorher `done` sein müssen               |
+| `description`        | Ziel, Abgrenzung und was vor der Umsetzung zu klären ist      |
+| `acceptanceCriteria` | prüfbare Kriterien, zusätzlich zu den Regeln unter "Qualität" |
+
+Ablauf einer Session:
+
+1. Von aktuellem `main` starten. Ist keine Aufgabe genannt, gilt unter den Aufgaben mit
+   Status `open` und erfüllten `dependsOn` die mit der höchsten Priorität, bei Gleichstand
+   die erste in der Datei.
+2. Branch `<id>-<kurztitel>` anlegen, zum Beispiel `T005-wohnungen-anlegen`.
+3. Erst klären, was die Beschreibung unter "Zu klären" nennt oder sonst offen lässt, dann
+   umsetzen.
+4. Sind Abnahmekriterien und "Qualität" erfüllt: nennen, was auf dem Gerät anzusehen ist,
+   und auf die Freigabe warten.
+5. Nach der Freigabe `status` auf `done` setzen, committen und einen PR öffnen. Auf `main`
+   gilt die Aufgabe erst mit dem Merge als erledigt; die nächste Aufgabe beginnt danach.
+
+Regeln:
+
+- Fällt etwas auf, das nicht zur laufenden Aufgabe gehört, wird es eine neue Aufgabe mit
+  der nächsten freien ID im selben PR, nicht Teil der laufenden Änderung. Was unter
+  "Später" oder "Nicht geplant" fällt, wird nur in der Antwort erwähnt.
+- Erledigte Aufgaben bleiben in der Datei stehen.
+- Eine Entscheidung, die über die Aufgabe hinaus gilt, wird in dieser Datei festgehalten.
+
 ## Assets
 
 - Icons und Illustrationen stammen aus einem einzigen offenen Emoji- oder Icon-Set, als SVG.
