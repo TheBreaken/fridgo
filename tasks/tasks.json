@@ -4,7 +4,7 @@
     "title": "App-Kennung festlegen",
     "type": "refactor",
     "priority": "high",
-    "status": "open",
+    "status": "done",
     "dependsOn": [],
     "description": "Ziel: Der Platzhalter `com.example.fridgo` wird durch die endgültige App-Kennung ersetzt, bevor echte Daten auf einem Gerät liegen. Eine geänderte Kennung ist für Android und iOS eine andere App; die Daten der alten wären nur über Export und Import zu retten.\n\nAbgrenzung: Keine Signierung, kein Store-Eintrag (siehe T028).\n\nZu klären: Wie lautet die Kennung?",
     "acceptanceCriteria": [

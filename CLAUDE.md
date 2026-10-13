@@ -194,7 +194,9 @@ Ablauf einer Session:
 1. Von aktuellem `main` starten. Ist keine Aufgabe genannt, gilt unter den Aufgaben mit
    Status `open` und erfüllten `dependsOn` die mit der höchsten Priorität, bei Gleichstand
    die erste in der Datei.
-2. Branch `<id>-<kurztitel>` anlegen, zum Beispiel `T005-wohnungen-anlegen`.
+2. Branch `feature/<id>-<kurztitel>` anlegen, bei Aufgaben vom Typ `fix` stattdessen
+   `bugfix/<id>-<kurztitel>`. Der Kurztitel ist englisch, zum Beispiel
+   `feature/T005-add-homes`.
 3. Erst klären, was die Beschreibung unter "Zu klären" nennt oder sonst offen lässt, dann
    umsetzen.
 4. Sind Abnahmekriterien und "Qualität" erfüllt: nennen, was auf dem Gerät anzusehen ist,
@@ -226,10 +228,10 @@ Regeln:
 - Aus den globalen Vorgaben gelten Arbeitsweise, Clean Code, Kommentare, Autorschaft und
   das Commit-Format. Die Abschnitte zu Docker, Symfony, Shopware, PHPUnit und Twig gelten
   hier nicht.
+- Commit-Messages auf Englisch, abweichend von den globalen Vorgaben; der Type bleibt klein,
+  zum Beispiel `refactor: set app identifier`.
 - Commit-Messages ohne `Related:`-Zeile; es gibt kein Ticketsystem.
 
 ## Offene Punkte
 
-- Die App-Kennung ist der Platzhalter `com.example.fridgo`. Vor dem ersten TestFlight- oder
-  Store-Build ersetzen.
 - Die UI ist zunächst nur deutsch.
