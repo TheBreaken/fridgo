@@ -1,0 +1,495 @@
+[
+  {
+    "id": "T001",
+    "title": "App-Kennung festlegen",
+    "type": "refactor",
+    "priority": "high",
+    "status": "open",
+    "dependsOn": [],
+    "description": "Ziel: Der Platzhalter `com.example.fridgo` wird durch die endgültige App-Kennung ersetzt, bevor echte Daten auf einem Gerät liegen. Eine geänderte Kennung ist für Android und iOS eine andere App; die Daten der alten wären nur über Export und Import zu retten.\n\nAbgrenzung: Keine Signierung, kein Store-Eintrag (siehe T028).\n\nZu klären: Wie lautet die Kennung?",
+    "acceptanceCriteria": [
+      "Android (`applicationId`, `namespace`, Kotlin-Paket) und iOS (Bundle Identifier von Runner und RunnerTests) tragen die neue Kennung",
+      "Im Repository kommt `com.example` nicht mehr vor",
+      "Der offene Punkt zur App-Kennung in `CLAUDE.md` ist entfernt"
+    ]
+  },
+  {
+    "id": "T002",
+    "title": "App-Grundgerüst mit Navigation und Texten aus ARB",
+    "type": "feat",
+    "priority": "high",
+    "status": "open",
+    "dependsOn": [],
+    "description": "Ziel: Die App startet über `go_router` in einen Startscreen, Abhängigkeiten kommen über Riverpod herein, sichtbare Texte stehen in einer deutschen ARB-Datei. Die Ordnerstruktur für View, ViewModel und Repository wird festgelegt, damit alle folgenden Aufgaben ihr folgen.\n\nAbgrenzung: Keine Datenbank (T004), keine Gestaltung (T003), keine Fachlogik.\n\nZu klären: Ordner nach Feature oder nach Schicht?",
+    "acceptanceCriteria": [
+      "Die App startet in einen Startscreen, der über `go_router` erreicht wird",
+      "`ProviderScope` umschließt die App",
+      "Der Text des Startscreens kommt aus der ARB-Datei, im Widget steht kein String",
+      "Die Ordnerstruktur steht in `CLAUDE.md` unter Architektur",
+      "Ein Widget-Test deckt den Start ab"
+    ]
+  },
+  {
+    "id": "T003",
+    "title": "Design-Grundlage mit Icon-Set",
+    "type": "feat",
+    "priority": "high",
+    "status": "open",
+    "dependsOn": ["T002"],
+    "description": "Ziel: Farbwelt, Typografie, Abstände und Grundkomponenten stehen fest, bevor der erste echte Screen entsteht. Die Session schlägt zwei bis drei Richtungen samt offenem Icon- oder Emoji-Set vor, der Nutzer wählt eine. Die Optik ist ein Kernziel der App.\n\nAbgrenzung: Keine Fach-Screens. App-Icon und Startbildschirm folgen in T027.\n\nZu klären: Hell und Dunkel oder nur ein Modus? Welche Schrift (Lizenz; als Asset gebündelt, weil die App offline läuft)? Welches Icon-Set?",
+    "acceptanceCriteria": [
+      "Zwei bis drei Richtungen wurden gezeigt, eine ist gewählt",
+      "Das Icon-Set ist gewählt, seine Lizenz geprüft und im Repository dokumentiert",
+      "Farben, Typografie und Abstände liegen zentral im Theme; Widgets enthalten keine Einzelwerte",
+      "Die Grundkomponenten Karte, Hauptaktion, leerer Zustand und Bildplatzhalter sind auf einem Beispielscreen zu sehen",
+      "`CLAUDE.md` nennt Icon-Set und Gestaltungsregeln; der offene Punkt unter Assets ist ersetzt"
+    ]
+  },
+  {
+    "id": "T004",
+    "title": "Datenbank-Grundgerüst mit Tabelle für Wohnungen",
+    "type": "feat",
+    "priority": "high",
+    "status": "open",
+    "dependsOn": ["T002"],
+    "description": "Ziel: drift ist eingerichtet, Schemaversion 1 enthält die Tabelle für `Home`, und ein `HomeRepository` legt Wohnungen an und liefert sie. Dazu entsteht das Werkzeug für alle späteren Schemaänderungen: Codegenerierung über das Makefile und Migrationstests gegen abgelegte Schemastände.\n\nAbgrenzung: Keine Oberfläche (T005).\n\nZu klären: Woher kommen die UUIDs? Ein Paket dafür steht nicht auf der Liste in `CLAUDE.md`.",
+    "acceptanceCriteria": [
+      "`Home` hat eine UUID als Primärschlüssel",
+      "`HomeRepository` gibt eigene Modelle zurück, keine drift-Typen",
+      "Die Datenbank kommt über einen Riverpod-Provider und ist im Test durch eine In-Memory-Datenbank ersetzt",
+      "Schemastand 1 ist abgelegt, das Gerüst für Migrationstests läuft",
+      "Das Makefile hat ein Target für die Codegenerierung, `CLAUDE.md` führt es unter Kommandos",
+      "Repository-Tests: anlegen, auflisten, leere Datenbank"
+    ]
+  },
+  {
+    "id": "T005",
+    "title": "Wohnungen anlegen und auflisten",
+    "type": "feat",
+    "priority": "high",
+    "status": "open",
+    "dependsOn": ["T003", "T004"],
+    "description": "Ziel: Der Nutzer legt Wohnungen an und sieht sie in einer Liste. Beim ersten Start führt ein leerer Zustand zur ersten Wohnung.\n\nAbgrenzung: Umbenennen und Löschen folgen in T021, der Wechsel zwischen Wohnungen in T014.\n\nZu klären: Hat eine Wohnung außer dem Namen weitere Angaben, etwa ein Icon oder eine Farbe?",
+    "acceptanceCriteria": [
+      "Eine Wohnung lässt sich mit Namen anlegen; ein leerer oder nur aus Leerzeichen bestehender Name wird abgelehnt",
+      "Die Liste zeigt alle Wohnungen, auch nach einem Neustart der App",
+      "Ohne Wohnung erscheint ein gestalteter leerer Zustand mit Aufforderung zum Anlegen",
+      "ViewModel-Test und Widget-Test für Anlegen und Validierung"
+    ]
+  },
+  {
+    "id": "T006",
+    "title": "Lagerorte einer Wohnung anlegen und auflisten",
+    "type": "feat",
+    "priority": "high",
+    "status": "open",
+    "dependsOn": ["T005"],
+    "description": "Ziel: In einer Wohnung lassen sich Lagerorte anlegen, etwa Kühlschrank, Gefrierfach und Vorrat, jeder mit passendem Icon aus dem Set.\n\nAbgrenzung: Umbenennen und Löschen folgen in T021. Noch kein Bestand.\n\nZu klären: Feste Arten oder frei benennbar? Bekommt eine neue Wohnung Standard-Lagerorte?",
+    "acceptanceCriteria": [
+      "Die Tabelle für `StorageLocation` kommt als Migration mit Migrationstest",
+      "Ein Lagerort gehört zu genau einer Wohnung; die Datenbank erzwingt den Fremdschlüssel",
+      "Die Lagerorte einer Wohnung sind mit Icon je Art sichtbar",
+      "Ohne Lagerort erscheint ein leerer Zustand",
+      "Tests für Repository, ViewModel und Validierung"
+    ]
+  },
+  {
+    "id": "T007",
+    "title": "Lebensmittel manuell hinzufügen",
+    "type": "feat",
+    "priority": "high",
+    "status": "open",
+    "dependsOn": ["T006"],
+    "description": "Ziel: Der Nutzer legt ein Produkt mit Namen an und fügt es als Bestand einem Lagerort hinzu: Menge, Einheit, MHD und optional Öffnungsdatum.\n\nAbgrenzung: Kein Foto (T010), keine Nährwerte (T019), keine Auswahl vorhandener Produkte (T012). Für die Anzeige genügt hier eine einfache Liste; die sortierte Übersicht folgt in T008.\n\nZu klären: Welche Einheiten gibt es? Ist das MHD Pflicht? Sind Dezimalmengen erlaubt?",
+    "acceptanceCriteria": [
+      "Die Tabellen für `Product` und `StockItem` kommen als Migration mit Migrationstest",
+      "MHD und Öffnungsdatum sind Kalenderdaten ohne Zeitzonenumrechnung; ein Test prüft das über eine Sommerzeitgrenze",
+      "Das Formular lehnt einen fehlenden Namen und eine Menge von 0 oder weniger ab",
+      "Der Bestand ist nach dem Speichern in der Wohnung sichtbar und nach einem Neustart weiterhin vorhanden",
+      "Tests für Repository, ViewModel und Formularvalidierung"
+    ]
+  },
+  {
+    "id": "T008",
+    "title": "Bestandsübersicht pro Wohnung, nach MHD sortiert",
+    "type": "feat",
+    "priority": "high",
+    "status": "open",
+    "dependsOn": ["T007"],
+    "description": "Ziel: Die Übersicht einer Wohnung zeigt alle Bestände über alle Lagerorte als Produktkarten, das früheste MHD zuerst. Das ist der Kernscreen der App.\n\nAbgrenzung: Ablaufstatus folgt in T009, Vorschaubilder in T011, Verbrauchen in T013.\n\nZu klären: Wo stehen Bestände ohne MHD? Flache Liste oder nach Lagerort gruppiert?",
+    "acceptanceCriteria": [
+      "Sortierung nach MHD aufsteigend; Unit-Test auch für gleiche und fehlende MHDs",
+      "Dasselbe Produkt mit zwei verschiedenen MHDs erscheint als zwei Einträge",
+      "Eine Karte zeigt Name, Menge mit Einheit, MHD und Lagerort",
+      "Ohne Bestand erscheint ein leerer Zustand",
+      "Ein neu hinzugefügter Bestand erscheint ohne Neustart in der Übersicht"
+    ]
+  },
+  {
+    "id": "T009",
+    "title": "Ablaufstatus in der Übersicht",
+    "type": "feat",
+    "priority": "high",
+    "status": "open",
+    "dependsOn": ["T008"],
+    "description": "Ziel: Die Übersicht hebt hervor, was bald abläuft und was abgelaufen ist. Die aktuelle Zeit kommt über eine injizierte Uhr.\n\nAbgrenzung: Keine Benachrichtigungen (T024).\n\nZu klären: Ab wie vielen Tagen gilt ein Bestand als bald ablaufend? Beeinflusst das Öffnungsdatum den Status?",
+    "acceptanceCriteria": [
+      "Die Uhr ist ein Provider und im Test ersetzbar; im Code steht kein `DateTime.now()` außerhalb davon",
+      "Unit-Tests für die Grenzen: läuft heute ab, gestern abgelaufen, genau an der Schwelle, kein MHD",
+      "Der Status ist nicht allein an der Farbe erkennbar",
+      "Widget-Test der Produktkarte mit fester Uhr"
+    ]
+  },
+  {
+    "id": "T010",
+    "title": "Foto zum Produkt aufnehmen oder auswählen",
+    "type": "feat",
+    "priority": "high",
+    "status": "open",
+    "dependsOn": ["T007"],
+    "description": "Ziel: Beim Anlegen eines Produkts lässt sich ein Foto aufnehmen oder aus der Galerie wählen. Die Datei wird aus dem temporären ins dauerhafte App-Verzeichnis kopiert, in der Datenbank steht nur der relative Pfad.\n\nAbgrenzung: Vorschaubilder in der Übersicht folgen in T011.\n\nZu klären: Wird das Foto vor dem Speichern verkleinert oder zugeschnitten?",
+    "acceptanceCriteria": [
+      "Kamera und Galerie funktionieren auf Android und iOS; die Berechtigungstexte sind gesetzt",
+      "Die Datei liegt im dauerhaften App-Verzeichnis; die Datenbank enthält einen relativen Pfad (Test)",
+      "Eine abgelehnte Berechtigung oder abgebrochene Auswahl lässt das Formular benutzbar",
+      "Wird das Anlegen abgebrochen, bleibt keine verwaiste Bilddatei zurück",
+      "Die Bildablage liegt hinter einem Repository und ist im Test durch einen Fake ersetzt"
+    ]
+  },
+  {
+    "id": "T011",
+    "title": "Vorschaubilder in der Übersicht und Platzhalter",
+    "type": "feat",
+    "priority": "high",
+    "status": "open",
+    "dependsOn": ["T008", "T010"],
+    "description": "Ziel: Produktkarten zeigen ein Vorschaubild. Hat das Produkt kein Foto oder fehlt die Bilddatei, erscheint der Platzhalter aus dem Icon-Set. Eine fehlende Datei ist ein erwarteter Zustand.\n\nZu klären: Vorschaubild als eigene Datei oder verkleinert dekodiert? Ein Paket zur Bildbearbeitung steht nicht auf der Liste in `CLAUDE.md`.",
+    "acceptanceCriteria": [
+      "Die Übersicht lädt nie das Foto in voller Größe",
+      "Ein Produkt ohne Foto und ein Produkt mit gelöschter Bilddatei zeigen den Platzhalter, ohne Fehler (Widget-Test)",
+      "Scrollen durch 100 Bestände mit Fotos bleibt auf dem Gerät flüssig"
+    ]
+  },
+  {
+    "id": "T012",
+    "title": "Vorhandenes Produkt erneut hinzufügen",
+    "type": "feat",
+    "priority": "high",
+    "status": "open",
+    "dependsOn": ["T007"],
+    "description": "Ziel: Beim Hinzufügen lässt sich ein bereits angelegtes Produkt auswählen, statt es neu einzutippen. So entstehen mehrere Bestände desselben Produkts mit verschiedenen MHDs, auch in verschiedenen Wohnungen.\n\nAbgrenzung: Kein Verschieben von Beständen; das steht in `CLAUDE.md` unter Später.\n\nZu klären: Vorschläge beim Tippen des Namens oder eine eigene Produktliste?",
+    "acceptanceCriteria": [
+      "Die Auswahl eines vorhandenen Produkts legt kein zweites Produkt an (Test)",
+      "Dasselbe Produkt mit zwei verschiedenen MHDs am selben Lagerort ist möglich (Test)",
+      "Dasselbe Produkt kann in zwei Wohnungen liegen (Test)",
+      "Die Suche findet Namen unabhängig von Groß- und Kleinschreibung, auch mit Umlauten"
+    ]
+  },
+  {
+    "id": "T013",
+    "title": "Menge reduzieren: Teilverbrauch und vollständiger Verbrauch",
+    "type": "feat",
+    "priority": "high",
+    "status": "open",
+    "dependsOn": ["T008"],
+    "description": "Ziel: Direkt aus der Übersicht lässt sich die Menge eines Bestands verringern oder der Bestand vollständig verbrauchen.\n\nAbgrenzung: Bearbeiten der übrigen Felder folgt in T018.\n\nZu klären: Freie Eingabe oder feste Schritte beim Teilverbrauch? Lässt sich versehentliches Verbrauchen rückgängig machen?",
+    "acceptanceCriteria": [
+      "Teilverbrauch senkt die Menge und nie unter 0; Unit-Tests für genau 0, mehr als vorhanden und Dezimalmengen",
+      "Vollständiger Verbrauch entfernt den Bestand aus der Übersicht; das Produkt bleibt erhalten",
+      "Bei zwei Beständen desselben Produkts ändert sich nur der gewählte (Test)",
+      "Die Aktion ist aus der Übersicht mit höchstens zwei Tipps erreichbar und animiert",
+      "Widget-Test für das Ändern der Menge"
+    ]
+  },
+  {
+    "id": "T014",
+    "title": "Zwischen Wohnungen wechseln",
+    "type": "feat",
+    "priority": "high",
+    "status": "open",
+    "dependsOn": ["T008"],
+    "description": "Ziel: Der Nutzer wechselt mit wenigen Tipps zwischen den Übersichten seiner Wohnungen, um vor dem Einkauf zu sehen, was in der Zielwohnung liegt. Die zuletzt gewählte Wohnung ist beim nächsten Start wieder da.\n\nAbgrenzung: Keine gemeinsame Liste über alle Wohnungen.\n\nZu klären: Wie wird gewechselt: Tabs, Auswahl in der Kopfzeile oder Wischen?",
+    "acceptanceCriteria": [
+      "Der Wechsel ist von der Übersicht aus mit höchstens zwei Tipps möglich und animiert",
+      "Die zuletzt gewählte Wohnung übersteht einen Neustart (Test mit Fake für die Einstellungen)",
+      "Ist die gemerkte Wohnung nicht mehr vorhanden, startet die App ohne Fehler in einer anderen Wohnung oder im leeren Zustand (Test)"
+    ]
+  },
+  {
+    "id": "T015",
+    "title": "Integrationstest für den Kernablauf",
+    "type": "test",
+    "priority": "medium",
+    "status": "open",
+    "dependsOn": ["T013"],
+    "description": "Ziel: Ein `integration_test` spielt den Kernablauf durch: Wohnung anlegen, Lagerort anlegen, Produkt hinzufügen, teilweise verbrauchen, vollständig verbrauchen. Dazu der Fall, dass der Bestand nach Schließen und erneutem Start weiterhin vorhanden ist.\n\nAbgrenzung: Keine nativen Systemdialoge; Patrol steht in `CLAUDE.md` unter Später.\n\nZu klären: Läuft der Test nur lokal auf Emulator und Simulator oder auch in der CI?",
+    "acceptanceCriteria": [
+      "Der Test läuft auf einem Android-Emulator und einem iOS-Simulator grün",
+      "Der Bestand ist nach Schließen und erneutem Öffnen der Datenbank vorhanden",
+      "Das Makefile hat ein Target für Integrationstests, `CLAUDE.md` führt es unter Kommandos"
+    ]
+  },
+  {
+    "id": "T016",
+    "title": "Golden-Tests für Produktkarte und Übersicht",
+    "type": "test",
+    "priority": "medium",
+    "status": "open",
+    "dependsOn": ["T009", "T011"],
+    "description": "Ziel: Referenzbilder sichern die Optik der Produktkarte und der wichtigsten Screens gegen unbemerkte Änderungen.\n\nZu klären: In welcher Umgebung entstehen die Referenzbilder? Die CI läuft auf Linux, lokal wird auf macOS gearbeitet, und die Bilder fallen dort unterschiedlich aus. `CLAUDE.md` verlangt diese Rückfrage vor dem ersten Golden-Test.",
+    "acceptanceCriteria": [
+      "Die Entscheidung zur Umgebung steht in `CLAUDE.md`; der Hinweis zur Rückfrage ist ersetzt",
+      "Goldens für die Produktkarte in den Zuständen frisch, bald ablaufend, abgelaufen und ohne Foto",
+      "Goldens für die Übersicht mit Beständen und im leeren Zustand",
+      "Die CI ist mit den Golden-Tests grün",
+      "Das Makefile hat ein Target zum Aktualisieren der Referenzbilder"
+    ]
+  },
+  {
+    "id": "T017",
+    "title": "Detailansicht eines Bestands",
+    "type": "feat",
+    "priority": "medium",
+    "status": "open",
+    "dependsOn": ["T008", "T010"],
+    "description": "Ziel: Ein Tipp auf eine Produktkarte öffnet die Detailansicht mit großem Foto, Name, Menge, Einheit, MHD, Öffnungsdatum, Lagerort und Wohnung.\n\nAbgrenzung: Bearbeiten folgt in T018, Nährwerte in T019.\n\nZu klären: Zeigt die Ansicht auch die anderen Bestände desselben Produkts?",
+    "acceptanceCriteria": [
+      "Navigation von der Karte in die Detailansicht und zurück",
+      "Der Übergang von der Karte zur Detailansicht ist animiert",
+      "Ein fehlendes Foto zeigt den Platzhalter",
+      "Widget-Test für die angezeigten Angaben"
+    ]
+  },
+  {
+    "id": "T018",
+    "title": "Bestand bearbeiten, als geöffnet markieren und löschen",
+    "type": "feat",
+    "priority": "medium",
+    "status": "open",
+    "dependsOn": ["T017"],
+    "description": "Ziel: In der Detailansicht lassen sich Menge, Einheit, MHD und Öffnungsdatum ändern, der Bestand als heute geöffnet markieren und ein falsch angelegter Bestand löschen.\n\nAbgrenzung: Den Lagerort zu ändern ist Verschieben und steht in `CLAUDE.md` unter Später.",
+    "acceptanceCriteria": [
+      "Änderungen erscheinen ohne Neustart in Detailansicht und Übersicht",
+      "Geöffnet markieren setzt das Öffnungsdatum auf das heutige Kalenderdatum der injizierten Uhr (Test)",
+      "Löschen fragt vorher nach",
+      "Die Validierung entspricht der beim Anlegen",
+      "Tests für ViewModel und Repository"
+    ]
+  },
+  {
+    "id": "T019",
+    "title": "Nährwerte am Produkt erfassen und anzeigen",
+    "type": "feat",
+    "priority": "medium",
+    "status": "open",
+    "dependsOn": ["T017"],
+    "description": "Ziel: Ein Produkt bekommt optionale Nährwerte je 100 g oder 100 ml. Sie lassen sich beim Anlegen erfassen und stehen in der Detailansicht.\n\nAbgrenzung: Keine Tagesbilanz, kein Kalorientracker.\n\nZu klären: Welche Werte? Vorschlag: Brennwert, Fett, Kohlenhydrate, Zucker, Eiweiß und Salz, weil Open Food Facts sie verlässlich liefert. Vitamine ja oder nein?",
+    "acceptanceCriteria": [
+      "Die Schemaänderung kommt als Migration; bestehende Produkte bleiben ohne Nährwerte gültig (Migrationstest)",
+      "Alle Werte sind optional; negative Werte werden abgelehnt",
+      "Eingaben mit Dezimalkomma werden angenommen (Test)",
+      "Die Detailansicht zeigt Nährwerte nur, wenn welche vorhanden sind"
+    ]
+  },
+  {
+    "id": "T020",
+    "title": "Produkt bearbeiten",
+    "type": "feat",
+    "priority": "medium",
+    "status": "open",
+    "dependsOn": ["T010", "T019"],
+    "description": "Ziel: Name, Foto und Nährwerte eines Produkts lassen sich nachträglich ändern. Die Änderung gilt für alle Bestände dieses Produkts.\n\nZu klären: Wie erreicht man ein Produkt ohne Bestand, und lässt es sich löschen?",
+    "acceptanceCriteria": [
+      "Eine Änderung am Produkt erscheint bei allen seinen Beständen (Test)",
+      "Beim Ersetzen oder Entfernen des Fotos wird die alte Bilddatei gelöscht (Test mit Fake-Bildablage)",
+      "Die Validierung entspricht der beim Anlegen"
+    ]
+  },
+  {
+    "id": "T021",
+    "title": "Wohnungen und Lagerorte umbenennen und löschen",
+    "type": "feat",
+    "priority": "medium",
+    "status": "open",
+    "dependsOn": ["T007", "T014"],
+    "description": "Ziel: Wohnungen und Lagerorte lassen sich umbenennen und löschen.\n\nAbgrenzung: Bestände vor dem Löschen woandershin zu verschieben gehört nicht dazu; das steht in `CLAUDE.md` unter Später.\n\nZu klären: Werden die Bestände beim Löschen nach Rückfrage mitgelöscht, oder ist das Löschen nur bei leerem Lagerort erlaubt?",
+    "acceptanceCriteria": [
+      "Umbenennen mit derselben Validierung wie beim Anlegen",
+      "Die Rückfrage vor dem Löschen nennt, wie viele Bestände betroffen sind",
+      "Das Löschen läuft als eine Datenbanktransaktion; Produkte bleiben erhalten (Datenbanktest)",
+      "Nach dem Löschen der aktuell gewählten Wohnung zeigt die App eine andere Wohnung oder den leeren Zustand"
+    ]
+  },
+  {
+    "id": "T022",
+    "title": "Export von Datenbank und Bildern",
+    "type": "feat",
+    "priority": "medium",
+    "status": "open",
+    "dependsOn": ["T010"],
+    "description": "Ziel: Der Nutzer erzeugt eine einzelne Exportdatei mit der Datenbank und allen Bilddateien und kann sie aus der App heraus sichern oder weitergeben. Ein Export ohne Bilder ist unvollständig.\n\nAbgrenzung: Import folgt in T023. Kein automatisches Backup, keine Cloud.\n\nZu klären: Pakete für das Archiv und für das Speichern oder Teilen der Datei stehen nicht auf der Liste in `CLAUDE.md`; vor der Umsetzung klären, welche dazukommen. Dateiformat und Dateiname.",
+    "acceptanceCriteria": [
+      "Die Exportdatei enthält die Datenbank und alle referenzierten Bilder",
+      "Die Exportdatei enthält die Schemaversion",
+      "Die Datenbank wird in einem konsistenten Zustand gesichert",
+      "Eine fehlende Bilddatei bricht den Export nicht ab (Test)",
+      "Die Datei lässt sich auf Android und iOS aus der App heraus speichern oder teilen"
+    ]
+  },
+  {
+    "id": "T023",
+    "title": "Import eines Exports",
+    "type": "feat",
+    "priority": "medium",
+    "status": "open",
+    "dependsOn": ["T022"],
+    "description": "Ziel: Eine Exportdatei lässt sich einlesen, auch auf einem anderen Gerät. Danach sind Wohnungen, Lagerorte, Produkte, Bestände und Bilder wieder da.\n\nAbgrenzung: Kein Zusammenführen einzelner Datensätze, solange es nicht ausdrücklich entschieden wird.\n\nZu klären: Ersetzt der Import alle vorhandenen Daten (Vorschlag) oder führt er zusammen? Ein Paket für die Dateiauswahl steht nicht auf der Liste in `CLAUDE.md`.",
+    "acceptanceCriteria": [
+      "Export und anschließender Import ergeben denselben Bestand samt Bildern (Test)",
+      "Ein Export aus einer älteren Schemaversion wird ohne Datenverlust migriert (Test)",
+      "Ein Export aus einer neueren Schemaversion wird mit verständlicher Meldung abgelehnt",
+      "Eine beschädigte oder fremde Datei wird abgelehnt; die vorhandenen Daten bleiben unverändert (Test)",
+      "Bevor vorhandene Daten ersetzt werden, fragt die App nach",
+      "Die Bilder sind nach einem Import auf einem anderen Gerät sichtbar"
+    ]
+  },
+  {
+    "id": "T024",
+    "title": "Erinnerung vor Ablauf des MHD",
+    "type": "feat",
+    "priority": "medium",
+    "status": "open",
+    "dependsOn": ["T009"],
+    "description": "Ziel: Die App erinnert mit einer lokalen Benachrichtigung, bevor ein Bestand abläuft. Ein Tipp auf die Benachrichtigung öffnet die Übersicht der betroffenen Wohnung.\n\nAbgrenzung: Hier genügt das Planen beim Anlegen eines Bestands. Das Nachführen bei Änderungen folgt in T025, die Einstellungen in T026.\n\nZu klären: Eine Benachrichtigung je Bestand oder eine tägliche Sammelmeldung? iOS erlaubt höchstens 64 geplante Benachrichtigungen. Vorlauf und Uhrzeit. `flutter_local_notifications` braucht zum zeitgenauen Planen das Paket `timezone`, das nicht auf der Liste in `CLAUDE.md` steht.",
+    "acceptanceCriteria": [
+      "Die Berechtigung wird auf Android und iOS erst angefragt, wenn sie gebraucht wird; eine Ablehnung lässt die App voll benutzbar",
+      "Der Zeitpunkt wird aus MHD und injizierter Uhr berechnet; Unit-Tests für MHD heute, MHD in der Vergangenheit und eine Sommerzeitumstellung",
+      "Ein Bestand ohne MHD plant keine Erinnerung",
+      "Benachrichtigungen liegen hinter einer Schnittstelle und sind im Test durch einen Fake ersetzt",
+      "Auf beiden Plattformen am Gerät geprüft: Die Benachrichtigung erscheint, der Tipp öffnet die Übersicht"
+    ]
+  },
+  {
+    "id": "T025",
+    "title": "Erinnerungen folgen dem Bestand",
+    "type": "feat",
+    "priority": "medium",
+    "status": "open",
+    "dependsOn": ["T013", "T018", "T021", "T023", "T024"],
+    "description": "Ziel: Die geplanten Erinnerungen stimmen immer mit dem Bestand überein, auch nach geändertem MHD, Verbrauch, Löschen eines Bestands, Lagerorts oder einer Wohnung, nach einem Import und nach einem Neustart des Geräts.",
+    "acceptanceCriteria": [
+      "Nach vollständigem Verbrauch oder Löschen gibt es für den Bestand keine Erinnerung mehr (Test mit Fake)",
+      "Ein geändertes MHD plant die Erinnerung neu (Test)",
+      "Nach einem Import entsprechen die Erinnerungen dem importierten Bestand (Test)",
+      "Wiederholtes Abgleichen erzeugt keine doppelten Erinnerungen (Test)",
+      "Auf Android bleiben die Erinnerungen nach einem Neustart des Geräts erhalten; am Gerät geprüft"
+    ]
+  },
+  {
+    "id": "T026",
+    "title": "Einstellungen für Erinnerungen",
+    "type": "feat",
+    "priority": "medium",
+    "status": "open",
+    "dependsOn": ["T024"],
+    "description": "Ziel: Ein Einstellungs-Screen, auf dem sich Erinnerungen ein- und ausschalten sowie Vorlauf und Uhrzeit festlegen lassen. Die Werte liegen in `shared_preferences`.\n\nZu klären: Welche Einstellungen braucht es wirklich? Gehören Export und Import auf denselben Screen?",
+    "acceptanceCriteria": [
+      "Eine Änderung von Vorlauf oder Uhrzeit plant die bestehenden Erinnerungen neu (Test)",
+      "Ausschalten entfernt alle geplanten Erinnerungen (Test)",
+      "Die Einstellungen überstehen einen Neustart",
+      "Bei verweigerter Berechtigung zeigt der Screen einen Hinweis mit Weg in die Systemeinstellungen"
+    ]
+  },
+  {
+    "id": "T027",
+    "title": "App-Icon und Startbildschirm",
+    "type": "feat",
+    "priority": "medium",
+    "status": "open",
+    "dependsOn": ["T003"],
+    "description": "Ziel: Die App hat ein eigenes Icon und einen Startbildschirm, die zur Design-Grundlage passen.\n\nZu klären: Welches Motiv? Ein Paket zum Erzeugen der Icon-Größen steht nicht auf der Liste in `CLAUDE.md`; sonst entstehen die Größen von Hand.",
+    "acceptanceCriteria": [
+      "Eigenes App-Icon auf Android (adaptiv) und iOS in allen verlangten Größen",
+      "Der Startbildschirm passt zur Farbwelt aus T003",
+      "Unter dem Icon steht auf beiden Plattformen der Name Fridgo",
+      "Das Flutter-Standardicon ist nirgends mehr sichtbar"
+    ]
+  },
+  {
+    "id": "T028",
+    "title": "Installierbarer Release-Build für das eigene Gerät",
+    "type": "feat",
+    "priority": "medium",
+    "status": "open",
+    "dependsOn": ["T027"],
+    "description": "Ziel: Die App lässt sich als Release-Build dauerhaft auf dem eigenen Android- und iOS-Gerät installieren und über eine vorhandene Installation aktualisieren.\n\nAbgrenzung: Keine Veröffentlichung im Store.\n\nZu klären: Gibt es ein bezahltes Apple-Developer-Konto? Ohne läuft eine installierte App nur sieben Tage. Wo liegt der Android-Keystore? Geht er verloren, erzwingt ein neuer Schlüssel eine Neuinstallation mit Datenverlust.",
+    "acceptanceCriteria": [
+      "Das Makefile hat Targets für die Release-Builds, `CLAUDE.md` führt sie unter Kommandos",
+      "Der Android-Release ist mit einem eigenen Schlüssel signiert; Schlüssel und Passwörter liegen nicht im Repository",
+      "Ein Update über eine installierte Version behält alle Daten; am Gerät auf beiden Plattformen geprüft"
+    ]
+  },
+  {
+    "id": "T029",
+    "title": "Barcode scannen und bekanntes Produkt wiederfinden",
+    "type": "feat",
+    "priority": "low",
+    "status": "open",
+    "dependsOn": ["T012"],
+    "description": "Ziel: Beim Hinzufügen lässt sich ein Barcode mit der Kamera scannen. Gehört er zu einem bereits angelegten Produkt, wird dieses gewählt; sonst geht es mit dem Barcode ins manuelle Formular. Das funktioniert ohne Netz.\n\nAbgrenzung: Der Abruf bei Open Food Facts folgt in T030.\n\nZu klären: Lässt sich der Barcode auch von Hand eintippen?",
+    "acceptanceCriteria": [
+      "Der Barcode ist am Produkt gespeichert und je Produkt eindeutig; eine dafür nötige Schemaänderung kommt als Migration mit Test",
+      "Der Scan eines bekannten Barcodes wählt das Produkt vor (Test)",
+      "Ein unbekannter Barcode öffnet das Formular mit eingetragenem Barcode",
+      "Eine verweigerte Kameraberechtigung führt zur manuellen Eingabe",
+      "Der Scanner liegt hinter einer Schnittstelle; ViewModel-Test mit Fake",
+      "Auf beiden Plattformen am Gerät geprüft"
+    ]
+  },
+  {
+    "id": "T030",
+    "title": "Unbekannten Barcode bei Open Food Facts abrufen",
+    "type": "feat",
+    "priority": "low",
+    "status": "open",
+    "dependsOn": ["T019", "T029"],
+    "description": "Ziel: Für einen unbekannten Barcode holt die App Name und Nährwerte bei Open Food Facts und befüllt das Formular vor. Der Nutzer kann alles korrigieren. Fehlt das Netz oder das Produkt, geht es mit manueller Eingabe weiter.\n\nAbgrenzung: Das Produktbild folgt in T031.\n\nZu klären: Welche Sprache hat beim Produktnamen Vorrang?",
+    "acceptanceCriteria": [
+      "Kein Netz, Zeitüberschreitung, unbekanntes Produkt und unvollständige Antwort führen jeweils zur manuellen Eingabe mit Hinweis; je ein Test mit Fake-HTTP-Client",
+      "HTTP steht nur im Repository; die Antwort wird in ein eigenes Modell übersetzt",
+      "Die Anfrage sendet einen eigenen User-Agent, wie Open Food Facts es verlangt",
+      "Der Ladezustand ist sichtbar und abbrechbar",
+      "Der Abruf funktioniert auch im Android-Release-Build (Internet-Berechtigung im Haupt-Manifest)",
+      "Nutzungsbedingungen und Lizenz von Open Food Facts sind geprüft und im Repository dokumentiert"
+    ]
+  },
+  {
+    "id": "T031",
+    "title": "Produktbild von Open Food Facts übernehmen",
+    "type": "feat",
+    "priority": "low",
+    "status": "open",
+    "dependsOn": ["T011", "T030"],
+    "description": "Ziel: Liefert Open Food Facts ein Bild, wird es heruntergeladen und wie ein eigenes Foto dauerhaft abgelegt. Der Nutzer kann es durch ein eigenes Foto ersetzen.\n\nZu klären: Verlangt die Bildlizenz von Open Food Facts einen sichtbaren Hinweis in der App?",
+    "acceptanceCriteria": [
+      "Das Bild liegt als Datei im App-Verzeichnis mit relativem Pfad und ist danach ohne Netz sichtbar",
+      "Ein fehlgeschlagener Download legt das Produkt ohne Bild an (Test)",
+      "Das Bild ist im Export enthalten (Test)"
+    ]
+  },
+  {
+    "id": "T032",
+    "title": "Abnahme von Version 1 auf beiden Plattformen",
+    "type": "test",
+    "priority": "low",
+    "status": "open",
+    "dependsOn": ["T001", "T015", "T016", "T020", "T021", "T023", "T025", "T026", "T028", "T031"],
+    "description": "Ziel: Alle Punkte unter Version 1 in `CLAUDE.md` werden einmal vollständig auf einem echten Android- und einem echten iOS-Gerät durchgegangen, dazu die dort genannten besonders zählenden Fälle. Jeder Mangel wird eine eigene Aufgabe.\n\nAbgrenzung: Mängel werden hier erfasst, nicht behoben.",
+    "acceptanceCriteria": [
+      "Jeder Punkt der Liste Version 1 ist auf beiden Plattformen geprüft; das Ergebnis steht im PR",
+      "Die fünf besonders zählenden Fälle aus `CLAUDE.md` sind am Gerät geprüft",
+      "Im Flugmodus ist die App bis auf den Abruf bei Open Food Facts vollständig benutzbar",
+      "Für jeden Mangel existiert eine Aufgabe; keine davon hat Priorität `high`"
+    ]
+  }
+]
