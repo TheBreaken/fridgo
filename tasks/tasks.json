@@ -18,7 +18,7 @@
     "title": "App-Grundgerüst mit Navigation und Texten aus ARB",
     "type": "feat",
     "priority": "high",
-    "status": "open",
+    "status": "done",
     "dependsOn": [],
     "description": "Ziel: Die App startet über `go_router` in einen Startscreen, Abhängigkeiten kommen über Riverpod herein, sichtbare Texte stehen in einer deutschen ARB-Datei. Die Ordnerstruktur für View, ViewModel und Repository wird festgelegt, damit alle folgenden Aufgaben ihr folgen.\n\nAbgrenzung: Keine Datenbank (T004), keine Gestaltung (T003), keine Fachlogik.\n\nZu klären: Ordner nach Feature oder nach Schicht?",
     "acceptanceCriteria": [
