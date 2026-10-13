@@ -87,7 +87,7 @@ Rückfrage.
 | SVG-Grafiken                    | `flutter_svg`                               |
 | Kleine Einstellungen            | `shared_preferences`                        |
 | Erinnerungen                    | `flutter_local_notifications`               |
-| Texte                           | `flutter_localizations` mit ARB-Dateien     |
+| Texte                           | `flutter_localizations` mit ARB-Dateien, `intl` |
 | Open Food Facts                 | `http`, `json_serializable`                 |
 | Lint-Regeln                     | `very_good_analysis`                        |
 | Tests                           | `flutter_test`, `integration_test`, `mocktail` bei Bedarf |
@@ -106,6 +106,31 @@ View (Widget) → ViewModel → Repository → Datenquelle (drift, Dateisystem, 
 - Nur Repositories sprechen mit drift, dem Dateisystem und HTTP. drift-Typen verlassen das
   Repository nicht.
 - Abhängigkeiten kommen über Riverpod-Provider herein, damit Tests sie ersetzen können.
+
+Ordnerstruktur:
+
+```
+lib/
+  main.dart
+  app/                 App-Widget und Router
+  l10n/                ARB-Dateien
+  ui/
+    <anwendungsfall>/  Screen, ViewModel und nur dort benutzte Widgets
+    core/              von mehreren Anwendungsfällen geteilte Widgets
+  domain/              Modelle
+  data/
+    repositories/
+    database/          drift
+test/                  spiegelt lib/
+```
+
+- Die UI ist nach Anwendungsfall geschnitten, Modelle und Daten nach Schicht, weil mehrere
+  Anwendungsfälle dieselben Modelle und Repositories benutzen.
+- Unter `ui/` steht ein Ordner je Screen oder eng zusammengehöriger Screen-Gruppe, zum
+  Beispiel `homes/`, `stock_overview/`, `stock_item_detail/`. Die Dateien liegen flach
+  darin, ohne Unterordner: `homes_screen.dart`, `homes_view_model.dart`.
+- Ein Ordner entsteht mit seiner ersten Datei, nicht auf Vorrat.
+- Kein Screen heißt `HomeScreen`; `Home` ist die Wohnung. Der Einstieg ist `StartScreen`.
 
 Feste Regeln:
 
@@ -134,6 +159,7 @@ gepinnte Version bereit.
 | Target               | Zweck                                             |
 | -------------------- | ------------------------------------------------- |
 | `make setup`         | gepinnte Flutter-Version und Pakete laden         |
+| `make l10n`          | Texte aus den ARB-Dateien erzeugen                |
 | `make format`        | Code formatieren                                  |
 | `make check`         | Formatierung prüfen, analysieren, testen          |
 | `make analyze`       | nur statische Analyse                             |
@@ -153,6 +179,8 @@ Eine Änderung ist fertig, wenn `make check` grün ist und `make build-android` 
 - Lint: `very_good_analysis`. Regeln werden nicht per `// ignore` umgangen; eine Abweichung
   steht mit Begründung in `analysis_options.yaml`.
 - Generierter Code (`*.g.dart`, `*.freezed.dart`) wird nie von Hand bearbeitet.
+- Der aus den ARB-Dateien erzeugte Code (`lib/l10n/app_localizations*.dart`) wird nicht
+  eingecheckt. `make analyze` und `make test` erzeugen ihn vorher über `make l10n`.
 
 Testebenen:
 
