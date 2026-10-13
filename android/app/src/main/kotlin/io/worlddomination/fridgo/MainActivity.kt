@@ -1,4 +1,4 @@
-package com.example.fridgo
+package io.worlddomination.fridgo
 
 import io.flutter.embedding.android.FlutterActivity
 
