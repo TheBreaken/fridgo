@@ -491,5 +491,19 @@
       "Im Flugmodus ist die App bis auf den Abruf bei Open Food Facts vollständig benutzbar",
       "Für jeden Mangel existiert eine Aufgabe; keine davon hat Priorität `high`"
     ]
+  },
+  {
+    "id": "T033",
+    "title": "Lizenzen in der App anzeigen",
+    "type": "feat",
+    "priority": "low",
+    "status": "open",
+    "dependsOn": ["T026"],
+    "description": "Ziel: Schrift und Emoji-Set (beide SIL Open Font License 1.1, siehe `CLAUDE.md` unter Assets) erscheinen mit ihrem Lizenztext in der App. Flutter trägt nur die Lizenzen der Pakete von selbst ein, gebündelte Assets nicht.\n\nAbgrenzung: Keine eigene Gestaltung der Lizenzseite; `showLicensePage` genügt.\n\nZu klären: Steht der Einstieg auf dem Einstellungs-Screen aus T026?",
+    "acceptanceCriteria": [
+      "Die Lizenztexte aus `assets/fonts/nunito/OFL.txt` und `assets/emoji/LICENSE` sind über `LicenseRegistry` registriert",
+      "Die Lizenzseite ist aus der App erreichbar und nennt Nunito und Noto Emoji",
+      "Ein Test prüft, dass beide Lizenzen registriert sind"
+    ]
   }
 ]
