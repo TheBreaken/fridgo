@@ -34,7 +34,7 @@
     "title": "Design-Grundlage mit Icon-Set",
     "type": "feat",
     "priority": "high",
-    "status": "open",
+    "status": "done",
     "dependsOn": ["T002"],
     "description": "Ziel: Farbwelt, Typografie, Abstände und Grundkomponenten stehen fest, bevor der erste echte Screen entsteht. Die Session schlägt zwei bis drei Richtungen samt offenem Icon- oder Emoji-Set vor, der Nutzer wählt eine. Die Optik ist ein Kernziel der App.\n\nAbgrenzung: Keine Fach-Screens. App-Icon und Startbildschirm folgen in T027.\n\nZu klären: Hell und Dunkel oder nur ein Modus? Welche Schrift (Lizenz; als Asset gebündelt, weil die App offline läuft)? Welches Icon-Set?",
     "acceptanceCriteria": [
@@ -490,6 +490,20 @@
       "Die fünf besonders zählenden Fälle aus `CLAUDE.md` sind am Gerät geprüft",
       "Im Flugmodus ist die App bis auf den Abruf bei Open Food Facts vollständig benutzbar",
       "Für jeden Mangel existiert eine Aufgabe; keine davon hat Priorität `high`"
+    ]
+  },
+  {
+    "id": "T033",
+    "title": "Lizenzen in der App anzeigen",
+    "type": "feat",
+    "priority": "low",
+    "status": "open",
+    "dependsOn": ["T026"],
+    "description": "Ziel: Schrift und Emoji-Set (beide SIL Open Font License 1.1, siehe `CLAUDE.md` unter Assets) erscheinen mit ihrem Lizenztext in der App. Flutter trägt nur die Lizenzen der Pakete von selbst ein, gebündelte Assets nicht.\n\nAbgrenzung: Keine eigene Gestaltung der Lizenzseite; `showLicensePage` genügt.\n\nZu klären: Steht der Einstieg auf dem Einstellungs-Screen aus T026?",
+    "acceptanceCriteria": [
+      "Die Lizenztexte aus `assets/fonts/nunito/OFL.txt` und `assets/emoji/LICENSE` sind über `LicenseRegistry` registriert",
+      "Die Lizenzseite ist aus der App erreichbar und nennt Nunito und Noto Emoji",
+      "Ein Test prüft, dass beide Lizenzen registriert sind"
     ]
   }
 ]

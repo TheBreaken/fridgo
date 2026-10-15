@@ -1,4 +1,10 @@
 {
   "@@locale": "de",
-  "appTitle": "Fridgo"
+  "appTitle": "Fridgo",
+  "addFood": "Lebensmittel hinzufügen",
+  "exampleProductName": "Hafermilch",
+  "exampleProductDetails": "1 l · Vorrat",
+  "exampleProductBestBefore": "MHD 02.11.2026",
+  "exampleEmptyTitle": "Im Gefrierfach liegt noch nichts",
+  "exampleEmptyMessage": "Leg das erste Lebensmittel an, dann siehst du hier, was bald abläuft."
 }

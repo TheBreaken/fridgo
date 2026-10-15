@@ -242,12 +242,37 @@ Regeln:
 
 ## Assets
 
-- Icons und Illustrationen stammen aus einem einzigen offenen Emoji- oder Icon-Set, als SVG.
-  Welches Set es wird, ist noch offen und wird mit dem ersten Feature mit Bildern
-  entschieden.
+- Motive (Lebensmittel, Lagerorte, leere Zustände, Platzhalter) stammen aus
+  [Noto Emoji](https://github.com/googlefonts/noto-emoji), als SVG aus `2D/svg/` mit
+  unverändertem Dateinamen (`emoji_u<Codepoint>.svg`) unter `assets/emoji/`. Lizenz: SIL Open
+  Font License 1.1, liegt als `assets/emoji/LICENSE` bei. Ein Motiv kommt erst mit dem
+  Feature, das es zeigt; die Pfade stehen in `lib/ui/core/emoji.dart`.
+- Bedien-Icons (Hinzufügen, Zurück, Löschen …) sind die in Flutter eingebauten Material
+  Icons in der Variante Rounded (`Icons.*_rounded`), nicht aus dem Emoji-Set.
+- Schrift ist Nunito (SIL Open Font License 1.1) als statische TTF in den Stärken 400, 600 und
+  700 unter `assets/fonts/nunito/`, Lizenz als `OFL.txt` daneben. Gebündelt, weil die App
+  offline läuft.
 - Vor der Übernahme die Lizenz prüfen und sie im Repo dokumentieren.
 - Keine Stile mischen. Fehlt ein Motiv im Set, nachfragen statt ein fremdes dazuzunehmen.
+- Ein neues SVG muss `flutter_svg` darstellen können: keine Filter, Masken oder
+  Illustrator-Exporte mit DOCTYPE. `test/ui/core/emoji_test.dart` lädt jedes Motiv; ein
+  neues Motiv wird dort ergänzt.
 - Pro Produkt ergänzen eigene Fotos und Bilder von Open Food Facts das Set.
+
+## Gestaltung
+
+Richtung „Frisch“: Salatgrün als Hauptfarbe, Karotten-Orange als Akzent für die Hauptaktion,
+weiche große Radien, Nunito, farbige Noto-Emojis. Hell und dunkel, die App folgt der
+Systemeinstellung; einen Schalter in der App gibt es nicht.
+
+- Theme und Gestaltungswerte liegen zentral in `lib/ui/core/app_theme.dart`: Farben im
+  `ColorScheme`, Schrift im `TextTheme`, Abstände in `Spacing`, Radien in `Corners`, feste
+  Größen in `Sizes`. Widgets enthalten keine Farbwerte, Schriftgrößen oder Zahlen für
+  Abstände und Radien.
+- Karten liegen auf `surface`, die Seite dahinter auf `surfaceDim`. Die Hauptaktion ist der
+  Floating Action Button in `tertiary`.
+- Leere Zustände nutzen `EmptyState`, fehlende Bilder `ImagePlaceholder` aus `lib/ui/core/`.
+- Jeder Screen wird hell und dunkel angesehen.
 
 ## Sprache und Commits
 

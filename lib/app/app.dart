@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fridgo/app/router.dart';
 import 'package:fridgo/l10n/app_localizations.dart';
+import 'package:fridgo/ui/core/app_theme.dart';
 
 class FridgoApp extends ConsumerWidget {
   const new({super.key});
@@ -13,9 +14,8 @@ class FridgoApp extends ConsumerWidget {
       onGenerateTitle: (context) => AppLocalizations.of(context).appTitle,
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.teal),
-      ),
+      theme: AppTheme.light,
+      darkTheme: AppTheme.dark,
     );
   }
 }
