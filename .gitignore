@@ -33,6 +33,9 @@ migrate_working_dir/
 /build/
 /coverage/
 /lib/l10n/app_localizations*.dart
+*.g.dart
+*.freezed.dart
+/test/data/database/generated/
 
 # Symbolication related
 app.*.symbols

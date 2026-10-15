@@ -79,6 +79,7 @@ Rückfrage.
 | State Management und DI         | `flutter_riverpod`                          |
 | Navigation                      | `go_router`                                 |
 | Lokale Datenbank                | `drift`, `drift_flutter`                    |
+| Primärschlüssel (UUID v4)       | `uuid`                                      |
 | Unveränderliche Modelle         | `freezed_annotation`, `freezed`             |
 | Codegenerierung                 | `build_runner`, `drift_dev`                 |
 | Fotos aufnehmen und auswählen   | `image_picker`                              |
@@ -144,7 +145,9 @@ Feste Regeln:
 - Übersichten laden Vorschaubilder, nie das Kamerafoto in voller Größe.
 - Eine fehlende Bilddatei ist ein erwarteter Zustand und zeigt einen Platzhalter.
 - **Jede Schemaänderung ist eine Migration** mit hochgezählter Schemaversion, von der
-  ersten Tabelle an.
+  ersten Tabelle an. Ablauf: `schemaVersion` erhöhen, `make schema` legt den neuen Stand
+  unter `drift_schemas/` ab, Migration schreiben, Migrationstest unter
+  `test/data/database/` ergänzen. Abgelegte Schemastände werden nie geändert.
 - Der Export sichert Datenbank und Bilder gemeinsam; ein Export ohne Bilder ist
   unvollständig.
 - Die aktuelle Zeit kommt über eine injizierte Uhr, damit Ablauf und Erinnerungen testbar
@@ -160,6 +163,8 @@ gepinnte Version bereit.
 | -------------------- | ------------------------------------------------- |
 | `make setup`         | gepinnte Flutter-Version und Pakete laden         |
 | `make l10n`          | Texte aus den ARB-Dateien erzeugen                |
+| `make codegen`       | Code für drift und freezed erzeugen               |
+| `make schema`        | aktuellen Schemastand unter `drift_schemas/` ablegen |
 | `make format`        | Code formatieren                                  |
 | `make check`         | Formatierung prüfen, analysieren, testen          |
 | `make analyze`       | nur statische Analyse                             |
@@ -181,6 +186,9 @@ Eine Änderung ist fertig, wenn `make check` grün ist und `make build-android` 
 - Generierter Code (`*.g.dart`, `*.freezed.dart`) wird nie von Hand bearbeitet.
 - Der aus den ARB-Dateien erzeugte Code (`lib/l10n/app_localizations*.dart`) wird nicht
   eingecheckt. `make analyze` und `make test` erzeugen ihn vorher über `make l10n`.
+- Ebenso wird der Code von build_runner und drift_dev nicht eingecheckt. `make codegen`
+  läuft vor `analyze`, `test`, `run` und den Builds. Eingecheckt sind nur die
+  Schemastände unter `drift_schemas/`.
 
 Testebenen:
 

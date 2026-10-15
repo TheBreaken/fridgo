@@ -50,7 +50,7 @@
     "title": "Datenbank-Grundgerüst mit Tabelle für Wohnungen",
     "type": "feat",
     "priority": "high",
-    "status": "open",
+    "status": "done",
     "dependsOn": ["T002"],
     "description": "Ziel: drift ist eingerichtet, Schemaversion 1 enthält die Tabelle für `Home`, und ein `HomeRepository` legt Wohnungen an und liefert sie. Dazu entsteht das Werkzeug für alle späteren Schemaänderungen: Codegenerierung über das Makefile und Migrationstests gegen abgelegte Schemastände.\n\nAbgrenzung: Keine Oberfläche (T005).\n\nZu klären: Woher kommen die UUIDs? Ein Paket dafür steht nicht auf der Liste in `CLAUDE.md`.",
     "acceptanceCriteria": [
