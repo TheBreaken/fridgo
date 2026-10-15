@@ -1,16 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:fridgo/ui/core/app_theme.dart';
-import 'package:fridgo/ui/core/emoji.dart';
 
 class EmptyState extends StatelessWidget {
   const new({
+    required this.emoji,
     required this.title,
     required this.message,
     this.action,
     super.key,
   });
 
+  final String emoji;
   final String title;
   final String message;
   final Widget? action;
@@ -32,7 +33,7 @@ class EmptyState extends StatelessWidget {
           spacing: Spacing.s,
           children: [
             SvgPicture.asset(
-              Emoji.basket,
+              emoji,
               width: Sizes.illustration,
               height: Sizes.illustration,
               excludeFromSemantics: true,

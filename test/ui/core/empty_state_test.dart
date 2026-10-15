@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:fridgo/ui/core/emoji.dart';
 import 'package:fridgo/ui/core/empty_state.dart';
 
 void main() {
@@ -7,16 +9,43 @@ void main() {
 
   testWidgets('shows title and message', (tester) async {
     await tester.pumpWidget(
-      wrap(const EmptyState(title: 'Leer', message: 'Noch nichts da')),
+      wrap(
+        const EmptyState(
+          emoji: Emoji.house,
+          title: 'Leer',
+          message: 'Noch nichts da',
+        ),
+      ),
     );
 
     expect(find.text('Leer'), findsOneWidget);
     expect(find.text('Noch nichts da'), findsOneWidget);
   });
 
+  testWidgets('shows the given emoji', (tester) async {
+    await tester.pumpWidget(
+      wrap(
+        const EmptyState(
+          emoji: Emoji.house,
+          title: 'Leer',
+          message: 'Noch nichts da',
+        ),
+      ),
+    );
+
+    final picture = tester.widget<SvgPicture>(find.byType(SvgPicture));
+    expect((picture.bytesLoader as SvgAssetLoader).assetName, Emoji.house);
+  });
+
   testWidgets('shows no button without an action', (tester) async {
     await tester.pumpWidget(
-      wrap(const EmptyState(title: 'Leer', message: 'Noch nichts da')),
+      wrap(
+        const EmptyState(
+          emoji: Emoji.house,
+          title: 'Leer',
+          message: 'Noch nichts da',
+        ),
+      ),
     );
 
     expect(find.byType(FilledButton), findsNothing);
@@ -26,6 +55,7 @@ void main() {
     await tester.pumpWidget(
       wrap(
         EmptyState(
+          emoji: Emoji.house,
           title: 'Leer',
           message: 'Noch nichts da',
           action: FilledButton(onPressed: () {}, child: const Text('Anlegen')),

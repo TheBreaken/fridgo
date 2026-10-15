@@ -65,6 +65,19 @@ abstract final class AppTheme {
           borderRadius: BorderRadius.circular(Corners.large),
         ),
       ),
+      bottomSheetTheme: BottomSheetThemeData(
+        backgroundColor: scheme.surface,
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(
+            top: Radius.circular(Corners.large),
+          ),
+        ),
+      ),
+      inputDecorationTheme: InputDecorationTheme(
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(Corners.small),
+        ),
+      ),
     );
   }
 }
@@ -84,6 +97,7 @@ abstract final class Corners {
 }
 
 abstract final class Sizes {
+  static const double icon = 48;
   static const double thumbnail = 64;
   static const double illustration = 72;
 }

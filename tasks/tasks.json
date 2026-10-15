@@ -67,7 +67,7 @@
     "title": "Wohnungen anlegen und auflisten",
     "type": "feat",
     "priority": "high",
-    "status": "open",
+    "status": "done",
     "dependsOn": ["T003", "T004"],
     "description": "Ziel: Der Nutzer legt Wohnungen an und sieht sie in einer Liste. Beim ersten Start führt ein leerer Zustand zur ersten Wohnung.\n\nAbgrenzung: Umbenennen und Löschen folgen in T021, der Wechsel zwischen Wohnungen in T014.\n\nZu klären: Hat eine Wohnung außer dem Namen weitere Angaben, etwa ein Icon oder eine Farbe?",
     "acceptanceCriteria": [

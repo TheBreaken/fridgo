@@ -1,10 +1,11 @@
 {
   "@@locale": "de",
   "appTitle": "Fridgo",
-  "addFood": "Lebensmittel hinzufügen",
-  "exampleProductName": "Hafermilch",
-  "exampleProductDetails": "1 l · Vorrat",
-  "exampleProductBestBefore": "MHD 02.11.2026",
-  "exampleEmptyTitle": "Im Gefrierfach liegt noch nichts",
-  "exampleEmptyMessage": "Leg das erste Lebensmittel an, dann siehst du hier, was bald abläuft."
+  "homesTitle": "Wohnungen",
+  "homesEmptyTitle": "Noch keine Wohnung",
+  "homesEmptyMessage": "Leg deine erste Wohnung an. Danach trägst du dort Lagerorte und Lebensmittel ein.",
+  "addHome": "Wohnung anlegen",
+  "homeNameLabel": "Name",
+  "homeNameRequired": "Bitte gib einen Namen ein.",
+  "createHome": "Anlegen"
 }
