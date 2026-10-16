@@ -5,7 +5,15 @@ import 'package:fridgo/ui/core/emoji.dart';
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  const assets = {'canned food': Emoji.cannedFood, 'house': Emoji.house};
+  const assets = {
+    'basket': Emoji.basket,
+    'canned food': Emoji.cannedFood,
+    'house': Emoji.house,
+    'ice cube': Emoji.iceCube,
+    'jar': Emoji.jar,
+    'milk': Emoji.milk,
+    'wine glass': Emoji.wineGlass,
+  };
 
   for (final MapEntry(key: name, value: path) in assets.entries) {
     test('$name emoji is a bundled SVG that flutter_svg can parse', () async {

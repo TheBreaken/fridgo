@@ -26,6 +26,12 @@ class HomeRepository {
       (rows) => [for (final row in rows) Home(id: row.id, name: row.name)],
     );
   }
+
+  Stream<Home> watchHome(String id) {
+    final query = _database.select(_database.homes)
+      ..where((homes) => homes.id.equals(id));
+    return query.watchSingle().map((row) => Home(id: row.id, name: row.name));
+  }
 }
 
 final homeRepositoryProvider = Provider<HomeRepository>(

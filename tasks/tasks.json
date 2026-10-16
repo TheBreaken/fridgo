@@ -82,7 +82,7 @@
     "title": "Lagerorte einer Wohnung anlegen und auflisten",
     "type": "feat",
     "priority": "high",
-    "status": "open",
+    "status": "done",
     "dependsOn": ["T005"],
     "description": "Ziel: In einer Wohnung lassen sich Lagerorte anlegen, etwa Kühlschrank, Gefrierfach und Vorrat, jeder mit passendem Icon aus dem Set.\n\nAbgrenzung: Umbenennen und Löschen folgen in T021. Noch kein Bestand.\n\nZu klären: Feste Arten oder frei benennbar? Bekommt eine neue Wohnung Standard-Lagerorte?",
     "acceptanceCriteria": [

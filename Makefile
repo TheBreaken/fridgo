@@ -11,6 +11,7 @@ l10n:
 	$(FLUTTER) gen-l10n
 
 codegen:
+	$(DART) run drift_dev schema steps drift_schemas/ lib/data/database/app_database.steps.dart
 	$(DART) run build_runner build
 	$(DART) run drift_dev schema generate drift_schemas/ test/data/database/generated/
 

@@ -1,13 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:fridgo/domain/home.dart';
 import 'package:fridgo/l10n/app_localizations.dart';
 import 'package:fridgo/ui/core/app_theme.dart';
+import 'package:fridgo/ui/core/appear_animation.dart';
 import 'package:fridgo/ui/core/emoji.dart';
+import 'package:fridgo/ui/core/emoji_tile.dart';
 import 'package:fridgo/ui/core/empty_state.dart';
 import 'package:fridgo/ui/homes/create_home_sheet.dart';
 import 'package:fridgo/ui/homes/homes_view_model.dart';
+import 'package:go_router/go_router.dart';
 
 class HomesScreen extends ConsumerWidget {
   const new({super.key});
@@ -76,32 +78,9 @@ class _HomeList extends StatelessWidget {
           Padding(
             key: ValueKey(home.id),
             padding: const EdgeInsets.only(bottom: Spacing.m),
-            child: _AppearAnimation(child: _HomeCard(home: home)),
+            child: AppearAnimation(child: _HomeCard(home: home)),
           ),
       ],
-    );
-  }
-}
-
-class _AppearAnimation extends StatelessWidget {
-  const new({required this.child});
-
-  final Widget child;
-
-  @override
-  Widget build(BuildContext context) {
-    return TweenAnimationBuilder<double>(
-      tween: Tween(begin: 0, end: 1),
-      duration: Durations.medium2,
-      curve: Easing.emphasizedDecelerate,
-      builder: (context, progress, child) => Opacity(
-        opacity: progress,
-        child: Transform.translate(
-          offset: Offset(0, (1 - progress) * Spacing.l),
-          child: child,
-        ),
-      ),
-      child: child,
     );
   }
 }
@@ -115,25 +94,24 @@ class _HomeCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(Spacing.m),
-        child: Row(
-          spacing: Spacing.m,
-          children: [
-            Container(
-              width: Sizes.icon,
-              height: Sizes.icon,
-              padding: const EdgeInsets.all(Spacing.s),
-              decoration: BoxDecoration(
-                color: theme.colorScheme.primaryContainer,
-                borderRadius: BorderRadius.circular(Corners.small),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: () => context.go('/homes/${home.id}/storage-locations'),
+        child: Padding(
+          padding: const EdgeInsets.all(Spacing.m),
+          child: Row(
+            spacing: Spacing.m,
+            children: [
+              const EmojiTile(emoji: Emoji.house),
+              Expanded(
+                child: Text(home.name, style: theme.textTheme.titleMedium),
               ),
-              child: SvgPicture.asset(Emoji.house, excludeFromSemantics: true),
-            ),
-            Expanded(
-              child: Text(home.name, style: theme.textTheme.titleMedium),
-            ),
-          ],
+              Icon(
+                Icons.chevron_right_rounded,
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ],
+          ),
         ),
       ),
     );

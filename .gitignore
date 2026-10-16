@@ -35,6 +35,7 @@ migrate_working_dir/
 /lib/l10n/app_localizations*.dart
 *.g.dart
 *.freezed.dart
+/lib/data/database/app_database.steps.dart
 /test/data/database/generated/
 
 # Symbolication related

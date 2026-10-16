@@ -64,6 +64,8 @@ Wohnung 1 ── n Lagerort 1 ── n Bestand n ── 1 Produkt
 
 - Dasselbe Produkt kann mehrere Bestände mit verschiedenen MHDs haben, auch am selben
   Lagerort.
+- Ein Lagerort hat eine Art (`StorageLocationKind`: Kühlschrank, Gefrierfach, Vorrat, Keller,
+  Sonstiges), die sein Icon bestimmt, und einen frei wählbaren Namen.
 - Diese Begriffe gelten im Code durchgehend. Keine Synonyme (`Fridge`, `Item`, `Inventory`).
 
 ## Tech-Stack

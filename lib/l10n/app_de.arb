@@ -7,5 +7,17 @@
   "addHome": "Wohnung anlegen",
   "homeNameLabel": "Name",
   "homeNameRequired": "Bitte gib einen Namen ein.",
-  "createHome": "Anlegen"
+  "createHome": "Anlegen",
+  "storageLocationsEmptyTitle": "Noch kein Lagerort",
+  "storageLocationsEmptyMessage": "Leg Kühlschrank, Gefrierfach oder Vorrat an. Danach trägst du dort Lebensmittel ein.",
+  "addStorageLocation": "Lagerort anlegen",
+  "storageLocationKindLabel": "Art",
+  "storageLocationNameLabel": "Name",
+  "storageLocationNameRequired": "Bitte gib einen Namen ein.",
+  "createStorageLocation": "Anlegen",
+  "storageLocationKindRefrigerator": "Kühlschrank",
+  "storageLocationKindFreezer": "Gefrierfach",
+  "storageLocationKindPantry": "Vorrat",
+  "storageLocationKindCellar": "Keller",
+  "storageLocationKindOther": "Sonstiges"
 }
