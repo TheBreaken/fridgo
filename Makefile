@@ -1,5 +1,7 @@
 FLUTTER ?= fvm flutter
 DART ?= fvm dart
+# Test files or folders for make test; empty runs all.
+TESTS ?=
 
 .PHONY: setup l10n codegen schema format format-check analyze test check run build-android build-ios
 
@@ -27,8 +29,9 @@ format-check:
 analyze: l10n codegen
 	$(FLUTTER) analyze
 
+# A zone with daylight saving time, so the calendar date tests can fail.
 test: l10n codegen
-	$(FLUTTER) test
+	TZ=Europe/Berlin $(FLUTTER) test $(TESTS)
 
 check: format-check analyze test
 

@@ -96,7 +96,7 @@ class _HomeCard extends StatelessWidget {
     return Card(
       clipBehavior: Clip.antiAlias,
       child: InkWell(
-        onTap: () => context.go('/homes/${home.id}/storage-locations'),
+        onTap: () => context.go('/homes/${home.id}'),
         child: Padding(
           padding: const EdgeInsets.all(Spacing.m),
           child: Row(

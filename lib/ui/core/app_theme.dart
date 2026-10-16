@@ -97,6 +97,7 @@ abstract final class Corners {
 }
 
 abstract final class Sizes {
+  static const double inlineIcon = 18;
   static const double icon = 48;
   static const double thumbnail = 64;
   static const double illustration = 72;
