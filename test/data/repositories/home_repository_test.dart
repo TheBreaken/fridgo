@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:drift/native.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -115,4 +117,19 @@ void main() {
       expect(await _homeNames(repository), listed);
     });
   }
+
+  test('a home is still listed after reopening the database file', () async {
+    final directory = await Directory.systemTemp.createTemp('fridgo_test');
+    addTearDown(() => directory.delete(recursive: true));
+    final file = File('${directory.path}/fridgo.sqlite');
+    final firstSession = AppDatabase(NativeDatabase(file));
+    final home = await HomeRepository(firstSession).createHome('Berlin');
+    await firstSession.close();
+
+    final secondSession = AppDatabase(NativeDatabase(file));
+    addTearDown(secondSession.close);
+    final homes = await HomeRepository(secondSession).watchHomes().first;
+
+    expect(homes, [home]);
+  });
 }
