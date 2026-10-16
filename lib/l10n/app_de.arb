@@ -19,5 +19,88 @@
   "storageLocationKindFreezer": "Gefrierfach",
   "storageLocationKindPantry": "Vorrat",
   "storageLocationKindCellar": "Keller",
-  "storageLocationKindOther": "Sonstiges"
+  "storageLocationKindOther": "Sonstiges",
+  "showStorageLocations": "Lagerorte",
+  "stockOverviewNoStorageLocationTitle": "Noch kein Lagerort",
+  "stockOverviewNoStorageLocationMessage": "Leg zuerst Kühlschrank, Gefrierfach oder Vorrat an. Danach trägst du dort Lebensmittel ein.",
+  "stockOverviewEmptyTitle": "Noch keine Lebensmittel",
+  "stockOverviewEmptyMessage": "Trag ein, was in dieser Wohnung liegt. So siehst du, was bald abläuft.",
+  "stockItemBestBefore": "MHD {date}",
+  "@stockItemBestBefore": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "addStockItem": "Lebensmittel hinzufügen",
+  "productNameLabel": "Name",
+  "productNameRequired": "Bitte gib einen Namen ein.",
+  "stockItemStorageLocationLabel": "Lagerort",
+  "stockItemQuantityLabel": "Menge",
+  "stockItemQuantityInvalid": "Bitte gib eine Menge über 0 mit höchstens drei Nachkommastellen ein.",
+  "stockItemUnitLabel": "Einheit",
+  "stockItemBestBeforeDateLabel": "Mindestens haltbar bis",
+  "stockItemWithoutBestBeforeDate": "Ohne MHD",
+  "stockItemOpenedDateLabel": "Geöffnet am",
+  "stockItemNotOpened": "Noch nicht geöffnet",
+  "clearDate": "Datum entfernen",
+  "createStockItem": "Hinzufügen",
+  "stockUnitPiece": "Stück",
+  "stockUnitGram": "g",
+  "stockUnitKilogram": "kg",
+  "stockUnitMilliliter": "ml",
+  "stockUnitLiter": "l",
+  "stockUnitPackage": "Packung",
+  "stockQuantityPiece": "{quantity} Stück",
+  "@stockQuantityPiece": {
+    "placeholders": {
+      "quantity": {
+        "type": "String"
+      }
+    }
+  },
+  "stockQuantityGram": "{quantity} g",
+  "@stockQuantityGram": {
+    "placeholders": {
+      "quantity": {
+        "type": "String"
+      }
+    }
+  },
+  "stockQuantityKilogram": "{quantity} kg",
+  "@stockQuantityKilogram": {
+    "placeholders": {
+      "quantity": {
+        "type": "String"
+      }
+    }
+  },
+  "stockQuantityMilliliter": "{quantity} ml",
+  "@stockQuantityMilliliter": {
+    "placeholders": {
+      "quantity": {
+        "type": "String"
+      }
+    }
+  },
+  "stockQuantityLiter": "{quantity} l",
+  "@stockQuantityLiter": {
+    "placeholders": {
+      "quantity": {
+        "type": "String"
+      }
+    }
+  },
+  "stockQuantityPackage": "{count, plural, =1{{quantity} Packung} other{{quantity} Packungen}}",
+  "@stockQuantityPackage": {
+    "placeholders": {
+      "count": {
+        "type": "num"
+      },
+      "quantity": {
+        "type": "String"
+      }
+    }
+  }
 }

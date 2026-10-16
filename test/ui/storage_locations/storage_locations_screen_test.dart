@@ -1,35 +1,18 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:fridgo/app/app.dart';
-import 'package:fridgo/data/database/app_database.dart';
 import 'package:fridgo/ui/core/emoji.dart';
 import 'package:fridgo/ui/core/empty_state.dart';
-import 'package:fridgo/ui/homes/homes_screen.dart';
+import 'package:fridgo/ui/stock_overview/stock_overview_screen.dart';
 import 'package:fridgo/ui/storage_locations/create_storage_location_sheet.dart';
 import 'package:fridgo/ui/storage_locations/storage_locations_screen.dart';
 
-import '../../data/database/test_database.dart';
+import '../app_flows.dart';
 
-// Writing through a repository hangs in the FakeAsync zone of widget tests,
-// so the home is created through the homes screen.
 Future<void> _openStorageLocationsOfNewHome(WidgetTester tester) async {
-  final database = createWidgetTestDatabase();
-  addTearDown(database.close);
-  await tester.pumpWidget(
-    ProviderScope(
-      overrides: [appDatabaseProvider.overrideWithValue(database)],
-      child: const FridgoApp(),
-    ),
-  );
-  await tester.pumpAndSettle();
-  await tester.tap(find.byTooltip('Wohnung anlegen'));
-  await tester.pumpAndSettle();
-  await tester.enterText(find.byType(TextFormField), 'Berlin');
-  await tester.tap(find.widgetWithText(FilledButton, 'Anlegen'));
-  await tester.pumpAndSettle();
-  await tester.tap(find.text('Berlin'));
+  await pumpApp(tester, now: DateTime(2026, 10, 16, 9));
+  await createHomeAndOpenIt(tester, 'Berlin');
+  await tester.tap(find.byTooltip('Lagerorte'));
   await tester.pumpAndSettle();
 }
 
@@ -57,7 +40,7 @@ Finder _cardEmoji(String asset) => find.descendant(
 );
 
 void main() {
-  testWidgets('tapping a home opens its storage locations', (tester) async {
+  testWidgets('the storage locations action opens them', (tester) async {
     await _openStorageLocationsOfNewHome(tester);
 
     expect(find.byType(StorageLocationsScreen), findsOneWidget);
@@ -197,13 +180,13 @@ void main() {
     expect(_cardEmoji(Emoji.basket), findsOneWidget);
   });
 
-  testWidgets('back returns to the homes', (tester) async {
+  testWidgets('back returns to the stock overview', (tester) async {
     await _openStorageLocationsOfNewHome(tester);
 
     await tester.tap(find.byType(BackButton));
     await tester.pumpAndSettle();
 
-    expect(find.byType(HomesScreen), findsOneWidget);
+    expect(find.byType(StockOverviewScreen), findsOneWidget);
     expect(find.byType(StorageLocationsScreen), findsNothing);
   });
 }

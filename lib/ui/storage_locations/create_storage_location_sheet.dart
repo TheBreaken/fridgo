@@ -4,7 +4,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:fridgo/domain/storage_location.dart';
 import 'package:fridgo/l10n/app_localizations.dart';
 import 'package:fridgo/ui/core/app_theme.dart';
-import 'package:fridgo/ui/storage_locations/storage_location_kind_display.dart';
+import 'package:fridgo/ui/core/storage_location_kind_display.dart';
 import 'package:fridgo/ui/storage_locations/storage_locations_view_model.dart';
 
 Future<void> showCreateStorageLocationSheet(

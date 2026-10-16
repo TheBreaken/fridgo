@@ -8,6 +8,7 @@ void main() {
   const assets = {
     'basket': Emoji.basket,
     'canned food': Emoji.cannedFood,
+    'carrot': Emoji.carrot,
     'house': Emoji.house,
     'ice cube': Emoji.iceCube,
     'jar': Emoji.jar,

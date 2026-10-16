@@ -98,7 +98,7 @@
     "title": "Lebensmittel manuell hinzufügen",
     "type": "feat",
     "priority": "high",
-    "status": "open",
+    "status": "done",
     "dependsOn": ["T006"],
     "description": "Ziel: Der Nutzer legt ein Produkt mit Namen an und fügt es als Bestand einem Lagerort hinzu: Menge, Einheit, MHD und optional Öffnungsdatum.\n\nAbgrenzung: Kein Foto (T010), keine Nährwerte (T019), keine Auswahl vorhandener Produkte (T012). Für die Anzeige genügt hier eine einfache Liste; die sortierte Übersicht folgt in T008.\n\nZu klären: Welche Einheiten gibt es? Ist das MHD Pflicht? Sind Dezimalmengen erlaubt?",
     "acceptanceCriteria": [

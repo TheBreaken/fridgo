@@ -7,8 +7,8 @@ import 'package:fridgo/ui/core/appear_animation.dart';
 import 'package:fridgo/ui/core/emoji.dart';
 import 'package:fridgo/ui/core/emoji_tile.dart';
 import 'package:fridgo/ui/core/empty_state.dart';
+import 'package:fridgo/ui/core/storage_location_kind_display.dart';
 import 'package:fridgo/ui/storage_locations/create_storage_location_sheet.dart';
-import 'package:fridgo/ui/storage_locations/storage_location_kind_display.dart';
 import 'package:fridgo/ui/storage_locations/storage_locations_view_model.dart';
 
 class StorageLocationsScreen extends ConsumerWidget {

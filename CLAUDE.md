@@ -140,7 +140,9 @@ Feste Regeln:
 
 - **Primärschlüssel sind UUIDs**, keine Autoincrement-IDs.
 - **MHD und Öffnungsdatum sind Kalenderdaten**, keine UTC-Zeitpunkte. Keine
-  Zeitzonenumrechnung.
+  Zeitzonenumrechnung. In der Domäne `CalendarDate`, in SQLite TEXT `YYYY-MM-DD`; kein
+  `DateTime` für Kalenderdaten. `make test` läuft mit `TZ=Europe/Berlin`, damit
+  Sommerzeit-Tests auch in der CI (UTC) etwas prüfen.
 - **Fotos sind Dateien.** In SQLite steht nur ein Pfad relativ zum App-Verzeichnis, nie ein
   absoluter Pfad und nie das Bild selbst.
 - Aufgenommene oder ausgewählte Fotos werden aus dem temporären Verzeichnis in das
