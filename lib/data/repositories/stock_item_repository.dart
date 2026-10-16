@@ -57,6 +57,7 @@ class StockItemRepository {
           ])
           ..where(storageLocations.homeId.equals(homeId))
           ..orderBy([
+            OrderingTerm.asc(stockItems.bestBeforeDate, nulls: NullsOrder.last),
             OrderingTerm.asc(products.name.collate(Collate.noCase)),
             OrderingTerm.asc(stockItems.id),
           ]);

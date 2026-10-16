@@ -114,7 +114,7 @@
     "title": "Bestandsübersicht pro Wohnung, nach MHD sortiert",
     "type": "feat",
     "priority": "high",
-    "status": "open",
+    "status": "done",
     "dependsOn": ["T007"],
     "description": "Ziel: Die Übersicht einer Wohnung zeigt alle Bestände über alle Lagerorte als Produktkarten, das früheste MHD zuerst. Das ist der Kernscreen der App.\n\nAbgrenzung: Ablaufstatus folgt in T009, Vorschaubilder in T011, Verbrauchen in T013.\n\nZu klären: Wo stehen Bestände ohne MHD? Flache Liste oder nach Lagerort gruppiert?",
     "acceptanceCriteria": [

@@ -244,22 +244,57 @@ void _inOneStorageLocation() {
     expect((await listed()).single.product.name, 'Käse aus Österreich, groß');
   });
 
-  test('stock items are sorted by product name ignoring case', () async {
-    await repository.addStockItemWithNewProduct(
-      _milk(fridge, productName: 'quark'),
-    );
-    await repository.addStockItemWithNewProduct(
-      _milk(fridge, productName: 'Butter'),
-    );
-    await repository.addStockItemWithNewProduct(
-      _milk(fridge, productName: 'eier'),
-    );
+  const sortingCases = {
+    'the earliest best before date comes first': (
+      added: [
+        ('Milch', '2026-10-25'),
+        ('Quark', '2026-10-18'),
+        ('Butter', '2026-11-02'),
+      ],
+      sorted: ['Quark', 'Milch', 'Butter'],
+    ),
+    'dates across a year boundary keep their order': (
+      added: [
+        ('Eier', '2027-01-02'),
+        ('Joghurt', '2026-12-31'),
+        ('Sahne', '2026-02-01'),
+      ],
+      sorted: ['Sahne', 'Joghurt', 'Eier'],
+    ),
+    'equal best before dates are sorted by name ignoring case': (
+      added: [
+        ('quark', '2026-10-20'),
+        ('Butter', '2026-10-20'),
+        ('eier', '2026-10-20'),
+      ],
+      sorted: ['Butter', 'eier', 'quark'],
+    ),
+    'stock items without best before date come last, sorted by name': (
+      added: [('brot', null), ('Zucker', '2026-10-30'), ('Apfel', null)],
+      sorted: ['Zucker', 'Apfel', 'brot'],
+    ),
+  };
 
-    expect(
-      [for (final details in await listed()) details.product.name],
-      ['Butter', 'eier', 'quark'],
-    );
-  });
+  for (final MapEntry(key: description, value: (:added, :sorted))
+      in sortingCases.entries) {
+    test('stock items are sorted by best before date: $description', () async {
+      for (final (productName, bestBefore) in added) {
+        await repository.addStockItemWithNewProduct(
+          _milk(
+            fridge,
+            productName: productName,
+            bestBeforeDate: bestBefore == null
+                ? null
+                : CalendarDate.parse(bestBefore),
+          ),
+        );
+      }
+
+      expect([
+        for (final details in await listed()) details.product.name,
+      ], sorted);
+    });
+  }
 
   test('stock items of all storage locations of the home are listed', () async {
     final freezer = await StorageLocationRepository(database)
