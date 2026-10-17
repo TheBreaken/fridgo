@@ -175,6 +175,18 @@ void main() {
     );
   });
 
+  testWidgets('a saved stock item shows its expiry as of the clock', (
+    tester,
+  ) async {
+    await _openAddScreen(tester);
+    await _enter(tester, 'Name', 'Milch');
+    await _pickDay(tester, 'Mindestens haltbar bis', '18');
+
+    await _submit(tester);
+
+    expect(find.text('Noch 2 Tage'), findsOneWidget);
+  });
+
   testWidgets('a stock item without best before date shows only its quantity', (
     tester,
   ) async {

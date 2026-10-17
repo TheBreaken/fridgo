@@ -115,6 +115,23 @@ void main() {
     expect(CalendarDate(2026, 3, 29).toDateTime(), DateTime(2026, 3, 29));
   });
 
+  const dayDistances = {
+    'the same day is zero days away': ('2026-10-16', '2026-10-16', 0),
+    'the next day is one day away': ('2026-10-16', '2026-10-17', 1),
+    'the previous day is minus one day away': ('2026-10-16', '2026-10-15', -1),
+    'across the start of summer time': ('2026-03-28', '2026-03-30', 2),
+    'across the end of summer time': ('2026-10-24', '2026-10-26', 2),
+    'across a leap day': ('2028-02-28', '2028-03-01', 2),
+    'across the turn of the year': ('2026-12-31', '2027-01-01', 1),
+  };
+
+  for (final MapEntry(key: description, value: (from, to, days))
+      in dayDistances.entries) {
+    test('days until: $description', () {
+      expect(CalendarDate.parse(from).daysUntil(CalendarDate.parse(to)), days);
+    });
+  }
+
   test('two dates of the same day are equal', () {
     expect(CalendarDate(2026, 10, 25), CalendarDate.parse('2026-10-25'));
     expect(
