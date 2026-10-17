@@ -1,9 +1,11 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/misc.dart';
 import 'package:fridgo/data/clock.dart';
+import 'package:fridgo/data/repositories/product_image_repository.dart';
 import 'package:fridgo/data/repositories/stock_item_repository.dart';
 import 'package:fridgo/data/repositories/storage_location_repository.dart';
 import 'package:fridgo/domain/calendar_date.dart';
+import 'package:fridgo/domain/product_photo.dart';
 import 'package:fridgo/domain/stock_item.dart';
 import 'package:fridgo/domain/storage_location.dart';
 
@@ -38,7 +40,13 @@ class AddStockItemViewModel extends StreamNotifier<List<StorageLocation>> {
     return _toDouble(quantity);
   }
 
-  Future<void> addStockItem(StockItemDraft draft) async {
+  Future<String?> pickPhoto(PhotoSource source) =>
+      ref.read(productImageRepositoryProvider).pickPhoto(source);
+
+  Future<void> addStockItem(
+    StockItemDraft draft, {
+    String? pickedPhotoPath,
+  }) async {
     if (!isValidName(draft.productName)) {
       throw ArgumentError.value(
         draft.productName,
@@ -49,11 +57,21 @@ class AddStockItemViewModel extends StreamNotifier<List<StorageLocation>> {
     if (draft.quantity <= 0) {
       throw ArgumentError.value(draft.quantity, 'quantity', 'must be above 0');
     }
-    await ref
-        .read(stockItemRepositoryProvider)
-        .addStockItemWithNewProduct(
-          draft.copyWith(productName: draft.productName.trim()),
-        );
+    final productImages = ref.read(productImageRepositoryProvider);
+    final imagePath = pickedPhotoPath == null
+        ? null
+        : await productImages.store(pickedPhotoPath);
+    try {
+      await ref
+          .read(stockItemRepositoryProvider)
+          .addStockItemWithNewProduct(
+            draft.copyWith(productName: draft.productName.trim()),
+            imagePath: imagePath,
+          );
+    } on Object {
+      if (imagePath != null) await productImages.delete(imagePath);
+      rethrow;
+    }
   }
 
   double _toDouble(String quantity) =>

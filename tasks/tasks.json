@@ -145,7 +145,7 @@
     "title": "Foto zum Produkt aufnehmen oder auswählen",
     "type": "feat",
     "priority": "high",
-    "status": "open",
+    "status": "done",
     "dependsOn": ["T007"],
     "description": "Ziel: Beim Anlegen eines Produkts lässt sich ein Foto aufnehmen oder aus der Galerie wählen. Die Datei wird aus dem temporären ins dauerhafte App-Verzeichnis kopiert, in der Datenbank steht nur der relative Pfad.\n\nAbgrenzung: Vorschaubilder in der Übersicht folgen in T011.\n\nZu klären: Wird das Foto vor dem Speichern verkleinert oder zugeschnitten?",
     "acceptanceCriteria": [

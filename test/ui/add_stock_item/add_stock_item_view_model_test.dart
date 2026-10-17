@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:fridgo/data/clock.dart';
 import 'package:fridgo/data/database/app_database.dart';
 import 'package:fridgo/data/repositories/home_repository.dart';
+import 'package:fridgo/data/repositories/product_image_repository.dart';
 import 'package:fridgo/data/repositories/stock_item_repository.dart';
 import 'package:fridgo/data/repositories/storage_location_repository.dart';
 import 'package:fridgo/domain/calendar_date.dart';
@@ -11,11 +12,19 @@ import 'package:fridgo/domain/stock_item.dart';
 import 'package:fridgo/domain/storage_location.dart';
 import 'package:fridgo/ui/add_stock_item/add_stock_item_view_model.dart';
 
-ProviderContainer _createContainer({DateTime Function()? clock}) {
+import '../../data/repositories/fake_product_image_repository.dart';
+
+ProviderContainer _createContainer({
+  DateTime Function()? clock,
+  FakeProductImageRepository? productImages,
+}) {
   final database = AppDatabase(NativeDatabase.memory());
   final container = ProviderContainer(
     overrides: [
       appDatabaseProvider.overrideWithValue(database),
+      productImageRepositoryProvider.overrideWithValue(
+        productImages ?? FakeProductImageRepository(),
+      ),
       if (clock != null) clockProvider.overrideWithValue(clock),
     ],
   );
@@ -172,6 +181,70 @@ void main() {
 
     final stored = await _stored(container, fridge.homeId);
     expect(stored.single.product.name, 'Milch');
+  });
+
+  test('adding with a picked photo stores it at the product', () async {
+    final productImages = FakeProductImageRepository();
+    final container = _createContainer(productImages: productImages);
+    final fridge = await _createFridge(container);
+
+    await _viewModel(
+      container,
+      fridge.homeId,
+    ).addStockItem(_draft(fridge), pickedPhotoPath: '/tmp/image_picker_1.jpg');
+
+    final stored = await _stored(container, fridge.homeId);
+    expect(productImages.storedImages, {
+      'product_images/1.jpg': '/tmp/image_picker_1.jpg',
+    });
+    expect(stored.single.product.imagePath, 'product_images/1.jpg');
+  });
+
+  test('adding without photo stores no image', () async {
+    final productImages = FakeProductImageRepository();
+    final container = _createContainer(productImages: productImages);
+    final fridge = await _createFridge(container);
+
+    await _viewModel(container, fridge.homeId).addStockItem(_draft(fridge));
+
+    final stored = await _stored(container, fridge.homeId);
+    expect(productImages.storedImages, isEmpty);
+    expect(stored.single.product.imagePath, isNull);
+  });
+
+  test('a rejected draft leaves the picked photo unstored', () async {
+    final productImages = FakeProductImageRepository();
+    final container = _createContainer(productImages: productImages);
+    final fridge = await _createFridge(container);
+
+    await expectLater(
+      _viewModel(container, fridge.homeId).addStockItem(
+        _draft(fridge, productName: ''),
+        pickedPhotoPath: '/tmp/image_picker_1.jpg',
+      ),
+      throwsArgumentError,
+    );
+
+    expect(productImages.storedImages, isEmpty);
+  });
+
+  test('a failed save removes the stored image again', () async {
+    final productImages = FakeProductImageRepository();
+    final container = _createContainer(productImages: productImages);
+    final fridge = await _createFridge(container);
+    final draft = _draft(fridge)
+        .copyWith(storageLocationId: 'unknown-storage-location');
+
+    await expectLater(
+      _viewModel(
+        container,
+        fridge.homeId,
+      ).addStockItem(draft, pickedPhotoPath: '/tmp/image_picker_1.jpg'),
+      throwsA(isA<Exception>()),
+    );
+
+    expect(productImages.storedImages, isEmpty);
+    expect(await _stored(container, fridge.homeId), isEmpty);
   });
 
   const blankNames = {

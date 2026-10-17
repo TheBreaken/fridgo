@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:fridgo/domain/product_photo.dart';
 import 'package:fridgo/ui/add_stock_item/add_stock_item_screen.dart';
 import 'package:fridgo/ui/core/empty_state.dart';
 import 'package:fridgo/ui/stock_overview/stock_overview_screen.dart';
 
+import '../../data/repositories/fake_product_image_repository.dart';
 import '../app_flows.dart';
 
 final _today = DateTime(2026, 10, 16, 9);
@@ -11,8 +13,11 @@ final _today = DateTime(2026, 10, 16, 9);
 const _quantityError =
     'Bitte gib eine Menge über 0 mit höchstens drei Nachkommastellen ein.';
 
-Future<void> _openAddScreen(WidgetTester tester) async {
-  await pumpApp(tester, now: _today);
+Future<void> _openAddScreen(
+  WidgetTester tester, {
+  FakeProductImageRepository? productImages,
+}) async {
+  await pumpApp(tester, now: _today, productImages: productImages);
   await createHomeAndOpenIt(tester, 'Berlin');
   await createStorageLocationAndReturn(tester, 'Kühlschrank');
   await createStorageLocationAndReturn(tester, 'Gefrierfach');
@@ -39,6 +44,19 @@ Future<void> _pickDay(WidgetTester tester, String label, String day) async {
   await tester.pumpAndSettle();
   await tester.tap(find.text(day));
   await tester.tap(find.text('OK'));
+  await tester.pumpAndSettle();
+}
+
+Finder _photoField(String label) => find.bySemanticsLabel(label);
+
+Future<void> _choosePhotoAction(
+  WidgetTester tester,
+  String fieldLabel,
+  String action,
+) async {
+  await tester.tap(_photoField(fieldLabel));
+  await tester.pumpAndSettle();
+  await tester.tap(find.text(action));
   await tester.pumpAndSettle();
 }
 
@@ -209,4 +227,143 @@ void main() {
     expect(find.byType(StockOverviewScreen), findsOneWidget);
     expect(find.text('Noch keine Lebensmittel'), findsOneWidget);
   });
+
+  testWidgets('the photo sheet offers camera and gallery but no removal', (
+    tester,
+  ) async {
+    await _openAddScreen(tester);
+
+    await tester.tap(_photoField('Foto hinzufügen'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Foto aufnehmen'), findsOneWidget);
+    expect(find.text('Aus Galerie wählen'), findsOneWidget);
+    expect(find.text('Foto entfernen'), findsNothing);
+  });
+
+  const sources = {
+    'a photo from the camera': ('Foto aufnehmen', PhotoSource.camera),
+    'a photo from the gallery': ('Aus Galerie wählen', PhotoSource.gallery),
+  };
+
+  for (final MapEntry(key: description, value: (action, source))
+      in sources.entries) {
+    testWidgets('$description is shown in the form', (tester) async {
+      final productImages = FakeProductImageRepository();
+      final requestedSources = <PhotoSource>[];
+      productImages.onPick = (source) async {
+        requestedSources.add(source);
+        return '/tmp/picked.jpg';
+      };
+      await _openAddScreen(tester, productImages: productImages);
+
+      await _choosePhotoAction(tester, 'Foto hinzufügen', action);
+
+      expect(requestedSources, [source]);
+      expect(_photoField('Foto ändern'), findsOneWidget);
+      expect(_photoField('Foto hinzufügen'), findsNothing);
+    });
+  }
+
+  testWidgets('a picked photo can be removed again', (tester) async {
+    await _openAddScreen(tester);
+    await _choosePhotoAction(tester, 'Foto hinzufügen', 'Foto aufnehmen');
+
+    await _choosePhotoAction(tester, 'Foto ändern', 'Foto entfernen');
+
+    expect(_photoField('Foto hinzufügen'), findsOneWidget);
+  });
+
+  testWidgets('a saved stock item stores the picked photo', (tester) async {
+    final productImages = FakeProductImageRepository();
+    await _openAddScreen(tester, productImages: productImages);
+    await _choosePhotoAction(tester, 'Foto hinzufügen', 'Aus Galerie wählen');
+    await _enter(tester, 'Name', 'Milch');
+
+    await _submit(tester);
+
+    expect(find.byType(StockOverviewScreen), findsOneWidget);
+    expect(productImages.storedImages.values, ['/tmp/picked_from_gallery.jpg']);
+  });
+
+  testWidgets('a removed photo is not stored', (tester) async {
+    final productImages = FakeProductImageRepository();
+    await _openAddScreen(tester, productImages: productImages);
+    await _choosePhotoAction(tester, 'Foto hinzufügen', 'Foto aufnehmen');
+    await _choosePhotoAction(tester, 'Foto ändern', 'Foto entfernen');
+    await _enter(tester, 'Name', 'Milch');
+
+    await _submit(tester);
+
+    expect(productImages.storedImages, isEmpty);
+  });
+
+  testWidgets('back after picking a photo stores no image', (tester) async {
+    final productImages = FakeProductImageRepository();
+    await _openAddScreen(tester, productImages: productImages);
+    await _choosePhotoAction(tester, 'Foto hinzufügen', 'Foto aufnehmen');
+
+    await tester.tap(find.byType(BackButton));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(StockOverviewScreen), findsOneWidget);
+    expect(productImages.storedImages, isEmpty);
+  });
+
+  testWidgets('a cancelled pick keeps the form without photo', (tester) async {
+    final productImages = FakeProductImageRepository()
+      ..onPick = (_) async => null;
+    await _openAddScreen(tester, productImages: productImages);
+
+    await _choosePhotoAction(tester, 'Foto hinzufügen', 'Foto aufnehmen');
+
+    expect(_photoField('Foto hinzufügen'), findsOneWidget);
+    expect(find.byType(SnackBar), findsNothing);
+  });
+
+  final pickErrors = {
+    'denied camera access': (
+      'Foto aufnehmen',
+      const PhotoAccessDeniedException(PhotoSource.camera),
+      'Fridgo darf die Kamera nicht benutzen. '
+          'Du kannst das in den Einstellungen erlauben.',
+    ),
+    'denied photo access': (
+      'Aus Galerie wählen',
+      const PhotoAccessDeniedException(PhotoSource.gallery),
+      'Fridgo darf nicht auf deine Fotos zugreifen. '
+          'Du kannst das in den Einstellungen erlauben.',
+    ),
+    'a missing camera': (
+      'Foto aufnehmen',
+      const PhotoUnavailableException(
+        PhotoSource.camera,
+        'no_available_camera',
+      ),
+      'Das Foto hat nicht geklappt. '
+          'Versuch es noch einmal oder trag das Lebensmittel ohne Foto ein.',
+    ),
+  };
+
+  for (final MapEntry(key: description, value: (action, error, message))
+      in pickErrors.entries) {
+    testWidgets('$description shows a hint and the form still saves', (
+      tester,
+    ) async {
+      final productImages = FakeProductImageRepository()
+        ..onPick = (_) async => throw error;
+      await _openAddScreen(tester, productImages: productImages);
+
+      await _choosePhotoAction(tester, 'Foto hinzufügen', action);
+
+      expect(find.text(message), findsOneWidget);
+      await tester.pump(const Duration(seconds: 5));
+      await tester.pumpAndSettle();
+      await _enter(tester, 'Name', 'Milch');
+      await _submit(tester);
+      expect(find.byType(StockOverviewScreen), findsOneWidget);
+      expect(find.text('Milch'), findsOneWidget);
+      expect(productImages.storedImages, isEmpty);
+    });
+  }
 }

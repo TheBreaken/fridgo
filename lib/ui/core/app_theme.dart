@@ -105,4 +105,5 @@ abstract final class Sizes {
   static const double icon = 48;
   static const double thumbnail = 64;
   static const double illustration = 72;
+  static const double photo = 176;
 }

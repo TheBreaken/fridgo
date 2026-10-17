@@ -4,13 +4,19 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:fridgo/app/app.dart';
 import 'package:fridgo/data/clock.dart';
 import 'package:fridgo/data/database/app_database.dart';
+import 'package:fridgo/data/repositories/product_image_repository.dart';
 
 import '../data/database/test_database.dart';
+import '../data/repositories/fake_product_image_repository.dart';
 
 // Writing through a repository hangs in the FakeAsync zone of widget tests,
 // so these flows create data through the screens, as the user would.
 
-Future<void> pumpApp(WidgetTester tester, {required DateTime now}) async {
+Future<void> pumpApp(
+  WidgetTester tester, {
+  required DateTime now,
+  FakeProductImageRepository? productImages,
+}) async {
   final database = createWidgetTestDatabase();
   addTearDown(database.close);
   await tester.pumpWidget(
@@ -18,6 +24,9 @@ Future<void> pumpApp(WidgetTester tester, {required DateTime now}) async {
       overrides: [
         appDatabaseProvider.overrideWithValue(database),
         clockProvider.overrideWithValue(() => now),
+        productImageRepositoryProvider.overrideWithValue(
+          productImages ?? FakeProductImageRepository(),
+        ),
       ],
       child: const FridgoApp(),
     ),

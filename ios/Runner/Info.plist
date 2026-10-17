@@ -30,6 +30,10 @@
 	<string>$(FLUTTER_BUILD_NUMBER)</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+	<key>NSCameraUsageDescription</key>
+	<string>Fridgo nutzt die Kamera, damit du deine Lebensmittel fotografieren kannst.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Fridgo nutzt deine Fotos, damit du ein Bild für ein Lebensmittel auswählen kannst.</string>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>
