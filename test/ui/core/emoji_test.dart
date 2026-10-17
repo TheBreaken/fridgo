@@ -7,6 +7,7 @@ void main() {
 
   const assets = {
     'basket': Emoji.basket,
+    'camera': Emoji.camera,
     'canned food': Emoji.cannedFood,
     'carrot': Emoji.carrot,
     'house': Emoji.house,

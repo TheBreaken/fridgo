@@ -32,6 +32,7 @@ class StorageLocations extends Table {
 class Products extends Table {
   TextColumn get id => text()();
   TextColumn get name => text()();
+  TextColumn get imagePath => text().nullable()();
 
   @override
   Set<Column<Object>> get primaryKey => {id};
@@ -71,7 +72,7 @@ class AppDatabase extends _$AppDatabase {
   new(super.e);
 
   @override
-  int get schemaVersion => 3;
+  int get schemaVersion => 4;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -81,6 +82,8 @@ class AppDatabase extends _$AppDatabase {
         await m.createTable(schema.products);
         await m.createTable(schema.stockItems);
       },
+      from3To4: (m, schema) =>
+          m.addColumn(schema.products, schema.products.imagePath),
     ),
     // SQLite enforces foreign keys only when this is set on each connection.
     beforeOpen: (_) => customStatement('PRAGMA foreign_keys = ON'),

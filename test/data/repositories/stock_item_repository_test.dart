@@ -132,6 +132,25 @@ void _inOneStorageLocation() {
     expect(stockItem.openedDate, isNull);
   });
 
+  test('the image path of a product is stored as given', () async {
+    await repository.addStockItemWithNewProduct(
+      _milk(fridge),
+      imagePath: 'product_images/milk.jpg',
+    );
+
+    final product = (await listed()).single.product;
+
+    expect(product.imagePath, 'product_images/milk.jpg');
+  });
+
+  test('a product without photo has no image path', () async {
+    await repository.addStockItemWithNewProduct(_milk(fridge));
+
+    final product = (await listed()).single.product;
+
+    expect(product.imagePath, isNull);
+  });
+
   test(
     'the same product name with two best before dates gives two entries',
     () async {

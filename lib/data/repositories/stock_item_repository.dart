@@ -11,8 +11,15 @@ class StockItemRepository {
 
   final AppDatabase _database;
 
-  Future<StockItem> addStockItemWithNewProduct(StockItemDraft draft) {
-    final product = Product(id: const Uuid().v4(), name: draft.productName);
+  Future<StockItem> addStockItemWithNewProduct(
+    StockItemDraft draft, {
+    String? imagePath,
+  }) {
+    final product = Product(
+      id: const Uuid().v4(),
+      name: draft.productName,
+      imagePath: imagePath,
+    );
     final stockItem = StockItem(
       id: const Uuid().v4(),
       productId: product.id,
@@ -25,7 +32,13 @@ class StockItemRepository {
     return _database.transaction(() async {
       await _database
           .into(_database.products)
-          .insert(ProductsCompanion.insert(id: product.id, name: product.name));
+          .insert(
+            ProductsCompanion.insert(
+              id: product.id,
+              name: product.name,
+              imagePath: Value(product.imagePath),
+            ),
+          );
       await _database
           .into(_database.stockItems)
           .insert(
@@ -87,7 +100,11 @@ class StockItemRepository {
       bestBeforeDate: stockItem.bestBeforeDate,
       openedDate: stockItem.openedDate,
     ),
-    product: Product(id: product.id, name: product.name),
+    product: Product(
+      id: product.id,
+      name: product.name,
+      imagePath: product.imagePath,
+    ),
     storageLocation: StorageLocation(
       id: storageLocation.id,
       homeId: storageLocation.homeId,

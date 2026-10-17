@@ -2,10 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:fridgo/domain/calendar_date.dart';
+import 'package:fridgo/domain/product_photo.dart';
 import 'package:fridgo/domain/stock_item.dart';
 import 'package:fridgo/domain/storage_location.dart';
 import 'package:fridgo/l10n/app_localizations.dart';
 import 'package:fridgo/ui/add_stock_item/add_stock_item_view_model.dart';
+import 'package:fridgo/ui/add_stock_item/product_photo_field.dart';
 import 'package:fridgo/ui/core/app_theme.dart';
 import 'package:fridgo/ui/core/calendar_date_display.dart';
 import 'package:fridgo/ui/core/stock_unit_display.dart';
@@ -32,6 +34,7 @@ class _AddStockItemScreenState extends ConsumerState<AddStockItemScreen> {
   StockUnit _unit = StockUnit.piece;
   CalendarDate? _bestBeforeDate;
   CalendarDate? _openedDate;
+  String? _pickedPhotoPath;
   bool _isSaving = false;
 
   AddStockItemViewModel get _viewModel =>
@@ -56,8 +59,45 @@ class _AddStockItemScreenState extends ConsumerState<AddStockItemScreen> {
         bestBeforeDate: _bestBeforeDate,
         openedDate: _openedDate,
       ),
+      pickedPhotoPath: _pickedPhotoPath,
     );
     if (mounted) context.pop();
+  }
+
+  Future<void> _changePhoto() async {
+    final action = await showPhotoActionSheet(
+      context,
+      hasPhoto: _pickedPhotoPath != null,
+    );
+    switch (action) {
+      case null:
+        return;
+      case RemovePhoto():
+        setState(() => _pickedPhotoPath = null);
+      case PickPhoto(:final source):
+        await _pickPhoto(source);
+    }
+  }
+
+  Future<void> _pickPhoto(PhotoSource source) async {
+    try {
+      final path = await _viewModel.pickPhoto(source);
+      if (path != null && mounted) setState(() => _pickedPhotoPath = path);
+    } on PhotoPickException catch (error) {
+      if (!mounted) return;
+      final l10n = AppLocalizations.of(context);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(switch (error) {
+            PhotoAccessDeniedException(source: PhotoSource.camera) =>
+              l10n.productPhotoCameraAccessDenied,
+            PhotoAccessDeniedException(source: PhotoSource.gallery) =>
+              l10n.productPhotoGalleryAccessDenied,
+            PhotoUnavailableException() => l10n.productPhotoUnavailable,
+          }),
+        ),
+      );
+    }
   }
 
   @override
@@ -73,89 +113,98 @@ class _AddStockItemScreenState extends ConsumerState<AddStockItemScreen> {
       body: Form(
         key: _formKey,
         autovalidateMode: AutovalidateMode.onUserInteractionIfError,
-        child: ListView(
+        child: SingleChildScrollView(
           padding: const EdgeInsets.all(Spacing.l),
-          children: [
-            TextFormField(
-              controller: _nameController,
-              autofocus: true,
-              textCapitalization: TextCapitalization.sentences,
-              textInputAction: TextInputAction.next,
-              decoration: InputDecoration(labelText: l10n.productNameLabel),
-              validator: (name) => _viewModel.isValidName(name ?? '')
-                  ? null
-                  : l10n.productNameRequired,
-            ),
-            const SizedBox(height: Spacing.xl),
-            _ChoiceSection(
-              label: l10n.stockItemStorageLocationLabel,
-              children: [
-                for (final storageLocation in storageLocations)
-                  _StorageLocationChip(
-                    storageLocation: storageLocation,
-                    selected: storageLocation.id == selectedStorageLocationId,
-                    onSelected: () =>
-                        setState(() => _storageLocationId = storageLocation.id),
-                  ),
-              ],
-            ),
-            const SizedBox(height: Spacing.xl),
-            TextFormField(
-              controller: _quantityController,
-              keyboardType: const TextInputType.numberWithOptions(
-                decimal: true,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              ProductPhotoField(
+                photoPath: _pickedPhotoPath,
+                onTap: _changePhoto,
               ),
-              decoration: InputDecoration(
-                labelText: l10n.stockItemQuantityLabel,
+              const SizedBox(height: Spacing.xl),
+              TextFormField(
+                controller: _nameController,
+                autofocus: true,
+                textCapitalization: TextCapitalization.sentences,
+                textInputAction: TextInputAction.next,
+                decoration: InputDecoration(labelText: l10n.productNameLabel),
+                validator: (name) => _viewModel.isValidName(name ?? '')
+                    ? null
+                    : l10n.productNameRequired,
               ),
-              validator: (quantity) =>
-                  _viewModel.isValidQuantity(quantity ?? '')
-                  ? null
-                  : l10n.stockItemQuantityInvalid,
-            ),
-            const SizedBox(height: Spacing.m),
-            _ChoiceSection(
-              label: l10n.stockItemUnitLabel,
-              children: [
-                for (final unit in StockUnit.values)
-                  ChoiceChip(
-                    showCheckmark: false,
-                    label: Text(unit.label(l10n)),
-                    selected: unit == _unit,
-                    onSelected: (_) => setState(() => _unit = unit),
-                  ),
-              ],
-            ),
-            const SizedBox(height: Spacing.xl),
-            _DateField(
-              label: l10n.stockItemBestBeforeDateLabel,
-              emptyText: l10n.stockItemWithoutBestBeforeDate,
-              icon: Icons.event_rounded,
-              date: _bestBeforeDate,
-              initialPickerDate: today,
-              firstDate: _firstPickableDate,
-              lastDate: _lastPickableDate,
-              onChanged: (date) => setState(() => _bestBeforeDate = date),
-            ),
-            const SizedBox(height: Spacing.l),
-            _DateField(
-              label: l10n.stockItemOpenedDateLabel,
-              emptyText: l10n.stockItemNotOpened,
-              icon: Icons.lock_open_rounded,
-              date: _openedDate,
-              initialPickerDate: today,
-              firstDate: _firstPickableDate,
-              lastDate: today,
-              onChanged: (date) => setState(() => _openedDate = date),
-            ),
-            const SizedBox(height: Spacing.xxl),
-            FilledButton(
-              onPressed: _isSaving || selectedStorageLocationId == null
-                  ? null
-                  : () => _submit(selectedStorageLocationId),
-              child: Text(l10n.createStockItem),
-            ),
-          ],
+              const SizedBox(height: Spacing.xl),
+              _ChoiceSection(
+                label: l10n.stockItemStorageLocationLabel,
+                children: [
+                  for (final storageLocation in storageLocations)
+                    _StorageLocationChip(
+                      storageLocation: storageLocation,
+                      selected: storageLocation.id == selectedStorageLocationId,
+                      onSelected: () => setState(
+                        () => _storageLocationId = storageLocation.id,
+                      ),
+                    ),
+                ],
+              ),
+              const SizedBox(height: Spacing.xl),
+              TextFormField(
+                controller: _quantityController,
+                keyboardType: const TextInputType.numberWithOptions(
+                  decimal: true,
+                ),
+                decoration: InputDecoration(
+                  labelText: l10n.stockItemQuantityLabel,
+                ),
+                validator: (quantity) =>
+                    _viewModel.isValidQuantity(quantity ?? '')
+                    ? null
+                    : l10n.stockItemQuantityInvalid,
+              ),
+              const SizedBox(height: Spacing.m),
+              _ChoiceSection(
+                label: l10n.stockItemUnitLabel,
+                children: [
+                  for (final unit in StockUnit.values)
+                    ChoiceChip(
+                      showCheckmark: false,
+                      label: Text(unit.label(l10n)),
+                      selected: unit == _unit,
+                      onSelected: (_) => setState(() => _unit = unit),
+                    ),
+                ],
+              ),
+              const SizedBox(height: Spacing.xl),
+              _DateField(
+                label: l10n.stockItemBestBeforeDateLabel,
+                emptyText: l10n.stockItemWithoutBestBeforeDate,
+                icon: Icons.event_rounded,
+                date: _bestBeforeDate,
+                initialPickerDate: today,
+                firstDate: _firstPickableDate,
+                lastDate: _lastPickableDate,
+                onChanged: (date) => setState(() => _bestBeforeDate = date),
+              ),
+              const SizedBox(height: Spacing.l),
+              _DateField(
+                label: l10n.stockItemOpenedDateLabel,
+                emptyText: l10n.stockItemNotOpened,
+                icon: Icons.lock_open_rounded,
+                date: _openedDate,
+                initialPickerDate: today,
+                firstDate: _firstPickableDate,
+                lastDate: today,
+                onChanged: (date) => setState(() => _openedDate = date),
+              ),
+              const SizedBox(height: Spacing.xxl),
+              FilledButton(
+                onPressed: _isSaving || selectedStorageLocationId == null
+                    ? null
+                    : () => _submit(selectedStorageLocationId),
+                child: Text(l10n.createStockItem),
+              ),
+            ],
+          ),
         ),
       ),
     );
