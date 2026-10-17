@@ -39,6 +39,14 @@ final class CalendarDate {
   /// Local midnight of this day, for widgets such as the date picker.
   DateTime toDateTime() => DateTime(year, month, day);
 
+  /// Whole days from this date to [other], negative if [other] lies before.
+  int daysUntil(CalendarDate other) =>
+      other._utcMidnight.difference(_utcMidnight).inDays;
+
+  // UTC days all last 24 hours; local days around a daylight saving time
+  // change do not, which would make inDays round one day off.
+  DateTime get _utcMidnight => DateTime.utc(year, month, day);
+
   String toIso8601String() =>
       '${year.toString().padLeft(4, '0')}-'
       '${month.toString().padLeft(2, '0')}-'

@@ -130,7 +130,7 @@
     "title": "Ablaufstatus in der Übersicht",
     "type": "feat",
     "priority": "high",
-    "status": "open",
+    "status": "done",
     "dependsOn": ["T008"],
     "description": "Ziel: Die Übersicht hebt hervor, was bald abläuft und was abgelaufen ist. Die aktuelle Zeit kommt über eine injizierte Uhr.\n\nAbgrenzung: Keine Benachrichtigungen (T024).\n\nZu klären: Ab wie vielen Tagen gilt ein Bestand als bald ablaufend? Beeinflusst das Öffnungsdatum den Status?",
     "acceptanceCriteria": [

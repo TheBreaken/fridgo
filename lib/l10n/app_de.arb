@@ -33,6 +33,22 @@
       }
     }
   },
+  "expiryStatusExpired": "{days, plural, =1{Gestern abgelaufen} other{Seit {days} Tagen abgelaufen}}",
+  "@expiryStatusExpired": {
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "expiryStatusExpiringSoon": "{days, plural, =0{Läuft heute ab} =1{Läuft morgen ab} other{Noch {days} Tage}}",
+  "@expiryStatusExpiringSoon": {
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
   "addStockItem": "Lebensmittel hinzufügen",
   "productNameLabel": "Name",
   "productNameRequired": "Bitte gib einen Namen ein.",

@@ -1,16 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:fridgo/domain/stock_item.dart';
 import 'package:fridgo/l10n/app_localizations.dart';
 import 'package:fridgo/ui/core/app_theme.dart';
 import 'package:fridgo/ui/core/appear_animation.dart';
-import 'package:fridgo/ui/core/calendar_date_display.dart';
 import 'package:fridgo/ui/core/emoji.dart';
 import 'package:fridgo/ui/core/empty_state.dart';
-import 'package:fridgo/ui/core/image_placeholder.dart';
-import 'package:fridgo/ui/core/stock_unit_display.dart';
-import 'package:fridgo/ui/core/storage_location_kind_display.dart';
+import 'package:fridgo/ui/stock_overview/stock_item_card.dart';
 import 'package:fridgo/ui/stock_overview/stock_overview_view_model.dart';
 import 'package:fridgo/ui/storage_locations/create_storage_location_sheet.dart';
 import 'package:fridgo/ui/storage_locations/storage_locations_view_model.dart';
@@ -121,13 +117,14 @@ class _EmptyStock extends StatelessWidget {
   }
 }
 
-class _StockItemList extends StatelessWidget {
+class _StockItemList extends ConsumerWidget {
   const new({required this.stockItems});
 
   final List<StockItemDetails> stockItems;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final today = ref.watch(todayProvider);
     return ListView(
       padding: const EdgeInsets.all(Spacing.l),
       children: [
@@ -135,73 +132,11 @@ class _StockItemList extends StatelessWidget {
           Padding(
             key: ValueKey(details.stockItem.id),
             padding: const EdgeInsets.only(bottom: Spacing.m),
-            child: AppearAnimation(child: _StockItemCard(details: details)),
+            child: AppearAnimation(
+              child: StockItemCard(details: details, today: today),
+            ),
           ),
       ],
-    );
-  }
-}
-
-class _StockItemCard extends StatelessWidget {
-  const new({required this.details});
-
-  final StockItemDetails details;
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    final theme = Theme.of(context);
-    final secondaryStyle = theme.textTheme.bodyMedium?.copyWith(
-      color: theme.colorScheme.onSurfaceVariant,
-    );
-    final StockItemDetails(:stockItem, :product, :storageLocation) = details;
-    final quantity = stockItem.unit.formatQuantity(stockItem.quantity, l10n);
-    final bestBeforeDate = stockItem.bestBeforeDate;
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(Spacing.m),
-        child: Row(
-          spacing: Spacing.m,
-          children: [
-            const ImagePlaceholder(),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                spacing: Spacing.xs,
-                children: [
-                  Text(product.name, style: theme.textTheme.titleMedium),
-                  Text(
-                    [
-                      quantity,
-                      if (bestBeforeDate != null)
-                        l10n.stockItemBestBefore(bestBeforeDate.format(l10n)),
-                    ].join(' · '),
-                    style: secondaryStyle,
-                  ),
-                  Row(
-                    spacing: Spacing.xs,
-                    children: [
-                      SvgPicture.asset(
-                        storageLocation.kind.emoji,
-                        width: Sizes.inlineIcon,
-                        height: Sizes.inlineIcon,
-                        excludeFromSemantics: true,
-                      ),
-                      Flexible(
-                        child: Text(
-                          storageLocation.name,
-                          style: secondaryStyle,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
     );
   }
 }
