@@ -6,9 +6,9 @@ import 'package:fridgo/domain/stock_item.dart';
 import 'package:fridgo/l10n/app_localizations.dart';
 import 'package:fridgo/ui/core/app_theme.dart';
 import 'package:fridgo/ui/core/calendar_date_display.dart';
+import 'package:fridgo/ui/core/product_thumbnail.dart';
 import 'package:fridgo/ui/core/stock_unit_display.dart';
 import 'package:fridgo/ui/core/storage_location_kind_display.dart';
-import 'package:fridgo/ui/stock_overview/product_thumbnail.dart';
 
 class StockItemCard extends StatelessWidget {
   const new({required this.details, required this.today, super.key});

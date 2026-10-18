@@ -60,6 +60,7 @@
   "productPhotoUnavailable": "Das Foto hat nicht geklappt. Versuch es noch einmal oder trag das Lebensmittel ohne Foto ein.",
   "productNameLabel": "Name",
   "productNameRequired": "Bitte gib einen Namen ein.",
+  "clearSelectedProduct": "Anderes Produkt eintragen",
   "stockItemStorageLocationLabel": "Lagerort",
   "stockItemQuantityLabel": "Menge",
   "stockItemQuantityInvalid": "Bitte gib eine Menge über 0 mit höchstens drei Nachkommastellen ein.",

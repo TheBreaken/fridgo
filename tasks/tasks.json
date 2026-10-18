@@ -175,7 +175,7 @@
     "title": "Vorhandenes Produkt erneut hinzufügen",
     "type": "feat",
     "priority": "high",
-    "status": "open",
+    "status": "done",
     "dependsOn": ["T007"],
     "description": "Ziel: Beim Hinzufügen lässt sich ein bereits angelegtes Produkt auswählen, statt es neu einzutippen. So entstehen mehrere Bestände desselben Produkts mit verschiedenen MHDs, auch in verschiedenen Wohnungen.\n\nAbgrenzung: Kein Verschieben von Beständen; das steht in `CLAUDE.md` unter Später.\n\nZu klären: Vorschläge beim Tippen des Namens oder eine eigene Produktliste?",
     "acceptanceCriteria": [

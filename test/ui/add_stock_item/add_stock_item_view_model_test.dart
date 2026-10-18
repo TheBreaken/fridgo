@@ -59,16 +59,12 @@ Future<List<StockItemDetails>> _stored(
   String homeId,
 ) => container.read(stockItemRepositoryProvider).watchStockItems(homeId).first;
 
-StockItemDraft _draft(
-  StorageLocation storageLocation, {
-  String productName = 'Milch',
-  double quantity = 1,
-}) => StockItemDraft(
-  productName: productName,
-  storageLocationId: storageLocation.id,
-  quantity: quantity,
-  unit: StockUnit.liter,
-);
+StockItemDraft _draft(StorageLocation storageLocation, {double quantity = 1}) =>
+    StockItemDraft(
+      storageLocationId: storageLocation.id,
+      quantity: quantity,
+      unit: StockUnit.liter,
+    );
 
 void main() {
   const nameCases = {
@@ -177,7 +173,7 @@ void main() {
     await _viewModel(
       container,
       fridge.homeId,
-    ).addStockItem(_draft(fridge, productName: '  Milch  '));
+    ).addStockItemWithNewProduct(_draft(fridge), productName: '  Milch  ');
 
     final stored = await _stored(container, fridge.homeId);
     expect(stored.single.product.name, 'Milch');
@@ -188,10 +184,11 @@ void main() {
     final container = _createContainer(productImages: productImages);
     final fridge = await _createFridge(container);
 
-    await _viewModel(
-      container,
-      fridge.homeId,
-    ).addStockItem(_draft(fridge), pickedPhotoPath: '/tmp/image_picker_1.jpg');
+    await _viewModel(container, fridge.homeId).addStockItemWithNewProduct(
+      _draft(fridge),
+      productName: 'Milch',
+      pickedPhotoPath: '/tmp/image_picker_1.jpg',
+    );
 
     final stored = await _stored(container, fridge.homeId);
     expect(productImages.storedImages, {
@@ -205,7 +202,10 @@ void main() {
     final container = _createContainer(productImages: productImages);
     final fridge = await _createFridge(container);
 
-    await _viewModel(container, fridge.homeId).addStockItem(_draft(fridge));
+    await _viewModel(
+      container,
+      fridge.homeId,
+    ).addStockItemWithNewProduct(_draft(fridge), productName: 'Milch');
 
     final stored = await _stored(container, fridge.homeId);
     expect(productImages.storedImages, isEmpty);
@@ -218,8 +218,9 @@ void main() {
     final fridge = await _createFridge(container);
 
     await expectLater(
-      _viewModel(container, fridge.homeId).addStockItem(
-        _draft(fridge, productName: ''),
+      _viewModel(container, fridge.homeId).addStockItemWithNewProduct(
+        _draft(fridge),
+        productName: '',
         pickedPhotoPath: '/tmp/image_picker_1.jpg',
       ),
       throwsArgumentError,
@@ -236,15 +237,73 @@ void main() {
         .copyWith(storageLocationId: 'unknown-storage-location');
 
     await expectLater(
-      _viewModel(
-        container,
-        fridge.homeId,
-      ).addStockItem(draft, pickedPhotoPath: '/tmp/image_picker_1.jpg'),
+      _viewModel(container, fridge.homeId).addStockItemWithNewProduct(
+        draft,
+        productName: 'Milch',
+        pickedPhotoPath: '/tmp/image_picker_1.jpg',
+      ),
       throwsA(isA<Exception>()),
     );
 
     expect(productImages.storedImages, isEmpty);
     expect(await _stored(container, fridge.homeId), isEmpty);
+  });
+
+  test('adding for an existing product stores no second product', () async {
+    final container = _createContainer();
+    final fridge = await _createFridge(container);
+    final viewModel = _viewModel(container, fridge.homeId);
+    await viewModel.addStockItemWithNewProduct(
+      _draft(fridge),
+      productName: 'Milch',
+    );
+    final milk = (await _stored(container, fridge.homeId)).single.product;
+
+    await viewModel.addStockItemForProduct(milk.id, _draft(fridge));
+
+    final stored = await _stored(container, fridge.homeId);
+    expect([for (final details in stored) details.product], [milk, milk]);
+  });
+
+  test('adding for an existing product rejects a quantity of 0', () async {
+    final container = _createContainer();
+    final fridge = await _createFridge(container);
+    final viewModel = _viewModel(container, fridge.homeId);
+    await viewModel.addStockItemWithNewProduct(
+      _draft(fridge),
+      productName: 'Milch',
+    );
+    final milk = (await _stored(container, fridge.homeId)).single.product;
+
+    await expectLater(
+      viewModel.addStockItemForProduct(milk.id, _draft(fridge, quantity: 0)),
+      throwsA(
+        isA<ArgumentError>().having(
+          (error) => error.invalidValue,
+          'invalidValue',
+          0,
+        ),
+      ),
+    );
+
+    expect(await _stored(container, fridge.homeId), hasLength(1));
+  });
+
+  test('products of other homes are found as well', () async {
+    final container = _createContainer();
+    final berlinFridge = await _createFridge(container);
+    final hamburgFridge = await _createFridge(container, homeName: 'Hamburg');
+    await _viewModel(
+      container,
+      hamburgFridge.homeId,
+    ).addStockItemWithNewProduct(_draft(hamburgFridge), productName: 'Äpfel');
+
+    final found = await _viewModel(
+      container,
+      berlinFridge.homeId,
+    ).findProducts('apfel');
+
+    expect([for (final product in found) product.name], ['Äpfel']);
   });
 
   const blankNames = {
@@ -261,7 +320,7 @@ void main() {
         _viewModel(
           container,
           fridge.homeId,
-        ).addStockItem(_draft(fridge, productName: name)),
+        ).addStockItemWithNewProduct(_draft(fridge), productName: name),
         throwsA(
           isA<ArgumentError>().having(
             (error) => error.invalidValue,
@@ -287,10 +346,10 @@ void main() {
       final fridge = await _createFridge(container);
 
       await expectLater(
-        _viewModel(
-          container,
-          fridge.homeId,
-        ).addStockItem(_draft(fridge, quantity: quantity)),
+        _viewModel(container, fridge.homeId).addStockItemWithNewProduct(
+          _draft(fridge, quantity: quantity),
+          productName: 'Milch',
+        ),
         throwsA(
           isA<ArgumentError>().having(
             (error) => error.invalidValue,

@@ -1,8 +1,11 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/misc.dart';
+import 'package:fridgo/data/repositories/product_image_repository.dart';
 import 'package:fridgo/ui/core/app_theme.dart';
 import 'package:fridgo/ui/core/image_placeholder.dart';
-import 'package:fridgo/ui/stock_overview/stock_overview_view_model.dart';
 
 class ProductThumbnail extends StatelessWidget {
   const new({required this.imagePath, super.key});
@@ -73,3 +76,11 @@ class _Photo extends ConsumerWidget {
     );
   }
 }
+
+// Not auto-disposed, so a card scrolled back into view shows its photo without
+// a loading frame.
+final FutureProviderFamily<File, String> productImageFileProvider =
+    FutureProvider.family(
+      (ref, imagePath) =>
+          ref.watch(productImageRepositoryProvider).file(imagePath),
+    );

@@ -1,11 +1,9 @@
 import 'dart:async';
-import 'dart:io';
 
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/misc.dart';
 import 'package:fridgo/data/clock.dart';
-import 'package:fridgo/data/repositories/product_image_repository.dart';
 import 'package:fridgo/data/repositories/stock_item_repository.dart';
 import 'package:fridgo/domain/calendar_date.dart';
 import 'package:fridgo/domain/stock_item.dart';
@@ -30,11 +28,3 @@ final Provider<CalendarDate> todayProvider = Provider.autoDispose((ref) {
   });
   return CalendarDate.fromDateTime(now);
 });
-
-// Not auto-disposed, so a card scrolled back into view shows its photo without
-// a loading frame.
-final FutureProviderFamily<File, String> productImageFileProvider =
-    FutureProvider.family(
-      (ref, imagePath) =>
-          ref.watch(productImageRepositoryProvider).file(imagePath),
-    );

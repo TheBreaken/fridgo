@@ -29,18 +29,27 @@ Future<StorageLocation> _createStorageLocation(
 
 StockItemDraft _milk(
   StorageLocation storageLocation, {
-  String productName = 'Milch',
   double quantity = 1,
   StockUnit unit = StockUnit.liter,
   CalendarDate? bestBeforeDate,
   CalendarDate? openedDate,
 }) => StockItemDraft(
-  productName: productName,
   storageLocationId: storageLocation.id,
   quantity: quantity,
   unit: unit,
   bestBeforeDate: bestBeforeDate,
   openedDate: openedDate,
+);
+
+Future<StockItem> _addWithNewProduct(
+  StockItemRepository repository,
+  StockItemDraft draft, {
+  String productName = 'Milch',
+  String? imagePath,
+}) => repository.addStockItemWithNewProduct(
+  draft,
+  productName: productName,
+  imagePath: imagePath,
 );
 
 void main() {
@@ -52,10 +61,10 @@ void main() {
     final file = File('${directory.path}/fridgo.sqlite');
     final firstSession = AppDatabase(NativeDatabase(file));
     final storageLocation = await _createStorageLocation(firstSession);
-    final stockItem = await StockItemRepository(firstSession)
-        .addStockItemWithNewProduct(
-          _milk(storageLocation, bestBeforeDate: CalendarDate(2026, 10, 25)),
-        );
+    final stockItem = await _addWithNewProduct(
+      StockItemRepository(firstSession),
+      _milk(storageLocation, bestBeforeDate: CalendarDate(2026, 10, 25)),
+    );
     await firstSession.close();
 
     final secondSession = AppDatabase(NativeDatabase(file));
@@ -89,7 +98,8 @@ void _inOneStorageLocation() {
   });
 
   test('an added stock item has the given values and UUIDs v4', () async {
-    final stockItem = await repository.addStockItemWithNewProduct(
+    final stockItem = await _addWithNewProduct(
+      repository,
       _milk(
         fridge,
         quantity: 1.5,
@@ -110,9 +120,7 @@ void _inOneStorageLocation() {
   test(
     'an added stock item is listed with its product and storage location',
     () async {
-      final stockItem = await repository.addStockItemWithNewProduct(
-        _milk(fridge),
-      );
+      final stockItem = await _addWithNewProduct(repository, _milk(fridge));
 
       final details = (await listed()).single;
 
@@ -124,7 +132,7 @@ void _inOneStorageLocation() {
   );
 
   test('a stock item without dates is read back without dates', () async {
-    await repository.addStockItemWithNewProduct(_milk(fridge));
+    await _addWithNewProduct(repository, _milk(fridge));
 
     final stockItem = (await listed()).single.stockItem;
 
@@ -133,7 +141,8 @@ void _inOneStorageLocation() {
   });
 
   test('the image path of a product is stored as given', () async {
-    await repository.addStockItemWithNewProduct(
+    await _addWithNewProduct(
+      repository,
       _milk(fridge),
       imagePath: 'product_images/milk.jpg',
     );
@@ -144,7 +153,7 @@ void _inOneStorageLocation() {
   });
 
   test('a product without photo has no image path', () async {
-    await repository.addStockItemWithNewProduct(_milk(fridge));
+    await _addWithNewProduct(repository, _milk(fridge));
 
     final product = (await listed()).single.product;
 
@@ -154,10 +163,12 @@ void _inOneStorageLocation() {
   test(
     'the same product name with two best before dates gives two entries',
     () async {
-      await repository.addStockItemWithNewProduct(
+      await _addWithNewProduct(
+        repository,
         _milk(fridge, bestBeforeDate: CalendarDate(2026, 10, 20)),
       );
-      await repository.addStockItemWithNewProduct(
+      await _addWithNewProduct(
+        repository,
         _milk(fridge, bestBeforeDate: CalendarDate(2026, 11, 3)),
       );
 
@@ -176,11 +187,88 @@ void _inOneStorageLocation() {
   );
 
   test('every addition creates its own product', () async {
-    final first = await repository.addStockItemWithNewProduct(_milk(fridge));
-    final second = await repository.addStockItemWithNewProduct(_milk(fridge));
+    final first = await _addWithNewProduct(repository, _milk(fridge));
+    final second = await _addWithNewProduct(repository, _milk(fridge));
 
     expect(first.productId, isNot(second.productId));
     expect(await database.select(database.products).get(), hasLength(2));
+  });
+
+  test('adding for an existing product creates no second product', () async {
+    final first = await _addWithNewProduct(repository, _milk(fridge));
+
+    final second = await repository.addStockItemForProduct(
+      first.productId,
+      _milk(fridge),
+    );
+
+    expect(second.productId, first.productId);
+    expect(second.id, isNot(first.id));
+    expect(await database.select(database.products).get(), hasLength(1));
+  });
+
+  test('one product with two best before dates in the same storage location '
+      'gives two entries of that product', () async {
+    final first = await _addWithNewProduct(
+      repository,
+      _milk(fridge, bestBeforeDate: CalendarDate(2026, 10, 20)),
+    );
+    await repository.addStockItemForProduct(
+      first.productId,
+      _milk(fridge, bestBeforeDate: CalendarDate(2026, 11, 3)),
+    );
+
+    final listing = await listed();
+
+    expect(
+      [for (final details in listing) details.stockItem.bestBeforeDate],
+      [CalendarDate(2026, 10, 20), CalendarDate(2026, 11, 3)],
+    );
+    expect(
+      {for (final details in listing) details.product.id},
+      {first.productId},
+    );
+    expect(
+      {for (final details in listing) details.storageLocation.id},
+      {fridge.id},
+    );
+  });
+
+  test('one product can lie in two homes', () async {
+    final otherFridge = await _createStorageLocation(
+      database,
+      homeName: 'Hamburg',
+    );
+    final inBerlin = await _addWithNewProduct(repository, _milk(fridge));
+
+    await repository.addStockItemForProduct(
+      inBerlin.productId,
+      _milk(otherFridge),
+    );
+
+    final inHamburg = await repository
+        .watchStockItems(otherFridge.homeId)
+        .first;
+    expect((await listed()).single.product.id, inBerlin.productId);
+    expect(inHamburg.single.product.id, inBerlin.productId);
+  });
+
+  test('a stock item for an unknown product is rejected', () async {
+    await expectLater(
+      repository.addStockItemForProduct(
+        '00000000-0000-4000-8000-000000000000',
+        _milk(fridge),
+      ),
+      throwsA(
+        isA<SqliteException>().having(
+          (error) => error.message,
+          'message',
+          contains('FOREIGN KEY constraint failed'),
+        ),
+      ),
+    );
+
+    expect(await database.select(database.stockItems).get(), isEmpty);
   });
 
   const daylightSavingDates = {
@@ -193,7 +281,8 @@ void _inOneStorageLocation() {
     test(
       'dates around the day $description are stored as plain text',
       () async {
-        await repository.addStockItemWithNewProduct(
+        await _addWithNewProduct(
+          repository,
           _milk(
             fridge,
             bestBeforeDate: CalendarDate.parse(bestBefore),
@@ -215,7 +304,8 @@ void _inOneStorageLocation() {
     );
 
     test('dates around the day $description are read back unchanged', () async {
-      await repository.addStockItemWithNewProduct(
+      await _addWithNewProduct(
+        repository,
         _milk(
           fridge,
           bestBeforeDate: CalendarDate.parse(bestBefore),
@@ -239,9 +329,7 @@ void _inOneStorageLocation() {
   for (final MapEntry(key: description, value: quantity)
       in quantities.entries) {
     test('$description is read back exactly', () async {
-      await repository.addStockItemWithNewProduct(
-        _milk(fridge, quantity: quantity),
-      );
+      await _addWithNewProduct(repository, _milk(fridge, quantity: quantity));
 
       expect((await listed()).single.stockItem.quantity, quantity);
     });
@@ -249,15 +337,17 @@ void _inOneStorageLocation() {
 
   for (final unit in StockUnit.values) {
     test('the unit ${unit.name} is stored and read back', () async {
-      await repository.addStockItemWithNewProduct(_milk(fridge, unit: unit));
+      await _addWithNewProduct(repository, _milk(fridge, unit: unit));
 
       expect((await listed()).single.stockItem.unit, unit);
     });
   }
 
   test('a product name with umlauts is stored unchanged', () async {
-    await repository.addStockItemWithNewProduct(
-      _milk(fridge, productName: 'Käse aus Österreich, groß'),
+    await _addWithNewProduct(
+      repository,
+      _milk(fridge),
+      productName: 'Käse aus Österreich, groß',
     );
 
     expect((await listed()).single.product.name, 'Käse aus Österreich, groß');
@@ -298,14 +388,15 @@ void _inOneStorageLocation() {
       in sortingCases.entries) {
     test('stock items are sorted by best before date: $description', () async {
       for (final (productName, bestBefore) in added) {
-        await repository.addStockItemWithNewProduct(
+        await _addWithNewProduct(
+          repository,
           _milk(
             fridge,
-            productName: productName,
             bestBeforeDate: bestBefore == null
                 ? null
                 : CalendarDate.parse(bestBefore),
           ),
+          productName: productName,
         );
       }
 
@@ -322,10 +413,8 @@ void _inOneStorageLocation() {
           name: 'Gefrierfach',
           kind: StorageLocationKind.freezer,
         );
-    await repository.addStockItemWithNewProduct(_milk(fridge));
-    await repository.addStockItemWithNewProduct(
-      _milk(freezer, productName: 'Erbsen'),
-    );
+    await _addWithNewProduct(repository, _milk(fridge));
+    await _addWithNewProduct(repository, _milk(freezer), productName: 'Erbsen');
 
     expect(
       [for (final details in await listed()) details.storageLocation.name],
@@ -338,7 +427,7 @@ void _inOneStorageLocation() {
       database,
       homeName: 'Hamburg',
     );
-    await repository.addStockItemWithNewProduct(_milk(otherFridge));
+    await _addWithNewProduct(repository, _milk(otherFridge));
 
     expect(await listed(), isEmpty);
     expect(
@@ -350,9 +439,9 @@ void _inOneStorageLocation() {
   test('a stock item for an unknown storage location is rejected without '
       'leaving a product behind', () async {
     await expectLater(
-      repository.addStockItemWithNewProduct(
+      _addWithNewProduct(
+        repository,
         const StockItemDraft(
-          productName: 'Milch',
           storageLocationId: '00000000-0000-4000-8000-000000000000',
           quantity: 1,
           unit: StockUnit.liter,
@@ -379,7 +468,7 @@ void _inOneStorageLocation() {
     addTearDown(subscription.cancel);
     await pumpEventQueue();
 
-    await repository.addStockItemWithNewProduct(_milk(fridge));
+    await _addWithNewProduct(repository, _milk(fridge));
     await pumpEventQueue();
 
     expect([for (final listing in listings) listing.length], [0, 1]);

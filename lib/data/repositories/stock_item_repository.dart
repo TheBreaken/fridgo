@@ -13,47 +13,49 @@ class StockItemRepository {
 
   Future<StockItem> addStockItemWithNewProduct(
     StockItemDraft draft, {
+    required String productName,
     String? imagePath,
-  }) {
-    final product = Product(
-      id: const Uuid().v4(),
-      name: draft.productName,
-      imagePath: imagePath,
-    );
+  }) => _database.transaction(() async {
+    final productId = const Uuid().v4();
+    await _database
+        .into(_database.products)
+        .insert(
+          ProductsCompanion.insert(
+            id: productId,
+            name: productName,
+            imagePath: Value(imagePath),
+          ),
+        );
+    return await addStockItemForProduct(productId, draft);
+  });
+
+  Future<StockItem> addStockItemForProduct(
+    String productId,
+    StockItemDraft draft,
+  ) async {
     final stockItem = StockItem(
       id: const Uuid().v4(),
-      productId: product.id,
+      productId: productId,
       storageLocationId: draft.storageLocationId,
       quantity: draft.quantity,
       unit: draft.unit,
       bestBeforeDate: draft.bestBeforeDate,
       openedDate: draft.openedDate,
     );
-    return _database.transaction(() async {
-      await _database
-          .into(_database.products)
-          .insert(
-            ProductsCompanion.insert(
-              id: product.id,
-              name: product.name,
-              imagePath: Value(product.imagePath),
-            ),
-          );
-      await _database
-          .into(_database.stockItems)
-          .insert(
-            StockItemsCompanion.insert(
-              id: stockItem.id,
-              productId: stockItem.productId,
-              storageLocationId: stockItem.storageLocationId,
-              quantity: stockItem.quantity,
-              unit: stockItem.unit,
-              bestBeforeDate: Value(stockItem.bestBeforeDate),
-              openedDate: Value(stockItem.openedDate),
-            ),
-          );
-      return stockItem;
-    });
+    await _database
+        .into(_database.stockItems)
+        .insert(
+          StockItemsCompanion.insert(
+            id: stockItem.id,
+            productId: stockItem.productId,
+            storageLocationId: stockItem.storageLocationId,
+            quantity: stockItem.quantity,
+            unit: stockItem.unit,
+            bestBeforeDate: Value(stockItem.bestBeforeDate),
+            openedDate: Value(stockItem.openedDate),
+          ),
+        );
+    return stockItem;
   }
 
   Stream<List<StockItemDetails>> watchStockItems(String homeId) {
