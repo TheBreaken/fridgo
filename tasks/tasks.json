@@ -161,7 +161,7 @@
     "title": "Vorschaubilder in der Übersicht und Platzhalter",
     "type": "feat",
     "priority": "high",
-    "status": "open",
+    "status": "done",
     "dependsOn": ["T008", "T010"],
     "description": "Ziel: Produktkarten zeigen ein Vorschaubild. Hat das Produkt kein Foto oder fehlt die Bilddatei, erscheint der Platzhalter aus dem Icon-Set. Eine fehlende Datei ist ein erwarteter Zustand.\n\nZu klären: Vorschaubild als eigene Datei oder verkleinert dekodiert? Ein Paket zur Bildbearbeitung steht nicht auf der Liste in `CLAUDE.md`.",
     "acceptanceCriteria": [

@@ -3,7 +3,7 @@ DART ?= fvm dart
 # Test files or folders for make test; empty runs all.
 TESTS ?=
 
-.PHONY: setup l10n codegen schema format format-check analyze test check run build-android build-ios
+.PHONY: setup l10n codegen schema format format-check analyze test check run run-profile build-android build-ios
 
 setup:
 	fvm install
@@ -37,6 +37,10 @@ check: format-check analyze test
 
 run: codegen
 	$(FLUTTER) run
+
+# Debug builds always stutter; judge smoothness in profile mode on a device.
+run-profile: codegen
+	$(FLUTTER) run --profile
 
 build-android: codegen
 	$(FLUTTER) build apk --debug

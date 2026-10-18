@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:fridgo/data/repositories/product_image_repository.dart';
 import 'package:fridgo/domain/product_photo.dart';
 
@@ -17,6 +19,13 @@ class FakeProductImageRepository implements ProductImageRepository {
     storedImages[imagePath] = pickedPhotoPath;
     return imagePath;
   }
+
+  /// Nothing lies there unless a test puts a file into it.
+  String appDirectoryPath = '/nonexistent';
+
+  @override
+  Future<File> file(String imagePath) async =>
+      File('$appDirectoryPath/$imagePath');
 
   @override
   Future<void> delete(String imagePath) async => storedImages.remove(imagePath);
