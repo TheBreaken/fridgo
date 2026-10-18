@@ -165,22 +165,11 @@ Feste Regeln:
 Projekt die Docker-Regel der globalen Vorgaben; Flutter läuft auf dem Host, FVM stellt die
 gepinnte Version bereit.
 
-| Target               | Zweck                                             |
-| -------------------- | ------------------------------------------------- |
-| `make setup`         | gepinnte Flutter-Version und Pakete laden         |
-| `make l10n`          | Texte aus den ARB-Dateien erzeugen                |
-| `make codegen`       | Code für drift und freezed erzeugen               |
-| `make schema`        | aktuellen Schemastand unter `drift_schemas/` ablegen |
-| `make format`        | Code formatieren                                  |
-| `make check`         | Formatierung prüfen, analysieren, testen          |
-| `make analyze`       | nur statische Analyse                             |
-| `make test`          | nur Tests                                         |
-| `make run`           | App auf dem verbundenen Gerät oder Emulator starten |
-| `make run-profile`   | App im Profilmodus auf einem echten Gerät starten, um zu prüfen, ob sie flüssig läuft |
-| `make build-android` | Debug-APK bauen                                   |
-| `make build-ios`     | iOS-Debug-Build ohne Signierung                   |
-
 Fehlt ein Target für ein wiederkehrendes Kommando, wird es im `Makefile` ergänzt.
+
+Das Dart-MCP (`dart`) darf genutzt werden, wo es sinnvoll ist, zum Beispiel für Hot Reload,
+Laufzeitfehler oder den Widget-Inspektor einer laufenden App. Formatierung, Analyse und Tests
+als Abnahme laufen weiterhin über das `Makefile`.
 
 ## Qualität
 
