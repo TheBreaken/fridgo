@@ -2,12 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:fridgo/domain/calendar_date.dart';
+import 'package:fridgo/domain/product.dart';
 import 'package:fridgo/domain/product_photo.dart';
 import 'package:fridgo/domain/stock_item.dart';
 import 'package:fridgo/domain/storage_location.dart';
 import 'package:fridgo/l10n/app_localizations.dart';
 import 'package:fridgo/ui/add_stock_item/add_stock_item_view_model.dart';
+import 'package:fridgo/ui/add_stock_item/product_name_field.dart';
 import 'package:fridgo/ui/add_stock_item/product_photo_field.dart';
+import 'package:fridgo/ui/add_stock_item/selected_product_card.dart';
 import 'package:fridgo/ui/core/app_theme.dart';
 import 'package:fridgo/ui/core/calendar_date_display.dart';
 import 'package:fridgo/ui/core/stock_unit_display.dart';
@@ -35,6 +38,7 @@ class _AddStockItemScreenState extends ConsumerState<AddStockItemScreen> {
   CalendarDate? _bestBeforeDate;
   CalendarDate? _openedDate;
   String? _pickedPhotoPath;
+  Product? _selectedProduct;
   bool _isSaving = false;
 
   AddStockItemViewModel get _viewModel =>
@@ -50,19 +54,35 @@ class _AddStockItemScreenState extends ConsumerState<AddStockItemScreen> {
   Future<void> _submit(String storageLocationId) async {
     if (_isSaving || !_formKey.currentState!.validate()) return;
     setState(() => _isSaving = true);
-    await _viewModel.addStockItem(
-      StockItemDraft(
-        productName: _nameController.text,
-        storageLocationId: storageLocationId,
-        quantity: _viewModel.parseQuantity(_quantityController.text),
-        unit: _unit,
-        bestBeforeDate: _bestBeforeDate,
-        openedDate: _openedDate,
-      ),
-      pickedPhotoPath: _pickedPhotoPath,
+    final draft = StockItemDraft(
+      storageLocationId: storageLocationId,
+      quantity: _viewModel.parseQuantity(_quantityController.text),
+      unit: _unit,
+      bestBeforeDate: _bestBeforeDate,
+      openedDate: _openedDate,
     );
+    final selectedProduct = _selectedProduct;
+    if (selectedProduct == null) {
+      await _viewModel.addStockItemWithNewProduct(
+        draft,
+        productName: _nameController.text,
+        pickedPhotoPath: _pickedPhotoPath,
+      );
+    } else {
+      await _viewModel.addStockItemForProduct(selectedProduct.id, draft);
+    }
     if (mounted) context.pop();
   }
+
+  void _selectProduct(Product product) => setState(() {
+    _selectedProduct = product;
+    _pickedPhotoPath = null;
+  });
+
+  void _clearSelectedProduct() => setState(() {
+    _selectedProduct = null;
+    _nameController.clear();
+  });
 
   Future<void> _changePhoto() async {
     final action = await showPhotoActionSheet(
@@ -100,6 +120,33 @@ class _AddStockItemScreenState extends ConsumerState<AddStockItemScreen> {
     }
   }
 
+  Widget _buildProduct(AppLocalizations l10n) {
+    final selectedProduct = _selectedProduct;
+    if (selectedProduct != null) {
+      return SelectedProductCard(
+        key: ValueKey(selectedProduct.id),
+        product: selectedProduct,
+        onCleared: _clearSelectedProduct,
+      );
+    }
+    return Column(
+      key: const ValueKey('newProduct'),
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        ProductPhotoField(photoPath: _pickedPhotoPath, onTap: _changePhoto),
+        const SizedBox(height: Spacing.xl),
+        ProductNameField(
+          controller: _nameController,
+          findProducts: _viewModel.findProducts,
+          onProductSelected: _selectProduct,
+          validator: (name) => _viewModel.isValidName(name ?? '')
+              ? null
+              : l10n.productNameRequired,
+        ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
@@ -118,20 +165,14 @@ class _AddStockItemScreenState extends ConsumerState<AddStockItemScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              ProductPhotoField(
-                photoPath: _pickedPhotoPath,
-                onTap: _changePhoto,
-              ),
-              const SizedBox(height: Spacing.xl),
-              TextFormField(
-                controller: _nameController,
-                autofocus: true,
-                textCapitalization: TextCapitalization.sentences,
-                textInputAction: TextInputAction.next,
-                decoration: InputDecoration(labelText: l10n.productNameLabel),
-                validator: (name) => _viewModel.isValidName(name ?? '')
-                    ? null
-                    : l10n.productNameRequired,
+              AnimatedSize(
+                duration: Durations.medium2,
+                curve: Curves.easeInOut,
+                alignment: Alignment.topCenter,
+                child: AnimatedSwitcher(
+                  duration: Durations.medium2,
+                  child: _buildProduct(l10n),
+                ),
               ),
               const SizedBox(height: Spacing.xl),
               _ChoiceSection(

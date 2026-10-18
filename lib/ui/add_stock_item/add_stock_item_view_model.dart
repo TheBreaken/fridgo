@@ -2,10 +2,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/misc.dart';
 import 'package:fridgo/data/clock.dart';
 import 'package:fridgo/data/repositories/product_image_repository.dart';
+import 'package:fridgo/data/repositories/product_repository.dart';
 import 'package:fridgo/data/repositories/stock_item_repository.dart';
 import 'package:fridgo/data/repositories/storage_location_repository.dart';
 import 'package:fridgo/domain/calendar_date.dart';
+import 'package:fridgo/domain/product.dart';
 import 'package:fridgo/domain/product_photo.dart';
+import 'package:fridgo/domain/product_search.dart';
 import 'package:fridgo/domain/stock_item.dart';
 import 'package:fridgo/domain/storage_location.dart';
 
@@ -43,20 +46,24 @@ class AddStockItemViewModel extends StreamNotifier<List<StorageLocation>> {
   Future<String?> pickPhoto(PhotoSource source) =>
       ref.read(productImageRepositoryProvider).pickPhoto(source);
 
-  Future<void> addStockItem(
+  Future<List<Product>> findProducts(String query) async => searchProducts(
+    await ref.read(productRepositoryProvider).getProducts(),
+    query,
+  );
+
+  Future<void> addStockItemWithNewProduct(
     StockItemDraft draft, {
+    required String productName,
     String? pickedPhotoPath,
   }) async {
-    if (!isValidName(draft.productName)) {
+    if (!isValidName(productName)) {
       throw ArgumentError.value(
-        draft.productName,
+        productName,
         'productName',
         'must not be blank',
       );
     }
-    if (draft.quantity <= 0) {
-      throw ArgumentError.value(draft.quantity, 'quantity', 'must be above 0');
-    }
+    _checkQuantity(draft);
     final productImages = ref.read(productImageRepositoryProvider);
     final imagePath = pickedPhotoPath == null
         ? null
@@ -65,12 +72,29 @@ class AddStockItemViewModel extends StreamNotifier<List<StorageLocation>> {
       await ref
           .read(stockItemRepositoryProvider)
           .addStockItemWithNewProduct(
-            draft.copyWith(productName: draft.productName.trim()),
+            draft,
+            productName: productName.trim(),
             imagePath: imagePath,
           );
     } on Object {
       if (imagePath != null) await productImages.delete(imagePath);
       rethrow;
+    }
+  }
+
+  Future<void> addStockItemForProduct(
+    String productId,
+    StockItemDraft draft,
+  ) async {
+    _checkQuantity(draft);
+    await ref
+        .read(stockItemRepositoryProvider)
+        .addStockItemForProduct(productId, draft);
+  }
+
+  void _checkQuantity(StockItemDraft draft) {
+    if (draft.quantity <= 0) {
+      throw ArgumentError.value(draft.quantity, 'quantity', 'must be above 0');
     }
   }
 

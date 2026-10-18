@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:fridgo/domain/product_photo.dart';
 import 'package:fridgo/ui/add_stock_item/add_stock_item_screen.dart';
+import 'package:fridgo/ui/add_stock_item/selected_product_card.dart';
 import 'package:fridgo/ui/core/empty_state.dart';
 import 'package:fridgo/ui/stock_overview/stock_overview_screen.dart';
 
@@ -62,6 +63,20 @@ Future<void> _choosePhotoAction(
 
 String _fieldText(WidgetTester tester, String label) =>
     tester.widget<TextField>(_field(label)).controller!.text;
+
+Finder _suggestion(String name) => find.widgetWithText(InkWell, name);
+
+Future<void> _addAndReopen(WidgetTester tester, String name) async {
+  await _enter(tester, 'Name', name);
+  await _submit(tester);
+  await tester.tap(find.byTooltip('Lebensmittel hinzufügen'));
+  await tester.pumpAndSettle();
+}
+
+Future<void> _type(WidgetTester tester, String name) async {
+  await _enter(tester, 'Name', name);
+  await tester.pumpAndSettle();
+}
 
 bool _isSelected(WidgetTester tester, String chipLabel) => tester
     .widget<ChoiceChip>(find.widgetWithText(ChoiceChip, chipLabel))
@@ -366,4 +381,87 @@ void main() {
       expect(productImages.storedImages, isEmpty);
     });
   }
+
+  testWidgets('typing suggests existing products ignoring case and umlauts', (
+    tester,
+  ) async {
+    await _openAddScreen(tester);
+    await _addAndReopen(tester, 'Äpfel');
+    await _addAndReopen(tester, 'Butter');
+
+    await _type(tester, 'apf');
+
+    expect(_suggestion('Äpfel'), findsOneWidget);
+    expect(_suggestion('Butter'), findsNothing);
+  });
+
+  testWidgets('a chosen product replaces photo and name with its card', (
+    tester,
+  ) async {
+    await _openAddScreen(tester);
+    await _addAndReopen(tester, 'Milch');
+    await _type(tester, 'mil');
+
+    await tester.tap(_suggestion('Milch'));
+    await tester.pumpAndSettle();
+
+    expect(
+      find.descendant(
+        of: find.byType(SelectedProductCard),
+        matching: find.text('Milch'),
+      ),
+      findsOneWidget,
+    );
+    expect(_field('Name'), findsNothing);
+    expect(_photoField('Foto hinzufügen'), findsNothing);
+  });
+
+  testWidgets('saving a chosen product adds stock without a second product', (
+    tester,
+  ) async {
+    await _openAddScreen(tester);
+    await _addAndReopen(tester, 'Milch');
+    await _type(tester, 'mil');
+    await tester.tap(_suggestion('Milch'));
+    await tester.pumpAndSettle();
+    await _pickDay(tester, 'Mindestens haltbar bis', '25');
+
+    await _submit(tester);
+
+    expect(find.byType(StockOverviewScreen), findsOneWidget);
+    expect(find.text('Milch'), findsNWidgets(2));
+    await tester.tap(find.byTooltip('Lebensmittel hinzufügen'));
+    await tester.pumpAndSettle();
+    await _type(tester, 'mil');
+    expect(_suggestion('Milch'), findsOneWidget);
+  });
+
+  testWidgets('a typed name of an existing product adds a new product', (
+    tester,
+  ) async {
+    await _openAddScreen(tester);
+    await _addAndReopen(tester, 'Milch');
+
+    await _addAndReopen(tester, 'Milch');
+
+    await _type(tester, 'mil');
+    expect(_suggestion('Milch'), findsNWidgets(2));
+  });
+
+  testWidgets('clearing the chosen product brings back an empty form', (
+    tester,
+  ) async {
+    await _openAddScreen(tester);
+    await _addAndReopen(tester, 'Milch');
+    await _type(tester, 'mil');
+    await tester.tap(_suggestion('Milch'));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byTooltip('Anderes Produkt eintragen'));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(SelectedProductCard), findsNothing);
+    expect(_fieldText(tester, 'Name'), isEmpty);
+    expect(_photoField('Foto hinzufügen'), findsOneWidget);
+  });
 }

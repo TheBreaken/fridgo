@@ -20,11 +20,10 @@ abstract class StockItem with _$StockItem {
   }) = _StockItem;
 }
 
-/// What the user enters to add a new product as stock.
+/// What the user enters to add stock, apart from the product.
 @freezed
 abstract class StockItemDraft with _$StockItemDraft {
   const factory({
-    required String productName,
     required String storageLocationId,
     required double quantity,
     required StockUnit unit,

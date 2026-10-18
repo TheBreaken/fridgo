@@ -8,7 +8,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:fridgo/data/repositories/product_image_repository.dart';
 import 'package:fridgo/ui/core/app_theme.dart';
 import 'package:fridgo/ui/core/image_placeholder.dart';
-import 'package:fridgo/ui/stock_overview/product_thumbnail.dart';
+import 'package:fridgo/ui/core/product_thumbnail.dart';
 
 import '../../data/repositories/fake_product_image_repository.dart';
 
