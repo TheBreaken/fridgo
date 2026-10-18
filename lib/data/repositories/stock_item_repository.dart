@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fridgo/data/database/app_database.dart';
 import 'package:fridgo/domain/product.dart';
 import 'package:fridgo/domain/stock_item.dart';
+import 'package:fridgo/domain/stock_quantity.dart';
 import 'package:fridgo/domain/storage_location.dart';
 import 'package:uuid/uuid.dart';
 
@@ -42,21 +43,46 @@ class StockItemRepository {
       bestBeforeDate: draft.bestBeforeDate,
       openedDate: draft.openedDate,
     );
-    await _database
-        .into(_database.stockItems)
-        .insert(
-          StockItemsCompanion.insert(
-            id: stockItem.id,
-            productId: stockItem.productId,
-            storageLocationId: stockItem.storageLocationId,
-            quantity: stockItem.quantity,
-            unit: stockItem.unit,
-            bestBeforeDate: Value(stockItem.bestBeforeDate),
-            openedDate: Value(stockItem.openedDate),
-          ),
-        );
+    await _database.into(_database.stockItems).insert(_toCompanion(stockItem));
     return stockItem;
   }
+
+  /// Lowers the quantity by [consumed]; a stock item used up is deleted.
+  Future<void> consumeStockItem(String id, double consumed) =>
+      _database.transaction(() async {
+        final stockItems = _database.stockItems;
+        final row = await (_database.select(
+          stockItems,
+        )..where((stockItem) => stockItem.id.equals(id))).getSingle();
+        final remaining = quantityAfterConsuming(row.quantity, consumed);
+        if (remaining == 0) {
+          await deleteStockItem(id);
+          return;
+        }
+        await (_database.update(stockItems)
+              ..where((stockItem) => stockItem.id.equals(id)))
+            .write(StockItemsCompanion(quantity: Value(remaining)));
+      });
+
+  Future<void> deleteStockItem(String id) => (_database.delete(
+    _database.stockItems,
+  )..where((stockItem) => stockItem.id.equals(id))).go();
+
+  /// Writes [stockItem] back as it was, whether it still exists or not.
+  Future<void> restoreStockItem(StockItem stockItem) => _database
+      .into(_database.stockItems)
+      .insertOnConflictUpdate(_toCompanion(stockItem));
+
+  StockItemsCompanion _toCompanion(StockItem stockItem) =>
+      StockItemsCompanion.insert(
+        id: stockItem.id,
+        productId: stockItem.productId,
+        storageLocationId: stockItem.storageLocationId,
+        quantity: stockItem.quantity,
+        unit: stockItem.unit,
+        bestBeforeDate: Value(stockItem.bestBeforeDate),
+        openedDate: Value(stockItem.openedDate),
+      );
 
   Stream<List<StockItemDetails>> watchStockItems(String homeId) {
     final stockItems = _database.stockItems;

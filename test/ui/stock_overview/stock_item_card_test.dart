@@ -31,6 +31,7 @@ StockItemDetails _milk({CalendarDate? bestBeforeDate}) => StockItemDetails(
 Future<void> _pumpCard(
   WidgetTester tester, {
   required CalendarDate? bestBeforeDate,
+  VoidCallback? onConsume,
 }) => tester.pumpWidget(
   MaterialApp(
     theme: AppTheme.light,
@@ -40,6 +41,7 @@ Future<void> _pumpCard(
       body: StockItemCard(
         details: _milk(bestBeforeDate: bestBeforeDate),
         today: _today,
+        onConsume: onConsume ?? () {},
       ),
     ),
   ),
@@ -120,5 +122,14 @@ void main() {
 
     expect(expiredColour, AppTheme.light.colorScheme.onErrorContainer);
     expect(expiringSoonColour, AppTheme.light.colorScheme.onTertiaryContainer);
+  });
+
+  testWidgets('the consume button calls back once', (tester) async {
+    var calls = 0;
+    await _pumpCard(tester, bestBeforeDate: null, onConsume: () => calls++);
+
+    await tester.tap(find.byTooltip('Verbrauchen'));
+
+    expect(calls, 1);
   });
 }

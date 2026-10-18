@@ -190,7 +190,7 @@
     "title": "Menge reduzieren: Teilverbrauch und vollständiger Verbrauch",
     "type": "feat",
     "priority": "high",
-    "status": "open",
+    "status": "done",
     "dependsOn": ["T008"],
     "description": "Ziel: Direkt aus der Übersicht lässt sich die Menge eines Bestands verringern oder der Bestand vollständig verbrauchen.\n\nAbgrenzung: Bearbeiten der übrigen Felder folgt in T018.\n\nZu klären: Freie Eingabe oder feste Schritte beim Teilverbrauch? Lässt sich versehentliches Verbrauchen rückgängig machen?",
     "acceptanceCriteria": [

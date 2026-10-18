@@ -10,14 +10,13 @@ import 'package:fridgo/domain/product.dart';
 import 'package:fridgo/domain/product_photo.dart';
 import 'package:fridgo/domain/product_search.dart';
 import 'package:fridgo/domain/stock_item.dart';
+import 'package:fridgo/domain/stock_quantity.dart';
 import 'package:fridgo/domain/storage_location.dart';
 
 class AddStockItemViewModel extends StreamNotifier<List<StorageLocation>> {
   new(this.homeId);
 
   final String homeId;
-
-  static final _quantityPattern = RegExp(r'^(\d+|\d*[.,]\d{1,3})$');
 
   @override
   Stream<List<StorageLocation>> build() => ref
@@ -29,19 +28,9 @@ class AddStockItemViewModel extends StreamNotifier<List<StorageLocation>> {
 
   bool isValidName(String name) => name.trim().isNotEmpty;
 
-  bool isValidQuantity(String quantity) =>
-      _quantityPattern.hasMatch(quantity.trim()) && _toDouble(quantity) > 0;
+  bool isValidQuantity(String quantity) => isValidQuantityInput(quantity);
 
-  double parseQuantity(String quantity) {
-    if (!isValidQuantity(quantity)) {
-      throw ArgumentError.value(
-        quantity,
-        'quantity',
-        'must be above 0 with at most three decimals',
-      );
-    }
-    return _toDouble(quantity);
-  }
+  double parseQuantity(String quantity) => parseQuantityInput(quantity);
 
   Future<String?> pickPhoto(PhotoSource source) =>
       ref.read(productImageRepositoryProvider).pickPhoto(source);
@@ -97,9 +86,6 @@ class AddStockItemViewModel extends StreamNotifier<List<StorageLocation>> {
       throw ArgumentError.value(draft.quantity, 'quantity', 'must be above 0');
     }
   }
-
-  double _toDouble(String quantity) =>
-      double.parse(quantity.trim().replaceFirst(',', '.'));
 }
 
 final StreamNotifierProviderFamily<
