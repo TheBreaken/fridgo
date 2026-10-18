@@ -3,21 +3,40 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:fridgo/app/app.dart';
 import 'package:fridgo/data/database/app_database.dart';
+import 'package:fridgo/data/repositories/last_home_repository.dart';
+import 'package:fridgo/ui/core/empty_state.dart';
 import 'package:fridgo/ui/homes/homes_screen.dart';
+import 'package:fridgo/ui/stock_overview/stock_overview_screen.dart';
 
 import '../data/database/test_database.dart';
+import '../data/repositories/fake_last_home_repository.dart';
+import '../ui/app_flows.dart';
 
-Future<void> _pumpApp(WidgetTester tester) async {
-  final database = createWidgetTestDatabase();
-  addTearDown(database.close);
+Future<void> _pumpApp(
+  WidgetTester tester, {
+  AppDatabase? database,
+  FakeLastHomeRepository? lastHomes,
+}) async {
+  final usedDatabase = database ?? createWidgetTestDatabase();
+  if (database == null) addTearDown(usedDatabase.close);
   await tester.pumpWidget(
     ProviderScope(
-      overrides: [appDatabaseProvider.overrideWithValue(database)],
+      // A new key throws the old scope away, like a restart of the app.
+      key: UniqueKey(),
+      overrides: [
+        appDatabaseProvider.overrideWithValue(usedDatabase),
+        lastHomeRepositoryProvider.overrideWithValue(
+          lastHomes ?? FakeLastHomeRepository(),
+        ),
+      ],
       child: const FridgoApp(),
     ),
   );
   await tester.pumpAndSettle();
 }
+
+Finder _appBarTitle(String name) =>
+    find.descendant(of: find.byType(AppBar), matching: find.text(name));
 
 void main() {
   testWidgets('starts in the homes screen', (tester) async {
@@ -49,4 +68,49 @@ void main() {
       expect(Theme.of(context).brightness, brightness);
     });
   }
+
+  testWidgets('a restart opens the last selected home', (tester) async {
+    final database = createWidgetTestDatabase();
+    addTearDown(database.close);
+    final lastHomes = FakeLastHomeRepository();
+    await _pumpApp(tester, database: database, lastHomes: lastHomes);
+    await createHomeAndOpenIt(tester, 'Berlin');
+    await tester.tap(find.byType(BackButton));
+    await tester.pumpAndSettle();
+    await createHomeAndOpenIt(tester, 'Hamburg');
+
+    await _pumpApp(tester, database: database, lastHomes: lastHomes);
+
+    expect(find.byType(StockOverviewScreen), findsOneWidget);
+    expect(_appBarTitle('Hamburg'), findsOneWidget);
+  });
+
+  testWidgets('a remembered home that is gone opens another home', (
+    tester,
+  ) async {
+    final database = createWidgetTestDatabase();
+    addTearDown(database.close);
+    await _pumpApp(tester, database: database);
+    await createHomeAndOpenIt(tester, 'Berlin');
+
+    await _pumpApp(
+      tester,
+      database: database,
+      lastHomes: FakeLastHomeRepository(lastHomeId: 'deleted'),
+    );
+
+    expect(_appBarTitle('Berlin'), findsOneWidget);
+  });
+
+  testWidgets('a remembered home without any homes shows the empty state', (
+    tester,
+  ) async {
+    await _pumpApp(
+      tester,
+      lastHomes: FakeLastHomeRepository(lastHomeId: 'deleted'),
+    );
+
+    expect(find.byType(HomesScreen), findsOneWidget);
+    expect(find.byType(EmptyState), findsOneWidget);
+  });
 }

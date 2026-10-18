@@ -132,4 +132,17 @@ void main() {
 
     expect(homes, [home]);
   });
+
+  test(
+    'getting homes once returns them sorted by name ignoring case',
+    () async {
+      final repository = _createRepository();
+      await repository.createHome('hamburg');
+      await repository.createHome('Berlin');
+
+      final homes = await repository.getHomes();
+
+      expect([for (final home in homes) home.name], ['Berlin', 'hamburg']);
+    },
+  );
 }

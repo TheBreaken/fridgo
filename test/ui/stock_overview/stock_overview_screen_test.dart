@@ -6,6 +6,7 @@ import 'package:fridgo/ui/core/emoji.dart';
 import 'package:fridgo/ui/core/empty_state.dart';
 import 'package:fridgo/ui/homes/homes_screen.dart';
 import 'package:fridgo/ui/stock_overview/stock_overview_screen.dart';
+import 'package:fridgo/ui/stock_overview/switch_home_sheet.dart';
 import 'package:fridgo/ui/storage_locations/create_storage_location_sheet.dart';
 import 'package:fridgo/ui/storage_locations/storage_locations_screen.dart';
 
@@ -137,6 +138,62 @@ void main() {
   testWidgets('back returns to the homes', (tester) async {
     await pumpApp(tester, now: _today);
     await createHomeAndOpenIt(tester, 'Berlin');
+
+    await tester.tap(find.byType(BackButton));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(HomesScreen), findsOneWidget);
+  });
+
+  testWidgets('two taps on the title switch to another home', (tester) async {
+    await pumpApp(tester, now: _today);
+    await createHomeAndOpenIt(tester, 'Berlin');
+    await createStorageLocationAndReturn(tester, 'Kühlschrank');
+    await tester.tap(find.byType(BackButton));
+    await tester.pumpAndSettle();
+    await createHomeAndOpenIt(tester, 'Hamburg');
+
+    await tester.tap(find.byTooltip('Wohnung wechseln'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Berlin'));
+    await tester.pumpAndSettle();
+
+    expect(
+      find.descendant(of: find.byType(AppBar), matching: find.text('Berlin')),
+      findsOneWidget,
+    );
+    expect(find.text('Hamburg'), findsNothing);
+    expect(_emptyStateEmoji(Emoji.carrot), findsOneWidget);
+  });
+
+  testWidgets('the home switcher marks the current home', (tester) async {
+    await pumpApp(tester, now: _today);
+    await createHomeAndOpenIt(tester, 'Berlin');
+
+    await tester.tap(find.byTooltip('Wohnung wechseln'));
+    await tester.pumpAndSettle();
+
+    expect(
+      find.descendant(
+        of: find.byType(SwitchHomeSheet),
+        matching: find.byIcon(Icons.check_rounded),
+      ),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('back after switching homes returns to the homes', (
+    tester,
+  ) async {
+    await pumpApp(tester, now: _today);
+    await createHomeAndOpenIt(tester, 'Berlin');
+    await tester.tap(find.byType(BackButton));
+    await tester.pumpAndSettle();
+    await createHomeAndOpenIt(tester, 'Hamburg');
+    await tester.tap(find.byTooltip('Wohnung wechseln'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Berlin'));
+    await tester.pumpAndSettle();
 
     await tester.tap(find.byType(BackButton));
     await tester.pumpAndSettle();

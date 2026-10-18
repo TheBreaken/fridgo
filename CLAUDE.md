@@ -133,8 +133,8 @@ test/                  spiegelt lib/
   Beispiel `homes/`, `stock_overview/`, `stock_item_detail/`. Die Dateien liegen flach
   darin, ohne Unterordner: `homes_screen.dart`, `homes_view_model.dart`.
 - Ein Ordner entsteht mit seiner ersten Datei, nicht auf Vorrat.
-- Kein Screen heißt `HomeScreen`; `Home` ist die Wohnung. Der Einstieg ist die
-  Wohnungsliste `HomesScreen`.
+- Kein Screen heißt `HomeScreen`; `Home` ist die Wohnung. Die App startet in der
+  Übersicht der zuletzt gewählten Wohnung; darunter liegt die Wohnungsliste `HomesScreen`.
 
 Feste Regeln:
 

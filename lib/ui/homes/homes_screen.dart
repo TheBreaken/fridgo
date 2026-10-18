@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fridgo/domain/home.dart';
@@ -85,18 +87,23 @@ class _HomeList extends StatelessWidget {
   }
 }
 
-class _HomeCard extends StatelessWidget {
+void openHome(BuildContext context, WidgetRef ref, String homeId) {
+  unawaited(ref.read(homesViewModelProvider.notifier).selectHome(homeId));
+  context.go('/homes/$homeId');
+}
+
+class _HomeCard extends ConsumerWidget {
   const new({required this.home});
 
   final Home home;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     return Card(
       clipBehavior: Clip.antiAlias,
       child: InkWell(
-        onTap: () => context.go('/homes/${home.id}'),
+        onTap: () => openHome(context, ref, home.id),
         child: Padding(
           padding: const EdgeInsets.all(Spacing.m),
           child: Row(

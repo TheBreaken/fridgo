@@ -21,6 +21,7 @@
   "storageLocationKindCellar": "Keller",
   "storageLocationKindOther": "Sonstiges",
   "showStorageLocations": "Lagerorte",
+  "switchHome": "Wohnung wechseln",
   "stockOverviewNoStorageLocationTitle": "Noch kein Lagerort",
   "stockOverviewNoStorageLocationMessage": "Leg zuerst Kühlschrank, Gefrierfach oder Vorrat an. Danach trägst du dort Lebensmittel ein.",
   "stockOverviewEmptyTitle": "Noch keine Lebensmittel",

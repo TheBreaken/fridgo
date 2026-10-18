@@ -11,6 +11,7 @@ import 'package:fridgo/ui/core/empty_state.dart';
 import 'package:fridgo/ui/stock_overview/consume_stock_item_sheet.dart';
 import 'package:fridgo/ui/stock_overview/stock_item_card.dart';
 import 'package:fridgo/ui/stock_overview/stock_overview_view_model.dart';
+import 'package:fridgo/ui/stock_overview/switch_home_sheet.dart';
 import 'package:fridgo/ui/storage_locations/create_storage_location_sheet.dart';
 import 'package:fridgo/ui/storage_locations/storage_locations_view_model.dart';
 import 'package:go_router/go_router.dart';
@@ -29,40 +30,72 @@ class StockOverviewScreen extends ConsumerWidget {
     );
     final stockItems = ref.watch(stockOverviewProvider(homeId));
     final hasStorageLocations = storageLocations.value?.isNotEmpty ?? false;
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(home?.name ?? ''),
-        actions: [
-          IconButton(
-            onPressed: () => context.go('/homes/$homeId/storage-locations'),
-            tooltip: l10n.showStorageLocations,
-            icon: const Icon(Icons.kitchen_rounded),
-          ),
-        ],
+    return AnimatedSwitcher(
+      duration: Durations.medium2,
+      child: Scaffold(
+        key: ValueKey(homeId),
+        appBar: AppBar(
+          // Together with the button padding the name lines up with a plain
+          // title.
+          titleSpacing: Spacing.xs,
+          title: _SwitchHomeButton(homeId: homeId, name: home?.name ?? ''),
+          actions: [
+            IconButton(
+              onPressed: () => context.go('/homes/$homeId/storage-locations'),
+              tooltip: l10n.showStorageLocations,
+              icon: const Icon(Icons.kitchen_rounded),
+            ),
+          ],
+        ),
+        body: AnimatedSwitcher(
+          duration: Durations.medium2,
+          child: switch ((storageLocations, stockItems)) {
+            (AsyncError(:final error, :final stackTrace), _) ||
+            (
+              _,
+              AsyncError(:final error, :final stackTrace),
+            ) => Error.throwWithStackTrace(error, stackTrace),
+            (AsyncData(value: []), _) => _NoStorageLocation(homeId: homeId),
+            (AsyncData(), AsyncData(value: [])) => _EmptyStock(homeId: homeId),
+            (AsyncData(), AsyncData(:final value)) => _StockItemList(
+              stockItems: value,
+            ),
+            _ => const SizedBox.shrink(),
+          },
+        ),
+        floatingActionButton: hasStorageLocations
+            ? FloatingActionButton(
+                onPressed: () => _openAddStockItem(context, homeId),
+                tooltip: l10n.addStockItem,
+                child: const Icon(Icons.add_rounded),
+              )
+            : null,
       ),
-      body: AnimatedSwitcher(
-        duration: Durations.medium2,
-        child: switch ((storageLocations, stockItems)) {
-          (AsyncError(:final error, :final stackTrace), _) ||
-          (
-            _,
-            AsyncError(:final error, :final stackTrace),
-          ) => Error.throwWithStackTrace(error, stackTrace),
-          (AsyncData(value: []), _) => _NoStorageLocation(homeId: homeId),
-          (AsyncData(), AsyncData(value: [])) => _EmptyStock(homeId: homeId),
-          (AsyncData(), AsyncData(:final value)) => _StockItemList(
-            stockItems: value,
-          ),
-          _ => const SizedBox.shrink(),
-        },
+    );
+  }
+}
+
+class _SwitchHomeButton extends StatelessWidget {
+  const new({required this.homeId, required this.name});
+
+  final String homeId;
+  final String name;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Tooltip(
+      message: AppLocalizations.of(context).switchHome,
+      child: TextButton.icon(
+        onPressed: () => showSwitchHomeSheet(context, homeId),
+        iconAlignment: IconAlignment.end,
+        icon: const Icon(Icons.arrow_drop_down_rounded),
+        label: Text(name, overflow: TextOverflow.ellipsis),
+        style: TextButton.styleFrom(
+          foregroundColor: theme.colorScheme.onSurface,
+          textStyle: theme.textTheme.titleLarge,
+        ),
       ),
-      floatingActionButton: hasStorageLocations
-          ? FloatingActionButton(
-              onPressed: () => _openAddStockItem(context, homeId),
-              tooltip: l10n.addStockItem,
-              child: const Icon(Icons.add_rounded),
-            )
-          : null,
     );
   }
 }

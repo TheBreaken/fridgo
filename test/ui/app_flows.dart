@@ -4,9 +4,11 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:fridgo/app/app.dart';
 import 'package:fridgo/data/clock.dart';
 import 'package:fridgo/data/database/app_database.dart';
+import 'package:fridgo/data/repositories/last_home_repository.dart';
 import 'package:fridgo/data/repositories/product_image_repository.dart';
 
 import '../data/database/test_database.dart';
+import '../data/repositories/fake_last_home_repository.dart';
 import '../data/repositories/fake_product_image_repository.dart';
 
 // Writing through a repository hangs in the FakeAsync zone of widget tests,
@@ -24,6 +26,7 @@ Future<void> pumpApp(
       overrides: [
         appDatabaseProvider.overrideWithValue(database),
         clockProvider.overrideWithValue(() => now),
+        lastHomeRepositoryProvider.overrideWithValue(FakeLastHomeRepository()),
         productImageRepositoryProvider.overrideWithValue(
           productImages ?? FakeProductImageRepository(),
         ),

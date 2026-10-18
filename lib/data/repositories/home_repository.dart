@@ -17,15 +17,17 @@ class HomeRepository {
     return home;
   }
 
-  Stream<List<Home>> watchHomes() {
-    final query = _database.select(_database.homes)
-      ..orderBy([
-        (homes) => OrderingTerm.asc(homes.name.collate(Collate.noCase)),
-      ]);
-    return query.watch().map(
-      (rows) => [for (final row in rows) Home(id: row.id, name: row.name)],
-    );
-  }
+  Future<List<Home>> getHomes() async => _toHomes(await _homesQuery().get());
+
+  Stream<List<Home>> watchHomes() => _homesQuery().watch().map(_toHomes);
+
+  SimpleSelectStatement<$HomesTable, HomeRow> _homesQuery() => _database.select(
+    _database.homes,
+  )..orderBy([(homes) => OrderingTerm.asc(homes.name.collate(Collate.noCase))]);
+
+  List<Home> _toHomes(List<HomeRow> rows) => [
+    for (final row in rows) Home(id: row.id, name: row.name),
+  ];
 
   Stream<Home> watchHome(String id) {
     final query = _database.select(_database.homes)
