@@ -95,6 +95,12 @@ void main() {
     expect(first, isNot(second));
   });
 
+  test('a relative image path resolves inside the app directory', () async {
+    final file = await repository.file('product_images/milk.jpg');
+
+    expect(file.path, '${appDirectory.path}/product_images/milk.jpg');
+  });
+
   test('a deleted image is gone from the app directory', () async {
     final imagePath = await repository.store(pickedPhoto('photo.jpg').path);
 

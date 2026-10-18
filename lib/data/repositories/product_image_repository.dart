@@ -65,8 +65,11 @@ class ProductImageRepository {
     return imagePath;
   }
 
+  Future<File> file(String imagePath) async =>
+      File(await _absolutePath(imagePath));
+
   Future<void> delete(String imagePath) async {
-    final file = File(await _absolutePath(imagePath));
+    final file = await this.file(imagePath);
     if (file.existsSync()) await file.delete();
   }
 

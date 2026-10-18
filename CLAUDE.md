@@ -147,7 +147,8 @@ Feste Regeln:
   absoluter Pfad und nie das Bild selbst.
 - Aufgenommene oder ausgewählte Fotos werden aus dem temporären Verzeichnis in das
   dauerhafte App-Verzeichnis kopiert, bevor ihr Pfad gespeichert wird.
-- Übersichten laden Vorschaubilder, nie das Kamerafoto in voller Größe.
+- Übersichten laden Vorschaubilder, nie das Kamerafoto in voller Größe. Sie dekodieren das
+  gespeicherte Foto verkleinert (`ResizeImage`); eigene Vorschaudateien gibt es nicht.
 - Eine fehlende Bilddatei ist ein erwarteter Zustand und zeigt einen Platzhalter.
 - **Jede Schemaänderung ist eine Migration** mit hochgezählter Schemaversion, von der
   ersten Tabelle an. Ablauf: `schemaVersion` erhöhen, `make schema` legt den neuen Stand
@@ -175,6 +176,7 @@ gepinnte Version bereit.
 | `make analyze`       | nur statische Analyse                             |
 | `make test`          | nur Tests                                         |
 | `make run`           | App auf dem verbundenen Gerät oder Emulator starten |
+| `make run-profile`   | App im Profilmodus auf einem echten Gerät starten, um zu prüfen, ob sie flüssig läuft |
 | `make build-android` | Debug-APK bauen                                   |
 | `make build-ios`     | iOS-Debug-Build ohne Signierung                   |
 
