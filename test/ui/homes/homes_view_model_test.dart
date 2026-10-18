@@ -3,12 +3,20 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:fridgo/data/database/app_database.dart';
 import 'package:fridgo/data/repositories/home_repository.dart';
+import 'package:fridgo/data/repositories/last_home_repository.dart';
 import 'package:fridgo/ui/homes/homes_view_model.dart';
 
-ProviderContainer _createContainer() {
+import '../../data/repositories/fake_last_home_repository.dart';
+
+ProviderContainer _createContainer({FakeLastHomeRepository? lastHomes}) {
   final database = AppDatabase(NativeDatabase.memory());
   final container = ProviderContainer(
-    overrides: [appDatabaseProvider.overrideWithValue(database)],
+    overrides: [
+      appDatabaseProvider.overrideWithValue(database),
+      lastHomeRepositoryProvider.overrideWithValue(
+        lastHomes ?? FakeLastHomeRepository(),
+      ),
+    ],
   );
   addTearDown(() async {
     container.dispose();
@@ -20,6 +28,11 @@ ProviderContainer _createContainer() {
 Future<List<String>> _storedHomeNames(ProviderContainer container) async {
   final homes = await container.read(homeRepositoryProvider).watchHomes().first;
   return [for (final home in homes) home.name];
+}
+
+Future<String> _homeIdNamed(ProviderContainer container, String name) async {
+  final homes = await container.read(homeRepositoryProvider).watchHomes().first;
+  return homes.firstWhere((home) => home.name == name).id;
 }
 
 void main() {
@@ -104,4 +117,61 @@ void main() {
     final homes = container.read(homesViewModelProvider).requireValue;
     expect([for (final home in homes) home.name], ['Berlin']);
   });
+
+  test('selecting a home remembers it', () async {
+    final lastHomes = FakeLastHomeRepository();
+    final container = _createContainer(lastHomes: lastHomes);
+
+    await container.read(homesViewModelProvider.notifier).selectHome('home-1');
+
+    expect(lastHomes.lastHomeId, 'home-1');
+  });
+
+  test('without homes there is no start home', () async {
+    final container = _createContainer(
+      lastHomes: FakeLastHomeRepository(lastHomeId: 'deleted'),
+    );
+
+    final startHomeId = await container
+        .read(homesViewModelProvider.notifier)
+        .findStartHomeId();
+
+    expect(startHomeId, isNull);
+  });
+
+  test('the start home is the last selected home', () async {
+    final lastHomes = FakeLastHomeRepository();
+    final container = _createContainer(lastHomes: lastHomes);
+    final viewModel = container.read(homesViewModelProvider.notifier);
+    await viewModel.createHome('Berlin');
+    await viewModel.createHome('Hamburg');
+    final hamburg = await _homeIdNamed(container, 'Hamburg');
+    await viewModel.selectHome(hamburg);
+
+    final startHomeId = await viewModel.findStartHomeId();
+
+    expect(startHomeId, hamburg);
+  });
+
+  const fallbackCases = {
+    'nothing remembered starts in the alphabetically first home': null,
+    'a remembered home that is gone starts in the alphabetically first home':
+        'deleted',
+  };
+
+  for (final MapEntry(key: description, value: lastHomeId)
+      in fallbackCases.entries) {
+    test(description, () async {
+      final container = _createContainer(
+        lastHomes: FakeLastHomeRepository(lastHomeId: lastHomeId),
+      );
+      final viewModel = container.read(homesViewModelProvider.notifier);
+      await viewModel.createHome('Hamburg');
+      await viewModel.createHome('Berlin');
+
+      final startHomeId = await viewModel.findStartHomeId();
+
+      expect(startHomeId, await _homeIdNamed(container, 'Berlin'));
+    });
+  }
 }

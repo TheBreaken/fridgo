@@ -206,7 +206,7 @@
     "title": "Zwischen Wohnungen wechseln",
     "type": "feat",
     "priority": "high",
-    "status": "open",
+    "status": "done",
     "dependsOn": ["T008"],
     "description": "Ziel: Der Nutzer wechselt mit wenigen Tipps zwischen den Übersichten seiner Wohnungen, um vor dem Einkauf zu sehen, was in der Zielwohnung liegt. Die zuletzt gewählte Wohnung ist beim nächsten Start wieder da.\n\nAbgrenzung: Keine gemeinsame Liste über alle Wohnungen.\n\nZu klären: Wie wird gewechselt: Tabs, Auswahl in der Kopfzeile oder Wischen?",
     "acceptanceCriteria": [
