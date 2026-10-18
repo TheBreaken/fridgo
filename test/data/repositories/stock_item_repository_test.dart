@@ -473,4 +473,150 @@ void _inOneStorageLocation() {
 
     expect([for (final listing in listings) listing.length], [0, 1]);
   });
+
+  test('consuming a part lowers the quantity and keeps the rest', () async {
+    final stockItem = await _addWithNewProduct(
+      repository,
+      _milk(fridge, quantity: 500, unit: StockUnit.gram),
+    );
+
+    await repository.consumeStockItem(stockItem.id, 150);
+
+    expect(
+      (await listed()).single.stockItem,
+      stockItem.copyWith(quantity: 350),
+    );
+  });
+
+  test('consuming a decimal part leaves no binary rest', () async {
+    final stockItem = await _addWithNewProduct(
+      repository,
+      _milk(fridge, quantity: 0.3),
+    );
+
+    await repository.consumeStockItem(stockItem.id, 0.1);
+
+    expect((await listed()).single.stockItem.quantity, 0.2);
+  });
+
+  const usedUp = {'exactly the quantity': 1.0, 'more than available': 3.0};
+
+  for (final MapEntry(key: description, value: consumed) in usedUp.entries) {
+    test('consuming $description deletes the stock item', () async {
+      final stockItem = await _addWithNewProduct(repository, _milk(fridge));
+
+      await repository.consumeStockItem(stockItem.id, consumed);
+
+      expect(await listed(), isEmpty);
+      expect(await database.select(database.products).get(), hasLength(1));
+    });
+  }
+
+  test('consuming 0 is rejected and changes nothing', () async {
+    final stockItem = await _addWithNewProduct(repository, _milk(fridge));
+
+    await expectLater(
+      repository.consumeStockItem(stockItem.id, 0),
+      throwsArgumentError,
+    );
+
+    expect((await listed()).single.stockItem, stockItem);
+  });
+
+  test('consuming one of two stock items of a product changes only that '
+      'one', () async {
+    final first = await _addWithNewProduct(
+      repository,
+      _milk(fridge, quantity: 2, bestBeforeDate: CalendarDate(2026, 10, 20)),
+    );
+    final second = await repository.addStockItemForProduct(
+      first.productId,
+      _milk(fridge, quantity: 2, bestBeforeDate: CalendarDate(2026, 11, 3)),
+    );
+
+    await repository.consumeStockItem(second.id, 0.5);
+
+    expect(
+      [for (final details in await listed()) details.stockItem],
+      [first, second.copyWith(quantity: 1.5)],
+    );
+  });
+
+  test('using up one of two stock items of a product keeps the other and '
+      'the product', () async {
+    final first = await _addWithNewProduct(
+      repository,
+      _milk(fridge, bestBeforeDate: CalendarDate(2026, 10, 20)),
+    );
+    final second = await repository.addStockItemForProduct(
+      first.productId,
+      _milk(fridge, bestBeforeDate: CalendarDate(2026, 11, 3)),
+    );
+
+    await repository.deleteStockItem(first.id);
+
+    expect([for (final details in await listed()) details.stockItem], [second]);
+    expect(await database.select(database.products).get(), hasLength(1));
+  });
+
+  test('a deleted stock item is restored with all its values', () async {
+    final stockItem = await _addWithNewProduct(
+      repository,
+      _milk(
+        fridge,
+        quantity: 1.5,
+        bestBeforeDate: CalendarDate(2026, 10, 25),
+        openedDate: CalendarDate(2026, 10, 16),
+      ),
+    );
+    await repository.deleteStockItem(stockItem.id);
+
+    await repository.restoreStockItem(stockItem);
+
+    expect((await listed()).single.stockItem, stockItem);
+  });
+
+  test('restoring after a partial consumption brings back the '
+      'quantity', () async {
+    final stockItem = await _addWithNewProduct(
+      repository,
+      _milk(fridge, quantity: 2),
+    );
+    await repository.consumeStockItem(stockItem.id, 0.5);
+
+    await repository.restoreStockItem(stockItem);
+
+    expect((await listed()).single.stockItem, stockItem);
+    expect(await database.select(database.stockItems).get(), hasLength(1));
+  });
+
+  test('a running listing follows consuming and using up', () async {
+    final stockItem = await _addWithNewProduct(
+      repository,
+      _milk(fridge, quantity: 2),
+    );
+    final listings = <List<StockItemDetails>>[];
+    final subscription = repository
+        .watchStockItems(fridge.homeId)
+        .listen(listings.add);
+    addTearDown(subscription.cancel);
+    await pumpEventQueue();
+
+    await repository.consumeStockItem(stockItem.id, 0.5);
+    await pumpEventQueue();
+    await repository.deleteStockItem(stockItem.id);
+    await pumpEventQueue();
+
+    expect(
+      [
+        for (final listing in listings)
+          [for (final details in listing) details.stockItem.quantity],
+      ],
+      [
+        [2.0],
+        [1.5],
+        <double>[],
+      ],
+    );
+  });
 }

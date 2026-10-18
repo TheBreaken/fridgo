@@ -71,6 +71,46 @@
   "stockItemNotOpened": "Noch nicht geöffnet",
   "clearDate": "Datum entfernen",
   "createStockItem": "Hinzufügen",
+  "consumeStockItem": "Verbrauchen",
+  "consumeStockItemTitle": "{product} verbrauchen",
+  "@consumeStockItemTitle": {
+    "placeholders": {
+      "product": {
+        "type": "String"
+      }
+    }
+  },
+  "consumeStockItemAvailable": "Vorhanden: {quantity}",
+  "@consumeStockItemAvailable": {
+    "placeholders": {
+      "quantity": {
+        "type": "String"
+      }
+    }
+  },
+  "consumedQuantityLabel": "Verbraucht",
+  "consumePartly": "Abziehen",
+  "consumeCompletely": "Alles verbraucht",
+  "stockItemConsumedPartly": "{product}: {quantity} verbraucht",
+  "@stockItemConsumedPartly": {
+    "placeholders": {
+      "product": {
+        "type": "String"
+      },
+      "quantity": {
+        "type": "String"
+      }
+    }
+  },
+  "stockItemConsumedCompletely": "{product} aufgebraucht",
+  "@stockItemConsumedCompletely": {
+    "placeholders": {
+      "product": {
+        "type": "String"
+      }
+    }
+  },
+  "undo": "Rückgängig",
   "stockUnitPiece": "Stück",
   "stockUnitGram": "g",
   "stockUnitKilogram": "kg",
