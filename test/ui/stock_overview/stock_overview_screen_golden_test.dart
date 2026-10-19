@@ -114,7 +114,7 @@ class _FixedStorageLocations extends StorageLocationsViewModel {
 void main() {
   late Directory appDirectory;
 
-  setUpAll(loadAppFonts);
+  setUpAll(setUpGoldens);
   setUp(() {
     appDirectory = Directory.systemTemp.createTempSync('fridgo');
     File('${appDirectory.path}/$_photoPath')

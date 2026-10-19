@@ -213,9 +213,10 @@ Fälle, die für diese App besonders zählen:
 - Bestand nach Schließen und erneutem Start weiterhin vorhanden
 
 Golden-Tests fallen je nach Betriebssystem unterschiedlich aus. Die Referenzbilder entstehen
-lokal auf macOS, deshalb läuft auch die CI auf macOS. Goldens gibt es nur im hellen Modus. Sie
-laden echte Schriften und Schatten über `test/ui/golden.dart`, die übrigen Widget-Tests
-nicht.
+lokal auf macOS, deshalb läuft auch die CI auf macOS. Weil macOS die Kanten von Schrift je nach
+Version anders glättet, toleriert der Vergleich bis 0,5 % abweichende Pixel. Goldens gibt es nur
+im hellen Modus. Sie laden echte Schriften und Schatten über `test/ui/golden.dart`, die übrigen
+Widget-Tests nicht.
 
 ## Aufgaben
 
