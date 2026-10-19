@@ -16,25 +16,6 @@ Finder _field(String label) => find.widgetWithText(TextField, label);
 Finder _card(String name) =>
     find.widgetWithText(StockItemCard, name, skipOffstage: false);
 
-Future<void> _addStockItem(
-  WidgetTester tester, {
-  required String name,
-  required String quantity,
-  String unitLabel = 'Stück',
-}) async {
-  await tester.tap(find.byTooltip('Lebensmittel hinzufügen'));
-  await tester.pumpAndSettle();
-  await tester.enterText(_field('Name'), name);
-  await tester.enterText(_field('Menge'), quantity);
-  await tester.tap(find.widgetWithText(ChoiceChip, unitLabel));
-  await tester.pump();
-  final submit = find.widgetWithText(FilledButton, 'Hinzufügen');
-  await tester.ensureVisible(submit);
-  await tester.pumpAndSettle();
-  await tester.tap(submit);
-  await tester.pumpAndSettle();
-}
-
 Future<void> _openOverviewWithStock(
   WidgetTester tester, {
   required String name,
@@ -44,7 +25,7 @@ Future<void> _openOverviewWithStock(
   await pumpApp(tester, now: _today);
   await createHomeAndOpenIt(tester, 'Berlin');
   await createStorageLocationAndReturn(tester, 'Kühlschrank');
-  await _addStockItem(
+  await addStockItem(
     tester,
     name: name,
     quantity: quantity,
@@ -207,7 +188,7 @@ void main() {
 
   testWidgets('of two stock items only the chosen one changes', (tester) async {
     await _openOverviewWithStock(tester, name: 'Eier', quantity: '6');
-    await _addStockItem(tester, name: 'Milch', quantity: '1');
+    await addStockItem(tester, name: 'Milch', quantity: '1');
 
     await _openSheetOf(tester, 'Milch');
     await _tapButton(tester, 'Alles verbraucht');
@@ -221,7 +202,7 @@ void main() {
     tester,
   ) async {
     await _openOverviewWithStock(tester, name: 'Eier', quantity: '6');
-    await _addStockItem(tester, name: 'Milch', quantity: '1');
+    await addStockItem(tester, name: 'Milch', quantity: '1');
     await _openSheetOf(tester, 'Milch');
 
     await tester.tap(find.widgetWithText(FilledButton, 'Alles verbraucht'));

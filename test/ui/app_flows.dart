@@ -62,3 +62,22 @@ Future<void> createStorageLocationAndReturn(
   await tester.tap(find.byType(BackButton));
   await tester.pumpAndSettle();
 }
+
+Future<void> addStockItem(
+  WidgetTester tester, {
+  required String name,
+  required String quantity,
+  String unitLabel = 'Stück',
+}) async {
+  await tester.tap(find.byTooltip('Lebensmittel hinzufügen'));
+  await tester.pumpAndSettle();
+  await tester.enterText(find.widgetWithText(TextField, 'Name'), name);
+  await tester.enterText(find.widgetWithText(TextField, 'Menge'), quantity);
+  await tester.tap(find.widgetWithText(ChoiceChip, unitLabel));
+  await tester.pump();
+  final submit = find.widgetWithText(FilledButton, 'Hinzufügen');
+  await tester.ensureVisible(submit);
+  await tester.pumpAndSettle();
+  await tester.tap(submit);
+  await tester.pumpAndSettle();
+}

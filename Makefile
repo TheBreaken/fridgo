@@ -3,7 +3,7 @@ DART ?= fvm dart
 # Test files or folders for make test; empty runs all.
 TESTS ?=
 
-.PHONY: setup l10n codegen schema format format-check analyze test check run run-profile build-android build-ios
+.PHONY: setup l10n codegen schema format format-check analyze test check integration-test run run-profile build-android build-ios
 
 setup:
 	fvm install
@@ -34,6 +34,10 @@ test: l10n codegen
 	TZ=Europe/Berlin $(FLUTTER) test $(TESTS)
 
 check: format-check analyze test
+
+# flutter test uninstalls the app after integration tests, and with it all data.
+integration-test: l10n codegen
+	$(FLUTTER) test integration_test --no-uninstall
 
 run: codegen
 	$(FLUTTER) run
