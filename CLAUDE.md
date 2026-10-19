@@ -182,7 +182,9 @@ als Abnahme laufen weiterhin über das `Makefile`.
 ## Qualität
 
 Eine Änderung ist fertig, wenn `make check` grün ist und `make build-android` sowie
-`make build-ios` durchlaufen. Die CI (`.github/workflows/ci.yml`) führt `make check` aus.
+`make build-ios` durchlaufen. Die CI (`.github/workflows/ci.yml`) führt dieselben Schritte wie
+`make check` als einzelne Steps aus, damit ein Fehler seinen Schritt zeigt. Ändert sich ein
+Target, das `check` benutzt, wird `ci.yml` mitgezogen.
 
 - Formatierung: `dart format`, ohne Ausnahmen.
 - Lint: `very_good_analysis`. Regeln werden nicht per `// ignore` umgangen; eine Abweichung
