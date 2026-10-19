@@ -69,8 +69,6 @@ void testGolden(
 /// Pumps [widget] and waits until its photos and emojis are drawn. Both load
 /// through real file access, which never finishes in the FakeAsync zone.
 Future<void> pumpAndLoadImages(WidgetTester tester, Widget widget) async {
-  // ponytail: fixed waits for data, image files and SVG emojis, which arrive
-  // over a few frames; wait on them explicitly if a golden ever misses one.
   const settle = Duration(milliseconds: 100);
   await tester.runAsync(() async {
     await tester.pumpWidget(widget);
