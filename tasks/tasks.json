@@ -220,7 +220,7 @@
     "title": "Integrationstest für den Kernablauf",
     "type": "test",
     "priority": "medium",
-    "status": "open",
+    "status": "done",
     "dependsOn": ["T013"],
     "description": "Ziel: Ein `integration_test` spielt den Kernablauf durch: Wohnung anlegen, Lagerort anlegen, Produkt hinzufügen, teilweise verbrauchen, vollständig verbrauchen. Dazu der Fall, dass der Bestand nach Schließen und erneutem Start weiterhin vorhanden ist.\n\nAbgrenzung: Keine nativen Systemdialoge; Patrol steht in `CLAUDE.md` unter Später.\n\nZu klären: Läuft der Test nur lokal auf Emulator und Simulator oder auch in der CI?",
     "acceptanceCriteria": [

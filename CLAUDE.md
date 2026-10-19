@@ -167,6 +167,11 @@ gepinnte Version bereit.
 
 Fehlt ein Target für ein wiederkehrendes Kommando, wird es im `Makefile` ergänzt.
 
+`make integration-test` führt die Tests unter `integration_test/` aus. Sie laufen nur lokal, nicht
+in der CI, und nur auf einem Emulator oder Simulator, nicht auf dem eigenen Gerät: Die Test-App
+ersetzt die installierte App, erst `make run` stellt die echte wieder her. Das Gerät wählt
+`make integration-test FLUTTER="fvm flutter -d <Geräte-ID>"`.
+
 Das Dart-MCP (`dart`) darf genutzt werden, wo es sinnvoll ist, zum Beispiel für Hot Reload,
 Laufzeitfehler oder den Widget-Inspektor einer laufenden App. Formatierung, Analyse und Tests
 als Abnahme laufen weiterhin über das `Makefile`.
