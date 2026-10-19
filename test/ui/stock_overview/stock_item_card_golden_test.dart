@@ -89,6 +89,7 @@ void main() {
                         child: StockItemCard(
                           details: details,
                           today: _today,
+                          onTap: () {},
                           onConsume: () {},
                         ),
                       ),

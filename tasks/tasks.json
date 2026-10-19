@@ -250,7 +250,7 @@
     "title": "Detailansicht eines Bestands",
     "type": "feat",
     "priority": "medium",
-    "status": "open",
+    "status": "done",
     "dependsOn": ["T008", "T010"],
     "description": "Ziel: Ein Tipp auf eine Produktkarte öffnet die Detailansicht mit großem Foto, Name, Menge, Einheit, MHD, Öffnungsdatum, Lagerort und Wohnung.\n\nAbgrenzung: Bearbeiten folgt in T018, Nährwerte in T019.\n\nZu klären: Zeigt die Ansicht auch die anderen Bestände desselben Produkts?",
     "acceptanceCriteria": [
