@@ -172,6 +172,9 @@ in der CI, und nur auf einem Emulator oder Simulator, nicht auf dem eigenen Ger�
 ersetzt die installierte App, erst `make run` stellt die echte wieder her. Das Gerät wählt
 `make integration-test FLUTTER="fvm flutter -d <Geräte-ID>"`.
 
+`make update-goldens` erzeugt die Referenzbilder der Golden-Tests neu, mit `TESTS=<Datei>` nur
+für einzelne Tests. Die neuen Bilder vor dem Commit ansehen.
+
 Das Dart-MCP (`dart`) darf genutzt werden, wo es sinnvoll ist, zum Beispiel für Hot Reload,
 Laufzeitfehler oder den Widget-Inspektor einer laufenden App. Formatierung, Analyse und Tests
 als Abnahme laufen weiterhin über das `Makefile`.
@@ -179,7 +182,9 @@ als Abnahme laufen weiterhin über das `Makefile`.
 ## Qualität
 
 Eine Änderung ist fertig, wenn `make check` grün ist und `make build-android` sowie
-`make build-ios` durchlaufen. Die CI (`.github/workflows/ci.yml`) führt `make check` aus.
+`make build-ios` durchlaufen. Die CI (`.github/workflows/ci.yml`) führt dieselben Schritte wie
+`make check` als einzelne Steps aus, damit ein Fehler seinen Schritt zeigt. Ändert sich ein
+Target, das `check` benutzt, wird `ci.yml` mitgezogen.
 
 - Formatierung: `dart format`, ohne Ausnahmen.
 - Lint: `very_good_analysis`. Regeln werden nicht per `// ignore` umgangen; eine Abweichung
@@ -209,8 +214,11 @@ Fälle, die für diese App besonders zählen:
 - fehlende oder gelöschte Bilddatei
 - Bestand nach Schließen und erneutem Start weiterhin vorhanden
 
-Golden-Tests fallen auf Linux (CI) und macOS (lokal) unterschiedlich aus. Vor dem ersten
-Golden-Test nachfragen, in welcher Umgebung die Referenzbilder entstehen.
+Golden-Tests fallen je nach Betriebssystem unterschiedlich aus. Die Referenzbilder entstehen
+lokal auf macOS, deshalb läuft auch die CI auf macOS. Weil macOS die Kanten von Schrift je nach
+Version anders glättet, toleriert der Vergleich bis 0,5 % abweichende Pixel. Goldens gibt es nur
+im hellen Modus. Sie laden echte Schriften und Schatten über `test/ui/golden.dart`, die übrigen
+Widget-Tests nicht.
 
 ## Aufgaben
 

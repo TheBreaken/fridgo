@@ -3,7 +3,7 @@ DART ?= fvm dart
 # Test files or folders for make test; empty runs all.
 TESTS ?=
 
-.PHONY: setup l10n codegen schema format format-check analyze test check integration-test run run-profile build-android build-ios
+.PHONY: setup l10n codegen schema format format-check analyze test update-goldens check integration-test run run-profile build-android build-ios
 
 setup:
 	fvm install
@@ -32,6 +32,10 @@ analyze: l10n codegen
 # A zone with daylight saving time, so the calendar date tests can fail.
 test: l10n codegen
 	TZ=Europe/Berlin $(FLUTTER) test $(TESTS)
+
+# Golden reference images are made on macOS, which CI runs on as well.
+update-goldens: l10n codegen
+	TZ=Europe/Berlin $(FLUTTER) test --update-goldens $(TESTS)
 
 check: format-check analyze test
 

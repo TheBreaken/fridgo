@@ -5,9 +5,11 @@ on:
     branches:
       - main
 
+# The same steps as `make check`, one by one, so a failure shows its step.
 jobs:
   check:
-    runs-on: ubuntu-latest
+    # Golden reference images are made on macOS and only match there.
+    runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
       - id: fvm
@@ -17,5 +19,29 @@ jobs:
           flutter-version: ${{ steps.fvm.outputs.flutter }}
           channel: stable
           cache: true
-      - run: flutter pub get
-      - run: make check FLUTTER=flutter DART=dart
+      - name: Install dependencies
+        run: flutter pub get
+      # Before code generation, whose output is not formatted.
+      - name: Check formatting
+        run: dart format --output=none --set-exit-if-changed .
+      - name: Generate localizations
+        run: flutter gen-l10n
+      - name: Generate migration steps
+        run: dart run drift_dev schema steps drift_schemas/ lib/data/database/app_database.steps.dart
+      - name: Generate code
+        run: dart run build_runner build
+      - name: Generate schema test helpers
+        run: dart run drift_dev schema generate drift_schemas/ test/data/database/generated/
+      - name: Analyze
+        run: flutter analyze
+      - name: Test
+        # A zone with daylight saving time, so the calendar date tests can fail.
+        env:
+          TZ: Europe/Berlin
+        run: flutter test
+      - if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: golden-failures
+          path: test/**/failures/
+          if-no-files-found: ignore
