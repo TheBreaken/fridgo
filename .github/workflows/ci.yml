@@ -7,7 +7,8 @@ on:
 
 jobs:
   check:
-    runs-on: ubuntu-latest
+    # Golden reference images are made on macOS and only match there.
+    runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
       - id: fvm
@@ -19,3 +20,9 @@ jobs:
           cache: true
       - run: flutter pub get
       - run: make check FLUTTER=flutter DART=dart
+      - if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: golden-failures
+          path: test/**/failures/
+          if-no-files-found: ignore

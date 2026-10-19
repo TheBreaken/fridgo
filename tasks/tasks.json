@@ -234,7 +234,7 @@
     "title": "Golden-Tests für Produktkarte und Übersicht",
     "type": "test",
     "priority": "medium",
-    "status": "open",
+    "status": "done",
     "dependsOn": ["T009", "T011"],
     "description": "Ziel: Referenzbilder sichern die Optik der Produktkarte und der wichtigsten Screens gegen unbemerkte Änderungen.\n\nZu klären: In welcher Umgebung entstehen die Referenzbilder? Die CI läuft auf Linux, lokal wird auf macOS gearbeitet, und die Bilder fallen dort unterschiedlich aus. `CLAUDE.md` verlangt diese Rückfrage vor dem ersten Golden-Test.",
     "acceptanceCriteria": [

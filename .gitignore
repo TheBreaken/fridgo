@@ -32,6 +32,8 @@ migrate_working_dir/
 .pub/
 /build/
 /coverage/
+# Written by flutter test when a golden does not match.
+/test/**/failures/
 /lib/l10n/app_localizations*.dart
 *.g.dart
 *.freezed.dart
