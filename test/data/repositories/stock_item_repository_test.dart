@@ -559,6 +559,73 @@ void _inOneStorageLocation() {
     expect(await database.select(database.products).get(), hasLength(1));
   });
 
+  test('an update writes quantity, unit and both dates', () async {
+    final stockItem = await _addWithNewProduct(
+      repository,
+      _milk(fridge, bestBeforeDate: CalendarDate(2026, 10, 25)),
+    );
+    final changed = stockItem.copyWith(
+      quantity: 750,
+      unit: StockUnit.milliliter,
+      bestBeforeDate: CalendarDate(2026, 11, 2),
+      openedDate: CalendarDate(2026, 10, 22),
+    );
+
+    await repository.updateStockItem(changed);
+
+    expect((await listed()).single.stockItem, changed);
+  });
+
+  test('an update removes dates set to none', () async {
+    final stockItem = await _addWithNewProduct(
+      repository,
+      _milk(
+        fridge,
+        bestBeforeDate: CalendarDate(2026, 10, 25),
+        openedDate: CalendarDate(2026, 10, 16),
+      ),
+    );
+
+    await repository.updateStockItem(
+      stockItem.copyWith(bestBeforeDate: null, openedDate: null),
+    );
+
+    final updated = (await listed()).single.stockItem;
+    expect(updated.bestBeforeDate, isNull);
+    expect(updated.openedDate, isNull);
+  });
+
+  test('updating one of two stock items of a product changes only that '
+      'one', () async {
+    final first = await _addWithNewProduct(
+      repository,
+      _milk(fridge, bestBeforeDate: CalendarDate(2026, 10, 20)),
+    );
+    final second = await repository.addStockItemForProduct(
+      first.productId,
+      _milk(fridge, bestBeforeDate: CalendarDate(2026, 11, 3)),
+    );
+
+    await repository.updateStockItem(second.copyWith(quantity: 3));
+
+    expect(
+      [for (final details in await listed()) details.stockItem],
+      [first, second.copyWith(quantity: 3)],
+    );
+  });
+
+  test('updating a deleted stock item fails and brings nothing back', () async {
+    final stockItem = await _addWithNewProduct(repository, _milk(fridge));
+    await repository.deleteStockItem(stockItem.id);
+
+    await expectLater(
+      repository.updateStockItem(stockItem.copyWith(quantity: 2)),
+      throwsStateError,
+    );
+
+    expect(await listed(), isEmpty);
+  });
+
   test('a deleted stock item is restored with all its values', () async {
     final stockItem = await _addWithNewProduct(
       repository,

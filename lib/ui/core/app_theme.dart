@@ -48,6 +48,9 @@ abstract final class AppTheme {
     return base.copyWith(
       scaffoldBackgroundColor: scheme.surfaceDim,
       textTheme: text.copyWith(
+        headlineSmall: text.headlineSmall?.copyWith(
+          fontWeight: FontWeight.w700,
+        ),
         titleLarge: text.titleLarge?.copyWith(fontWeight: FontWeight.w700),
         titleMedium: text.titleMedium?.copyWith(fontWeight: FontWeight.w700),
         labelLarge: text.labelLarge?.copyWith(fontWeight: FontWeight.w700),
@@ -75,6 +78,12 @@ abstract final class AppTheme {
           borderRadius: BorderRadius.vertical(
             top: Radius.circular(Corners.large),
           ),
+        ),
+      ),
+      dialogTheme: DialogThemeData(
+        backgroundColor: scheme.surface,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(Corners.large),
         ),
       ),
       inputDecorationTheme: InputDecorationTheme(

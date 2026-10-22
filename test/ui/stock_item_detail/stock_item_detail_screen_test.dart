@@ -12,10 +12,12 @@ import 'package:fridgo/ui/core/app_theme.dart';
 import 'package:fridgo/ui/core/expiry_badge.dart';
 import 'package:fridgo/ui/core/image_placeholder.dart';
 import 'package:fridgo/ui/stock_item_detail/stock_item_detail_screen.dart';
+import 'package:fridgo/ui/stock_overview/stock_item_card.dart';
 import 'package:fridgo/ui/stock_overview/stock_overview_view_model.dart';
 import 'package:fridgo/ui/storage_locations/storage_locations_view_model.dart';
 
 import '../../data/repositories/fake_product_image_repository.dart';
+import '../app_flows.dart';
 
 const _homeId = 'home';
 const _stockItemId = 'yoghurt';
@@ -82,6 +84,16 @@ Future<void> _pumpDetails(WidgetTester tester, StockItemDetails details) async {
   await tester.pumpAndSettle();
 }
 
+Future<void> _openDetailsInApp(WidgetTester tester) async {
+  _usePhoneScreen(tester);
+  await pumpApp(tester, now: DateTime(2026, 10, 16, 9));
+  await createHomeAndOpenIt(tester, 'Berlin');
+  await createStorageLocationAndReturn(tester, 'Kühlschrank');
+  await addStockItem(tester, name: 'Joghurt', quantity: '2');
+  await tester.tap(find.text('Joghurt'));
+  await tester.pumpAndSettle();
+}
+
 Finder _valueOfRow(String label, String value) => find.descendant(
   of: find.ancestor(of: find.text(label), matching: find.byType(Row)).first,
   matching: find.text(value),
@@ -105,7 +117,6 @@ void main() {
       'Geöffnet',
       '14.10.2026',
     ),
-    'not opened': (_yoghurt(), 'Geöffnet', 'Noch nicht'),
     'storage location': (_yoghurt(), 'Lagerort', 'Kühlschrank oben'),
     'home': (_yoghurt(), 'Wohnung', 'Berlin'),
   };
@@ -117,6 +128,23 @@ void main() {
       expect(_valueOfRow(label, value), findsOneWidget);
     });
   }
+
+  testWidgets('unopened stock offers to mark it as opened today', (
+    tester,
+  ) async {
+    await _pumpDetails(tester, _yoghurt());
+
+    expect(find.widgetWithText(FilledButton, 'Heute geöffnet'), findsOneWidget);
+  });
+
+  testWidgets('opened stock offers no marking as opened', (tester) async {
+    await _pumpDetails(
+      tester,
+      _yoghurt(openedDate: CalendarDate(2026, 10, 14)),
+    );
+
+    expect(find.text('Heute geöffnet'), findsNothing);
+  });
 
   testWidgets('shows the product name', (tester) async {
     await _pumpDetails(tester, _yoghurt());
@@ -184,5 +212,46 @@ void main() {
 
     expect(find.text('Joghurt'), findsNothing);
     expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('marking as opened shows today from the clock', (tester) async {
+    await _openDetailsInApp(tester);
+
+    await tester.tap(find.widgetWithText(FilledButton, 'Heute geöffnet'));
+    await tester.pumpAndSettle();
+
+    expect(_valueOfRow('Geöffnet', '16.10.2026'), findsOneWidget);
+    expect(find.text('Heute geöffnet'), findsNothing);
+  });
+
+  testWidgets('deleting asks first, and cancelling keeps the stock item', (
+    tester,
+  ) async {
+    await _openDetailsInApp(tester);
+
+    await tester.tap(find.byTooltip('Löschen'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Joghurt löschen?'), findsOneWidget);
+
+    await tester.tap(find.widgetWithText(TextButton, 'Abbrechen'));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(StockItemDetailScreen), findsOneWidget);
+    expect(_valueOfRow('Menge', '2 Stück'), findsOneWidget);
+  });
+
+  testWidgets('confirmed deleting returns to the overview without the stock '
+      'item', (tester) async {
+    await _openDetailsInApp(tester);
+
+    await tester.tap(find.byTooltip('Löschen'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(TextButton, 'Löschen'));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(StockItemDetailScreen), findsNothing);
+    expect(find.byType(StockItemCard), findsNothing);
+    expect(find.text('Joghurt gelöscht'), findsOneWidget);
   });
 }

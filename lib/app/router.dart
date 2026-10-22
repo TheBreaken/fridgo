@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fridgo/ui/add_stock_item/add_stock_item_screen.dart';
 import 'package:fridgo/ui/homes/homes_screen.dart';
 import 'package:fridgo/ui/homes/homes_view_model.dart';
+import 'package:fridgo/ui/stock_item_detail/edit_stock_item_screen.dart';
 import 'package:fridgo/ui/stock_item_detail/stock_item_detail_screen.dart';
 import 'package:fridgo/ui/stock_overview/stock_overview_screen.dart';
 import 'package:fridgo/ui/storage_locations/storage_locations_screen.dart';
@@ -53,6 +54,15 @@ final routerProvider = Provider<GoRouter>((ref) {
                   homeId: state.pathParameters['homeId']!,
                   stockItemId: state.pathParameters['stockItemId']!,
                 ),
+                routes: [
+                  GoRoute(
+                    path: 'edit',
+                    builder: (context, state) => EditStockItemScreen(
+                      homeId: state.pathParameters['homeId']!,
+                      stockItemId: state.pathParameters['stockItemId']!,
+                    ),
+                  ),
+                ],
               ),
             ],
           ),

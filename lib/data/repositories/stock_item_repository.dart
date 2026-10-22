@@ -64,6 +64,15 @@ class StockItemRepository {
             .write(StockItemsCompanion(quantity: Value(remaining)));
       });
 
+  Future<void> updateStockItem(StockItem stockItem) async {
+    final updated = await _database
+        .update(_database.stockItems)
+        .replace(_toCompanion(stockItem));
+    if (!updated) {
+      throw StateError('No stock item with id ${stockItem.id} to update');
+    }
+  }
+
   Future<void> deleteStockItem(String id) => (_database.delete(
     _database.stockItems,
   )..where((stockItem) => stockItem.id.equals(id))).go();
