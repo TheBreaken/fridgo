@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:fridgo/domain/product_photo.dart';
 import 'package:fridgo/ui/add_stock_item/add_stock_item_screen.dart';
 import 'package:fridgo/ui/add_stock_item/selected_product_card.dart';
+import 'package:fridgo/ui/core/app_theme.dart';
 import 'package:fridgo/ui/core/empty_state.dart';
 import 'package:fridgo/ui/stock_overview/stock_overview_screen.dart';
 
@@ -33,6 +34,8 @@ Future<void> _enter(WidgetTester tester, String label, String text) =>
 
 Future<void> _submit(WidgetTester tester) async {
   final button = find.widgetWithText(FilledButton, 'Hinzufügen');
+  // A focused field scrolls back to its caret after typing; let it finish.
+  await tester.pumpAndSettle();
   await tester.ensureVisible(button);
   await tester.pumpAndSettle();
   await tester.tap(button);
@@ -76,6 +79,26 @@ Future<void> _addAndReopen(WidgetTester tester, String name) async {
 Future<void> _type(WidgetTester tester, String name) async {
   await _enter(tester, 'Name', name);
   await tester.pumpAndSettle();
+}
+
+const _nutritionFactsTitle = 'Nährwerte (optional)';
+
+Future<void> _toggleNutritionFacts(WidgetTester tester) async {
+  final title = find.text(_nutritionFactsTitle);
+  await tester.ensureVisible(title);
+  await tester.pumpAndSettle();
+  await tester.tap(title);
+  await tester.pumpAndSettle();
+}
+
+Future<void> _enterNutrient(
+  WidgetTester tester,
+  String label,
+  String text,
+) async {
+  await tester.ensureVisible(_field(label));
+  await _enter(tester, label, text);
+  await tester.pump();
 }
 
 bool _isSelected(WidgetTester tester, String chipLabel) => tester
@@ -463,5 +486,110 @@ void main() {
     expect(find.byType(SelectedProductCard), findsNothing);
     expect(_fieldText(tester, 'Name'), isEmpty);
     expect(_photoField('Foto hinzufügen'), findsOneWidget);
+  });
+
+  testWidgets('the nutrition facts start collapsed', (tester) async {
+    await _openAddScreen(tester);
+
+    expect(find.text(_nutritionFactsTitle), findsOneWidget);
+    expect(_field('Fett'), findsNothing);
+  });
+
+  testWidgets('opening the nutrition facts shows all seven fields', (
+    tester,
+  ) async {
+    await _openAddScreen(tester);
+
+    await _toggleNutritionFacts(tester);
+
+    for (final label in [
+      'Brennwert',
+      'Fett',
+      'davon gesättigte Fettsäuren',
+      'Kohlenhydrate',
+      'davon Zucker',
+      'Eiweiß',
+      'Salz',
+    ]) {
+      expect(_field(label), findsOneWidget, reason: label);
+    }
+  });
+
+  testWidgets(
+    'saved nutrition facts with decimal comma appear in the details',
+    (tester) async {
+      await _openAddScreen(tester);
+      await _enter(tester, 'Name', 'Milch');
+      await _toggleNutritionFacts(tester);
+      await _enterNutrient(tester, 'Brennwert', '64');
+      await _enterNutrient(tester, 'Fett', '3,5');
+
+      await _submit(tester);
+      await tester.tap(find.text('Milch'));
+      await tester.pumpAndSettle();
+      await tester.scrollUntilVisible(find.text('3,5 g'), Sizes.thumbnail);
+
+      expect(find.text('64 kcal · 268 kJ'), findsOneWidget);
+      expect(find.text('3,5 g'), findsOneWidget);
+    },
+  );
+
+  const invalidNutrients = {
+    'a negative fat value': ('Fett', '-1', 'Bitte gib 0 bis 100 g mit '),
+    'more than 100 g of salt': ('Salz', '100,5', 'Bitte gib 0 bis 100 g mit '),
+    'more than 900 kcal': ('Brennwert', '901', 'Bitte gib 0 bis 900 kcal mit '),
+  };
+  for (final MapEntry(key: description, value: (label, input, error))
+      in invalidNutrients.entries) {
+    testWidgets('$description shows an error and keeps the form open', (
+      tester,
+    ) async {
+      await _openAddScreen(tester);
+      await _enter(tester, 'Name', 'Milch');
+      await _toggleNutritionFacts(tester);
+      await _enterNutrient(tester, label, input);
+
+      await _submit(tester);
+
+      expect(
+        find.text('${error}höchstens drei Nachkommastellen ein.'),
+        findsOneWidget,
+      );
+      expect(find.byType(AddStockItemScreen), findsOneWidget);
+    });
+  }
+
+  testWidgets('an invalid value in collapsed nutrition facts opens them', (
+    tester,
+  ) async {
+    await _openAddScreen(tester);
+    await _enter(tester, 'Name', 'Milch');
+    await _toggleNutritionFacts(tester);
+    await _enterNutrient(tester, 'Fett', '-1');
+    await _toggleNutritionFacts(tester);
+
+    await _submit(tester);
+
+    expect(_field('Fett'), findsOneWidget);
+    expect(
+      find.text(
+        'Bitte gib 0 bis 100 g mit höchstens drei Nachkommastellen ein.',
+      ),
+      findsOneWidget,
+    );
+    expect(find.byType(AddStockItemScreen), findsOneWidget);
+  });
+
+  testWidgets('a chosen product shows no nutrition facts to enter', (
+    tester,
+  ) async {
+    await _openAddScreen(tester);
+    await _addAndReopen(tester, 'Milch');
+    await _type(tester, 'mil');
+
+    await tester.tap(_suggestion('Milch'));
+    await tester.pumpAndSettle();
+
+    expect(find.text(_nutritionFactsTitle), findsNothing);
   });
 }

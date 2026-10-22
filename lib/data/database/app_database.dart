@@ -33,6 +33,13 @@ class Products extends Table {
   TextColumn get id => text()();
   TextColumn get name => text()();
   TextColumn get imagePath => text().nullable()();
+  RealColumn get energyKcal => real().nullable()();
+  RealColumn get fat => real().nullable()();
+  RealColumn get saturatedFat => real().nullable()();
+  RealColumn get carbohydrates => real().nullable()();
+  RealColumn get sugars => real().nullable()();
+  RealColumn get protein => real().nullable()();
+  RealColumn get salt => real().nullable()();
 
   @override
   Set<Column<Object>> get primaryKey => {id};
@@ -72,7 +79,7 @@ class AppDatabase extends _$AppDatabase {
   new(super.e);
 
   @override
-  int get schemaVersion => 4;
+  int get schemaVersion => 5;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -84,6 +91,20 @@ class AppDatabase extends _$AppDatabase {
       },
       from3To4: (m, schema) =>
           m.addColumn(schema.products, schema.products.imagePath),
+      from4To5: (m, schema) async {
+        final products = schema.products;
+        for (final column in [
+          products.energyKcal,
+          products.fat,
+          products.saturatedFat,
+          products.carbohydrates,
+          products.sugars,
+          products.protein,
+          products.salt,
+        ]) {
+          await m.addColumn(products, column);
+        }
+      },
     ),
     // SQLite enforces foreign keys only when this is set on each connection.
     beforeOpen: (_) => customStatement('PRAGMA foreign_keys = ON'),

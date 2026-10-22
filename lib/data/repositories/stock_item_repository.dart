@@ -1,7 +1,8 @@
 import 'package:drift/drift.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fridgo/data/database/app_database.dart';
-import 'package:fridgo/domain/product.dart';
+import 'package:fridgo/data/repositories/product_repository.dart';
+import 'package:fridgo/domain/nutrient.dart';
 import 'package:fridgo/domain/stock_item.dart';
 import 'package:fridgo/domain/stock_quantity.dart';
 import 'package:fridgo/domain/storage_location.dart';
@@ -16,6 +17,7 @@ class StockItemRepository {
     StockItemDraft draft, {
     required String productName,
     String? imagePath,
+    Map<Nutrient, double> nutritionFacts = const {},
   }) => _database.transaction(() async {
     final productId = const Uuid().v4();
     await _database
@@ -25,6 +27,13 @@ class StockItemRepository {
             id: productId,
             name: productName,
             imagePath: Value(imagePath),
+            energyKcal: Value(nutritionFacts[Nutrient.energy]),
+            fat: Value(nutritionFacts[Nutrient.fat]),
+            saturatedFat: Value(nutritionFacts[Nutrient.saturatedFat]),
+            carbohydrates: Value(nutritionFacts[Nutrient.carbohydrates]),
+            sugars: Value(nutritionFacts[Nutrient.sugars]),
+            protein: Value(nutritionFacts[Nutrient.protein]),
+            salt: Value(nutritionFacts[Nutrient.salt]),
           ),
         );
     return await addStockItemForProduct(productId, draft);
@@ -137,11 +146,7 @@ class StockItemRepository {
       bestBeforeDate: stockItem.bestBeforeDate,
       openedDate: stockItem.openedDate,
     ),
-    product: Product(
-      id: product.id,
-      name: product.name,
-      imagePath: product.imagePath,
-    ),
+    product: productFromRow(product),
     storageLocation: StorageLocation(
       id: storageLocation.id,
       homeId: storageLocation.homeId,

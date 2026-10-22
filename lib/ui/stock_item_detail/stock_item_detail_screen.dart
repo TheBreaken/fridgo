@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:fridgo/domain/calendar_date.dart';
 import 'package:fridgo/domain/expiry_status.dart';
+import 'package:fridgo/domain/nutrient.dart';
 import 'package:fridgo/domain/stock_item.dart';
 import 'package:fridgo/l10n/app_localizations.dart';
 import 'package:fridgo/ui/core/app_theme.dart';
@@ -10,6 +11,7 @@ import 'package:fridgo/ui/core/calendar_date_display.dart';
 import 'package:fridgo/ui/core/emoji.dart';
 import 'package:fridgo/ui/core/expiry_badge.dart';
 import 'package:fridgo/ui/core/image_placeholder.dart';
+import 'package:fridgo/ui/core/nutrient_display.dart';
 import 'package:fridgo/ui/core/product_thumbnail.dart';
 import 'package:fridgo/ui/core/stock_item_photo_hero.dart';
 import 'package:fridgo/ui/core/stock_unit_display.dart';
@@ -192,7 +194,83 @@ class _Details extends StatelessWidget {
             ),
           ),
         ),
+        if (product.nutritionFacts.isNotEmpty) ...[
+          const SizedBox(height: Spacing.l),
+          _NutritionFactsCard(nutritionFacts: product.nutritionFacts),
+        ],
       ],
+    );
+  }
+}
+
+class _NutritionFactsCard extends StatelessWidget {
+  const new({required this.nutritionFacts});
+
+  final Map<Nutrient, double> nutritionFacts;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final theme = Theme.of(context);
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(Spacing.l),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          spacing: Spacing.s,
+          children: [
+            Text(l10n.nutritionFactsTitle, style: theme.textTheme.titleMedium),
+            Text(
+              l10n.nutritionFactsReference,
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
+            for (final nutrient in Nutrient.values)
+              if (nutritionFacts[nutrient] case final value?)
+                _NutrientRow(nutrient: nutrient, value: value),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _NutrientRow extends StatelessWidget {
+  const new({required this.nutrient, required this.value});
+
+  final Nutrient nutrient;
+  final double value;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final theme = Theme.of(context);
+    return Padding(
+      padding: EdgeInsetsDirectional.only(
+        start: nutrient.isPartOfPrevious ? Spacing.l : 0,
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        spacing: Spacing.m,
+        children: [
+          Flexible(
+            child: Text(
+              nutrient.label(l10n),
+              style: theme.textTheme.bodyLarge?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ),
+          Flexible(
+            child: Text(
+              nutrient.formatValue(value, l10n),
+              textAlign: TextAlign.end,
+              style: theme.textTheme.titleMedium,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

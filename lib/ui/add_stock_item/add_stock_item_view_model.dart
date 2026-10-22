@@ -6,6 +6,7 @@ import 'package:fridgo/data/repositories/product_repository.dart';
 import 'package:fridgo/data/repositories/stock_item_repository.dart';
 import 'package:fridgo/data/repositories/storage_location_repository.dart';
 import 'package:fridgo/domain/calendar_date.dart';
+import 'package:fridgo/domain/nutrient.dart';
 import 'package:fridgo/domain/product.dart';
 import 'package:fridgo/domain/product_photo.dart';
 import 'package:fridgo/domain/product_search.dart';
@@ -32,6 +33,12 @@ class AddStockItemViewModel extends StreamNotifier<List<StorageLocation>> {
 
   double parseQuantity(String quantity) => parseQuantityInput(quantity);
 
+  bool isValidNutrient(String input, Nutrient nutrient) =>
+      isValidNutrientInput(input, nutrient);
+
+  double? parseNutrient(String input, Nutrient nutrient) =>
+      parseNutrientInput(input, nutrient);
+
   Future<String?> pickPhoto(PhotoSource source) =>
       ref.read(productImageRepositoryProvider).pickPhoto(source);
 
@@ -44,6 +51,7 @@ class AddStockItemViewModel extends StreamNotifier<List<StorageLocation>> {
     StockItemDraft draft, {
     required String productName,
     String? pickedPhotoPath,
+    Map<Nutrient, double> nutritionFacts = const {},
   }) async {
     if (!isValidName(productName)) {
       throw ArgumentError.value(
@@ -53,6 +61,7 @@ class AddStockItemViewModel extends StreamNotifier<List<StorageLocation>> {
       );
     }
     _checkQuantity(draft);
+    _checkNutritionFacts(nutritionFacts);
     final productImages = ref.read(productImageRepositoryProvider);
     final imagePath = pickedPhotoPath == null
         ? null
@@ -64,6 +73,7 @@ class AddStockItemViewModel extends StreamNotifier<List<StorageLocation>> {
             draft,
             productName: productName.trim(),
             imagePath: imagePath,
+            nutritionFacts: nutritionFacts,
           );
     } on Object {
       if (imagePath != null) await productImages.delete(imagePath);
@@ -84,6 +94,18 @@ class AddStockItemViewModel extends StreamNotifier<List<StorageLocation>> {
   void _checkQuantity(StockItemDraft draft) {
     if (draft.quantity <= 0) {
       throw ArgumentError.value(draft.quantity, 'quantity', 'must be above 0');
+    }
+  }
+
+  void _checkNutritionFacts(Map<Nutrient, double> nutritionFacts) {
+    for (final MapEntry(key: nutrient, :value) in nutritionFacts.entries) {
+      if (!nutrient.isValidValue(value)) {
+        throw ArgumentError.value(
+          value,
+          nutrient.name,
+          'must be from 0 to ${nutrient.maximum}',
+        );
+      }
     }
   }
 }

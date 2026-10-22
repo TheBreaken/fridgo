@@ -7,6 +7,7 @@ import 'package:fridgo/data/repositories/home_repository.dart';
 import 'package:fridgo/data/repositories/stock_item_repository.dart';
 import 'package:fridgo/data/repositories/storage_location_repository.dart';
 import 'package:fridgo/domain/calendar_date.dart';
+import 'package:fridgo/domain/nutrient.dart';
 import 'package:fridgo/domain/stock_item.dart';
 import 'package:fridgo/domain/storage_location.dart';
 
@@ -76,6 +77,28 @@ void main() {
     expect(listed.single.stockItem, stockItem);
     expect(listed.single.product.name, 'Milch');
   });
+
+  test(
+    'listed stock items carry the nutrition facts of their product',
+    () async {
+      final database = AppDatabase(NativeDatabase.memory());
+      addTearDown(database.close);
+      final repository = StockItemRepository(database);
+      final fridge = await _createStorageLocation(database);
+      await repository.addStockItemWithNewProduct(
+        _milk(fridge),
+        productName: 'Milch',
+        nutritionFacts: const {Nutrient.energy: 64, Nutrient.fat: 3.5},
+      );
+
+      final listed = await repository.watchStockItems(fridge.homeId).first;
+
+      expect(listed.single.product.nutritionFacts, {
+        Nutrient.energy: 64.0,
+        Nutrient.fat: 3.5,
+      });
+    },
+  );
 }
 
 void _inOneStorageLocation() {

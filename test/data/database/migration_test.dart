@@ -3,6 +3,7 @@ import 'package:drift_dev/api/migrations_native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:fridgo/data/database/app_database.dart';
 import 'package:fridgo/data/repositories/home_repository.dart';
+import 'package:fridgo/data/repositories/product_repository.dart';
 import 'package:fridgo/data/repositories/stock_item_repository.dart';
 import 'package:fridgo/data/repositories/storage_location_repository.dart';
 import 'package:fridgo/domain/home.dart';
@@ -18,22 +19,22 @@ const _productId = '3a2b1c0d-9e8f-4a7b-b6c5-d4e3f2a1b0c9';
 void main() {
   final verifier = SchemaVerifier(GeneratedHelper());
 
-  test('a new database matches the stored schema version 4', () async {
+  test('a new database matches the stored schema version 5', () async {
     final database = AppDatabase(NativeDatabase.memory());
     addTearDown(database.close);
 
-    await verifier.migrateAndValidate(database, 4);
+    await verifier.migrateAndValidate(database, 5);
   });
 
-  for (final version in [1, 2, 3]) {
+  for (final version in [1, 2, 3, 4]) {
     test(
-      'upgrading from version $version gives the stored schema version 4',
+      'upgrading from version $version gives the stored schema version 5',
       () async {
         final schema = await verifier.schemaAt(version);
         final database = AppDatabase(schema.newConnection());
         addTearDown(database.close);
 
-        await verifier.migrateAndValidate(database, 4);
+        await verifier.migrateAndValidate(database, 5);
       },
     );
   }
@@ -47,7 +48,7 @@ void main() {
     final database = AppDatabase(schema.newConnection());
     addTearDown(database.close);
 
-    await verifier.migrateAndValidate(database, 4);
+    await verifier.migrateAndValidate(database, 5);
 
     expect(await HomeRepository(database).watchHomes().first, [
       const Home(id: _homeId, name: 'Berlin'),
@@ -71,7 +72,7 @@ void main() {
       final database = AppDatabase(schema.newConnection());
       addTearDown(database.close);
 
-      await verifier.migrateAndValidate(database, 4);
+      await verifier.migrateAndValidate(database, 5);
 
       expect(
         await StorageLocationRepository(database)
@@ -122,7 +123,7 @@ void main() {
       final database = AppDatabase(schema.newConnection());
       addTearDown(database.close);
 
-      await verifier.migrateAndValidate(database, 4);
+      await verifier.migrateAndValidate(database, 5);
 
       final listed = await StockItemRepository(database)
           .watchStockItems(_homeId)
@@ -132,6 +133,29 @@ void main() {
         const Product(id: _productId, name: 'Nudeln'),
       );
       expect(listed.single.stockItem.quantity, 500);
+    },
+  );
+
+  test(
+    'upgrading from version 4 keeps the products without nutrition facts',
+    () async {
+      final schema = await verifier.schemaAt(4);
+      schema.rawDatabase.execute(
+        'INSERT INTO products (id, name, image_path) VALUES (?, ?, ?)',
+        [_productId, 'Nudeln', 'product_images/nudeln.jpg'],
+      );
+      final database = AppDatabase(schema.newConnection());
+      addTearDown(database.close);
+
+      await verifier.migrateAndValidate(database, 5);
+
+      expect(await ProductRepository(database).getProducts(), [
+        const Product(
+          id: _productId,
+          name: 'Nudeln',
+          imagePath: 'product_images/nudeln.jpg',
+        ),
+      ]);
     },
   );
 }

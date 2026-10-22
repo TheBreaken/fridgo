@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:fridgo/data/repositories/product_image_repository.dart';
 import 'package:fridgo/domain/calendar_date.dart';
 import 'package:fridgo/domain/home.dart';
+import 'package:fridgo/domain/nutrient.dart';
 import 'package:fridgo/domain/product.dart';
 import 'package:fridgo/domain/stock_item.dart';
 import 'package:fridgo/domain/storage_location.dart';
@@ -29,6 +30,7 @@ StockItemDetails _yoghurt({
   CalendarDate? bestBeforeDate,
   CalendarDate? openedDate,
   String? imagePath,
+  Map<Nutrient, double> nutritionFacts = const {},
 }) => StockItemDetails(
   stockItem: StockItem(
     id: _stockItemId,
@@ -39,7 +41,12 @@ StockItemDetails _yoghurt({
     bestBeforeDate: bestBeforeDate,
     openedDate: openedDate,
   ),
-  product: Product(id: 'product', name: 'Joghurt', imagePath: imagePath),
+  product: Product(
+    id: 'product',
+    name: 'Joghurt',
+    imagePath: imagePath,
+    nutritionFacts: nutritionFacts,
+  ),
   storageLocation: const StorageLocation(
     id: 'refrigerator',
     homeId: _homeId,
@@ -253,5 +260,44 @@ void main() {
     expect(find.byType(StockItemDetailScreen), findsNothing);
     expect(find.byType(StockItemCard), findsNothing);
     expect(find.text('Joghurt gelöscht'), findsOneWidget);
+  });
+
+  final shownNutrients = {
+    'energy in kcal and kJ': (
+      Nutrient.energy,
+      370.0,
+      'Brennwert',
+      '370 kcal · 1548 kJ',
+    ),
+    'fat with decimal comma': (Nutrient.fat, 3.5, 'Fett', '3,5 g'),
+    'a value of 0': (Nutrient.sugars, 0.0, 'davon Zucker', '0 g'),
+    'salt with three decimals': (Nutrient.salt, 0.125, 'Salz', '0,125 g'),
+  };
+  for (final MapEntry(key: description, value: (nutrient, amount, label, text))
+      in shownNutrients.entries) {
+    testWidgets('shows the nutrition facts: $description', (tester) async {
+      await _pumpDetails(tester, _yoghurt(nutritionFacts: {nutrient: amount}));
+
+      expect(find.text('Nährwerte'), findsOneWidget);
+      expect(_valueOfRow(label, text), findsOneWidget);
+    });
+  }
+
+  testWidgets('shows only the nutrients that have a value', (tester) async {
+    await _pumpDetails(
+      tester,
+      _yoghurt(nutritionFacts: const {Nutrient.protein: 4}),
+    );
+
+    expect(find.text('Eiweiß'), findsOneWidget);
+    expect(find.text('Fett'), findsNothing);
+    expect(find.text('Brennwert'), findsNothing);
+  });
+
+  testWidgets('a product without nutrition facts shows none', (tester) async {
+    await _pumpDetails(tester, _yoghurt());
+
+    expect(find.text('Nährwerte'), findsNothing);
+    expect(find.text('je 100 g bzw. 100 ml'), findsNothing);
   });
 }

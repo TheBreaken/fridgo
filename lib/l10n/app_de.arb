@@ -195,5 +195,47 @@
         "type": "String"
       }
     }
+  },
+  "nutritionFactsTitle": "Nährwerte",
+  "nutritionFactsOptionalTitle": "Nährwerte (optional)",
+  "nutritionFactsReference": "je 100 g bzw. 100 ml",
+  "nutrientEnergy": "Brennwert",
+  "nutrientFat": "Fett",
+  "nutrientSaturatedFat": "davon gesättigte Fettsäuren",
+  "nutrientCarbohydrates": "Kohlenhydrate",
+  "nutrientSugars": "davon Zucker",
+  "nutrientProtein": "Eiweiß",
+  "nutrientSalt": "Salz",
+  "nutrientUnitKilocalorie": "kcal",
+  "nutrientUnitGram": "g",
+  "nutrientAmount": "{amount} {unit}",
+  "@nutrientAmount": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      },
+      "unit": {
+        "type": "String"
+      }
+    }
+  },
+  "nutrientEnergyValue": "{kilocalories} · {kilojoules} kJ",
+  "@nutrientEnergyValue": {
+    "placeholders": {
+      "kilocalories": {
+        "type": "String"
+      },
+      "kilojoules": {
+        "type": "String"
+      }
+    }
+  },
+  "nutrientValueInvalid": "Bitte gib 0 bis {maximum} mit höchstens drei Nachkommastellen ein.",
+  "@nutrientValueInvalid": {
+    "placeholders": {
+      "maximum": {
+        "type": "String"
+      }
+    }
   }
 }
