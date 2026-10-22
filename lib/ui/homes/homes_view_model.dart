@@ -16,6 +16,21 @@ class HomesViewModel extends StreamNotifier<List<Home>> {
     await ref.read(homeRepositoryProvider).createHome(name.trim());
   }
 
+  Future<void> renameHome(Home home, String name) async {
+    if (!isValidName(name)) {
+      throw ArgumentError.value(name, 'name', 'must not be blank');
+    }
+    await ref
+        .read(homeRepositoryProvider)
+        .updateHome(home.copyWith(name: name.trim()));
+  }
+
+  Future<int> countStockItems(String homeId) =>
+      ref.read(homeRepositoryProvider).countStockItems(homeId);
+
+  Future<void> deleteHome(String homeId) =>
+      ref.read(homeRepositoryProvider).deleteHome(homeId);
+
   /// The last selected home if it still exists, otherwise the first one.
   Future<String?> findStartHomeId() async {
     final lastHomeId = await ref

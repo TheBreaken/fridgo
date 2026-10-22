@@ -7,22 +7,28 @@ import 'package:fridgo/ui/core/app_theme.dart';
 import 'package:fridgo/ui/core/storage_location_kind_display.dart';
 import 'package:fridgo/ui/storage_locations/storage_locations_view_model.dart';
 
+/// Creates a storage location, or edits [storageLocation] if given.
 Future<void> showCreateStorageLocationSheet(
   BuildContext context,
-  String homeId,
-) {
+  String homeId, {
+  StorageLocation? storageLocation,
+}) {
   return showModalBottomSheet<void>(
     context: context,
     isScrollControlled: true,
     showDragHandle: true,
-    builder: (context) => CreateStorageLocationSheet(homeId: homeId),
+    builder: (context) => CreateStorageLocationSheet(
+      homeId: homeId,
+      storageLocation: storageLocation,
+    ),
   );
 }
 
 class CreateStorageLocationSheet extends ConsumerStatefulWidget {
-  const new({required this.homeId, super.key});
+  const new({required this.homeId, this.storageLocation, super.key});
 
   final String homeId;
+  final StorageLocation? storageLocation;
 
   @override
   ConsumerState<CreateStorageLocationSheet> createState() =>
@@ -32,8 +38,11 @@ class CreateStorageLocationSheet extends ConsumerStatefulWidget {
 class _CreateStorageLocationSheetState
     extends ConsumerState<CreateStorageLocationSheet> {
   final _formKey = GlobalKey<FormState>();
-  final _nameController = TextEditingController();
-  StorageLocationKind _kind = StorageLocationKind.refrigerator;
+  late final _nameController = TextEditingController(
+    text: widget.storageLocation?.name,
+  );
+  late StorageLocationKind _kind =
+      widget.storageLocation?.kind ?? StorageLocationKind.refrigerator;
   bool _isSaving = false;
 
   StorageLocationsViewModel get _viewModel =>
@@ -66,7 +75,14 @@ class _CreateStorageLocationSheetState
   Future<void> _submit() async {
     if (_isSaving || !_formKey.currentState!.validate()) return;
     setState(() => _isSaving = true);
-    await _viewModel.createStorageLocation(_nameController.text, _kind);
+    final storageLocation = widget.storageLocation;
+    await (storageLocation == null
+        ? _viewModel.createStorageLocation(_nameController.text, _kind)
+        : _viewModel.updateStorageLocation(
+            storageLocation,
+            _nameController.text,
+            _kind,
+          ));
     if (mounted) Navigator.of(context).pop();
   }
 
@@ -74,6 +90,7 @@ class _CreateStorageLocationSheetState
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
+    final isEditing = widget.storageLocation != null;
     return Padding(
       padding: EdgeInsets.fromLTRB(
         Spacing.l,
@@ -89,7 +106,12 @@ class _CreateStorageLocationSheetState
           crossAxisAlignment: CrossAxisAlignment.stretch,
           spacing: Spacing.l,
           children: [
-            Text(l10n.addStorageLocation, style: theme.textTheme.titleLarge),
+            Text(
+              isEditing
+                  ? l10n.editStorageLocationTitle
+                  : l10n.addStorageLocation,
+              style: theme.textTheme.titleLarge,
+            ),
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               spacing: Spacing.s,
@@ -131,7 +153,11 @@ class _CreateStorageLocationSheetState
             ),
             FilledButton(
               onPressed: _isSaving ? null : _submit,
-              child: Text(l10n.createStorageLocation),
+              child: Text(
+                isEditing
+                    ? l10n.saveStorageLocation
+                    : l10n.createStorageLocation,
+              ),
             ),
           ],
         ),

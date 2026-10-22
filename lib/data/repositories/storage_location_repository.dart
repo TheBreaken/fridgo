@@ -33,6 +33,45 @@ class StorageLocationRepository {
     return storageLocation;
   }
 
+  Future<void> updateStorageLocation(StorageLocation storageLocation) async {
+    final updated = await _database
+        .update(_database.storageLocations)
+        .replace(
+          StorageLocationsCompanion.insert(
+            id: storageLocation.id,
+            homeId: storageLocation.homeId,
+            name: storageLocation.name,
+            kind: storageLocation.kind,
+          ),
+        );
+    if (!updated) {
+      throw StateError(
+        'No storage location with id ${storageLocation.id} to update',
+      );
+    }
+  }
+
+  Future<int> countStockItems(String storageLocationId) async {
+    final stockItems = _database.stockItems;
+    final count = stockItems.id.count();
+    final query = _database.selectOnly(stockItems)
+      ..addColumns([count])
+      ..where(stockItems.storageLocationId.equals(storageLocationId));
+    final row = await query.getSingle();
+    return row.read<int>(count)!;
+  }
+
+  /// Deletes the storage location with its stock items. The products stay.
+  Future<void> deleteStorageLocation(String id) =>
+      _database.transaction(() async {
+        await (_database.delete(
+          _database.stockItems,
+        )..where((stockItem) => stockItem.storageLocationId.equals(id))).go();
+        await (_database.delete(
+          _database.storageLocations,
+        )..where((storageLocation) => storageLocation.id.equals(id))).go();
+      });
+
   Stream<List<StorageLocation>> watchStorageLocations(String homeId) {
     final query = _database.select(_database.storageLocations)
       ..where((storageLocations) => storageLocations.homeId.equals(homeId))

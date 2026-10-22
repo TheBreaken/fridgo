@@ -34,6 +34,53 @@ class HomeRepository {
       ..where((homes) => homes.id.equals(id));
     return query.watchSingle().map((row) => Home(id: row.id, name: row.name));
   }
+
+  Future<void> updateHome(Home home) async {
+    final updated = await _database
+        .update(_database.homes)
+        .replace(HomesCompanion.insert(id: home.id, name: home.name));
+    if (!updated) {
+      throw StateError('No home with id ${home.id} to update');
+    }
+  }
+
+  Future<int> countStockItems(String homeId) async {
+    final stockItems = _database.stockItems;
+    final storageLocations = _database.storageLocations;
+    final count = stockItems.id.count();
+    final query =
+        _database.selectOnly(stockItems).join([
+            innerJoin(
+              storageLocations,
+              storageLocations.id.equalsExp(stockItems.storageLocationId),
+              useColumns: false,
+            ),
+          ])
+          ..addColumns([count])
+          ..where(storageLocations.homeId.equals(homeId));
+    final row = await query.getSingle();
+    return row.read<int>(count)!;
+  }
+
+  /// Deletes the home with its storage locations and their stock items. The
+  /// products stay.
+  Future<void> deleteHome(String id) => _database.transaction(() async {
+    final storageLocations = _database.storageLocations;
+    final storageLocationIds = _database.selectOnly(storageLocations)
+      ..addColumns([storageLocations.id])
+      ..where(storageLocations.homeId.equals(id));
+    await (_database.delete(_database.stockItems)..where(
+          (stockItem) =>
+              stockItem.storageLocationId.isInQuery(storageLocationIds),
+        ))
+        .go();
+    await (_database.delete(
+      storageLocations,
+    )..where((storageLocation) => storageLocation.homeId.equals(id))).go();
+    await (_database.delete(
+      _database.homes,
+    )..where((home) => home.id.equals(id))).go();
+  });
 }
 
 final homeRepositoryProvider = Provider<HomeRepository>(

@@ -189,4 +189,139 @@ void main() {
     expect(find.byType(StockOverviewScreen), findsOneWidget);
     expect(find.byType(StorageLocationsScreen), findsNothing);
   });
+
+  group('changing storage locations', _changingStorageLocations);
+}
+
+Future<void> _chooseFromMenu(WidgetTester tester, String action) async {
+  await tester.tap(find.byTooltip('Weitere Aktionen'));
+  await tester.pumpAndSettle();
+  await tester.tap(find.text(action));
+  await tester.pumpAndSettle();
+}
+
+Future<void> _createFridge(WidgetTester tester) async {
+  await _openSheetWithMainAction(tester);
+  await tester.tap(find.widgetWithText(FilledButton, 'Anlegen'));
+  await tester.pumpAndSettle();
+}
+
+Finder _cardText(String text) =>
+    find.descendant(of: find.byType(Card), matching: find.text(text));
+
+void _changingStorageLocations() {
+  testWidgets('editing starts with the current kind and name', (tester) async {
+    await _openStorageLocationsOfNewHome(tester);
+    await _openSheetWithMainAction(tester);
+    await tester.tap(find.widgetWithText(ChoiceChip, 'Keller'));
+    await tester.pump();
+    await _submitName(tester, 'Weinkeller');
+
+    await _chooseFromMenu(tester, 'Bearbeiten');
+
+    expect(find.text('Lagerort bearbeiten'), findsOneWidget);
+    expect(_nameField(tester), 'Weinkeller');
+    expect(
+      tester
+          .widget<ChoiceChip>(find.widgetWithText(ChoiceChip, 'Keller'))
+          .selected,
+      isTrue,
+    );
+  });
+
+  testWidgets('an edited storage location shows its new kind and name', (
+    tester,
+  ) async {
+    await _openStorageLocationsOfNewHome(tester);
+    await _createFridge(tester);
+    await _chooseFromMenu(tester, 'Bearbeiten');
+
+    await tester.tap(find.widgetWithText(ChoiceChip, 'Gefrierfach'));
+    await tester.pump();
+    await tester.tap(find.widgetWithText(FilledButton, 'Speichern'));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(CreateStorageLocationSheet), findsNothing);
+    expect(_cardText('Gefrierfach'), findsOneWidget);
+    expect(_cardText('Kühlschrank'), findsNothing);
+    expect(_cardEmoji(Emoji.iceCube), findsOneWidget);
+  });
+
+  testWidgets('editing to a blank name shows an error and keeps the name', (
+    tester,
+  ) async {
+    await _openStorageLocationsOfNewHome(tester);
+    await _createFridge(tester);
+    await _chooseFromMenu(tester, 'Bearbeiten');
+
+    await tester.enterText(find.byType(TextFormField), '');
+    await tester.tap(find.widgetWithText(FilledButton, 'Speichern'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Bitte gib einen Namen ein.'), findsOneWidget);
+    expect(find.byType(CreateStorageLocationSheet), findsOneWidget);
+    expect(_cardText('Kühlschrank'), findsOneWidget);
+  });
+
+  testWidgets('cancelling the delete keeps the storage location', (
+    tester,
+  ) async {
+    await _openStorageLocationsOfNewHome(tester);
+    await _createFridge(tester);
+    await _chooseFromMenu(tester, 'Löschen');
+
+    await tester.tap(find.widgetWithText(TextButton, 'Abbrechen'));
+    await tester.pumpAndSettle();
+
+    expect(_cardText('Kühlschrank'), findsOneWidget);
+  });
+
+  testWidgets('deleting an empty storage location says it holds no stock', (
+    tester,
+  ) async {
+    await _openStorageLocationsOfNewHome(tester);
+    await _createFridge(tester);
+
+    await _chooseFromMenu(tester, 'Löschen');
+
+    expect(find.text('Kühlschrank löschen?'), findsOneWidget);
+    expect(
+      find.text(
+        'Bestände liegen keine darin. Die Produkte bleiben in den Vorschlägen.',
+      ),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('deleting a storage location names and removes its stock', (
+    tester,
+  ) async {
+    await pumpApp(tester, now: DateTime(2026, 10, 22, 9));
+    await createHomeAndOpenIt(tester, 'Berlin');
+    await createStorageLocationAndReturn(tester, 'Kühlschrank');
+    await addStockItem(tester, name: 'Milch', quantity: '1');
+    await tester.tap(find.byTooltip('Lagerorte'));
+    await tester.pumpAndSettle();
+    await _chooseFromMenu(tester, 'Löschen');
+
+    expect(
+      find.text(
+        'Auch 1 Bestand darin wird gelöscht. Die Produkte bleiben in den '
+        'Vorschlägen.',
+      ),
+      findsOneWidget,
+    );
+
+    await tester.tap(find.widgetWithText(TextButton, 'Löschen'));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(EmptyState), findsOneWidget);
+    expect(find.text('Kühlschrank gelöscht'), findsOneWidget);
+
+    await tester.tap(find.byType(BackButton));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Milch'), findsNothing);
+    expect(find.text('Noch kein Lagerort'), findsOneWidget);
+  });
 }
