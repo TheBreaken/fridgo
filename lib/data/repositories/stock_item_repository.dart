@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fridgo/data/database/app_database.dart';
 import 'package:fridgo/data/repositories/product_repository.dart';
 import 'package:fridgo/domain/nutrient.dart';
+import 'package:fridgo/domain/product.dart';
 import 'package:fridgo/domain/stock_item.dart';
 import 'package:fridgo/domain/stock_quantity.dart';
 import 'package:fridgo/domain/storage_location.dart';
@@ -23,17 +24,13 @@ class StockItemRepository {
     await _database
         .into(_database.products)
         .insert(
-          ProductsCompanion.insert(
-            id: productId,
-            name: productName,
-            imagePath: Value(imagePath),
-            energyKcal: Value(nutritionFacts[Nutrient.energy]),
-            fat: Value(nutritionFacts[Nutrient.fat]),
-            saturatedFat: Value(nutritionFacts[Nutrient.saturatedFat]),
-            carbohydrates: Value(nutritionFacts[Nutrient.carbohydrates]),
-            sugars: Value(nutritionFacts[Nutrient.sugars]),
-            protein: Value(nutritionFacts[Nutrient.protein]),
-            salt: Value(nutritionFacts[Nutrient.salt]),
+          productToCompanion(
+            Product(
+              id: productId,
+              name: productName,
+              imagePath: imagePath,
+              nutritionFacts: nutritionFacts,
+            ),
           ),
         );
     return await addStockItemForProduct(productId, draft);

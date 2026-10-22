@@ -9,12 +9,14 @@ class NutritionFactsSection extends StatelessWidget {
     required this.expansibleController,
     required this.controllers,
     required this.isValidInput,
+    this.initiallyExpanded = false,
     super.key,
   });
 
   final ExpansibleController expansibleController;
   final Map<Nutrient, TextEditingController> controllers;
   final bool Function(String input, Nutrient nutrient) isValidInput;
+  final bool initiallyExpanded;
 
   @override
   Widget build(BuildContext context) {
@@ -23,6 +25,7 @@ class NutritionFactsSection extends StatelessWidget {
       clipBehavior: Clip.antiAlias,
       child: ExpansionTile(
         controller: expansibleController,
+        initiallyExpanded: initiallyExpanded,
         // Collapsed fields must stay built, or Form.validate skips them.
         maintainState: true,
         shape: const Border(),

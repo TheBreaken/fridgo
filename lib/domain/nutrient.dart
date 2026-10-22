@@ -37,3 +37,15 @@ double? parseNutrientInput(String input, Nutrient nutrient) {
   }
   return tryParseDecimalInput(input);
 }
+
+void checkNutritionFacts(Map<Nutrient, double> nutritionFacts) {
+  for (final MapEntry(key: nutrient, :value) in nutritionFacts.entries) {
+    if (!nutrient.isValidValue(value)) {
+      throw ArgumentError.value(
+        value,
+        nutrient.name,
+        'must be from 0 to ${nutrient.maximum}',
+      );
+    }
+  }
+}

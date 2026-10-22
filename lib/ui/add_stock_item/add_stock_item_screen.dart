@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -9,13 +11,13 @@ import 'package:fridgo/domain/stock_item.dart';
 import 'package:fridgo/domain/storage_location.dart';
 import 'package:fridgo/l10n/app_localizations.dart';
 import 'package:fridgo/ui/add_stock_item/add_stock_item_view_model.dart';
-import 'package:fridgo/ui/add_stock_item/nutrition_facts_section.dart';
 import 'package:fridgo/ui/add_stock_item/product_name_field.dart';
-import 'package:fridgo/ui/add_stock_item/product_photo_field.dart';
 import 'package:fridgo/ui/add_stock_item/selected_product_card.dart';
 import 'package:fridgo/ui/core/app_theme.dart';
 import 'package:fridgo/ui/core/calendar_date_field.dart';
 import 'package:fridgo/ui/core/choice_section.dart';
+import 'package:fridgo/ui/core/nutrition_facts_section.dart';
+import 'package:fridgo/ui/core/product_photo_field.dart';
 import 'package:fridgo/ui/core/stock_unit_display.dart';
 import 'package:fridgo/ui/core/storage_location_kind_display.dart';
 import 'package:go_router/go_router.dart';
@@ -104,6 +106,21 @@ class _AddStockItemScreenState extends ConsumerState<AddStockItemScreen> {
     _pickedPhotoPath = null;
   });
 
+  Future<void> _editSelectedProduct(Product product) async {
+    final deleted = await context.push<bool>('/products/${product.id}');
+    if (deleted ?? false) {
+      if (mounted) _clearSelectedProduct();
+      return;
+    }
+    final edited = await _viewModel.getProduct(product.id);
+    if (!mounted) return;
+    if (edited == null) {
+      _clearSelectedProduct();
+    } else {
+      setState(() => _selectedProduct = edited);
+    }
+  }
+
   void _clearSelectedProduct() => setState(() {
     _selectedProduct = null;
     _nameController.clear();
@@ -129,19 +146,7 @@ class _AddStockItemScreenState extends ConsumerState<AddStockItemScreen> {
       final path = await _viewModel.pickPhoto(source);
       if (path != null && mounted) setState(() => _pickedPhotoPath = path);
     } on PhotoPickException catch (error) {
-      if (!mounted) return;
-      final l10n = AppLocalizations.of(context);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(switch (error) {
-            PhotoAccessDeniedException(source: PhotoSource.camera) =>
-              l10n.productPhotoCameraAccessDenied,
-            PhotoAccessDeniedException(source: PhotoSource.gallery) =>
-              l10n.productPhotoGalleryAccessDenied,
-            PhotoUnavailableException() => l10n.productPhotoUnavailable,
-          }),
-        ),
-      );
+      if (mounted) showPhotoPickError(context, error);
     }
   }
 
@@ -151,6 +156,7 @@ class _AddStockItemScreenState extends ConsumerState<AddStockItemScreen> {
       return SelectedProductCard(
         key: ValueKey(selectedProduct.id),
         product: selectedProduct,
+        onEdit: () => _editSelectedProduct(selectedProduct),
         onCleared: _clearSelectedProduct,
       );
     }
@@ -158,7 +164,13 @@ class _AddStockItemScreenState extends ConsumerState<AddStockItemScreen> {
       key: const ValueKey('newProduct'),
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        ProductPhotoField(photoPath: _pickedPhotoPath, onTap: _changePhoto),
+        ProductPhotoField(
+          photo: switch (_pickedPhotoPath) {
+            final path? => File(path),
+            null => null,
+          },
+          onTap: _changePhoto,
+        ),
         const SizedBox(height: Spacing.xl),
         ProductNameField(
           controller: _nameController,

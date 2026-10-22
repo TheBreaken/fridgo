@@ -296,7 +296,7 @@
     "title": "Produkt bearbeiten",
     "type": "feat",
     "priority": "medium",
-    "status": "open",
+    "status": "done",
     "dependsOn": ["T010", "T019"],
     "description": "Ziel: Name, Foto und Nährwerte eines Produkts lassen sich nachträglich ändern. Die Änderung gilt für alle Bestände dieses Produkts.\n\nZu klären: Wie erreicht man ein Produkt ohne Bestand, und lässt es sich löschen?",
     "acceptanceCriteria": [

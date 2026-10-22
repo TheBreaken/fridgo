@@ -4,6 +4,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:fridgo/domain/calendar_date.dart';
 import 'package:fridgo/domain/expiry_status.dart';
 import 'package:fridgo/domain/nutrient.dart';
+import 'package:fridgo/domain/product.dart';
 import 'package:fridgo/domain/stock_item.dart';
 import 'package:fridgo/l10n/app_localizations.dart';
 import 'package:fridgo/ui/core/app_theme.dart';
@@ -60,6 +61,7 @@ class StockItemDetailScreen extends ConsumerWidget {
           details: value,
           homeName: homeName,
           today: ref.watch(todayProvider),
+          onEditProduct: () => _editProduct(context, value.product),
           onMarkedOpened: () => ref
               .read(stockItemDetailViewModelProvider)
               .markOpenedToday(value.stockItem),
@@ -67,6 +69,12 @@ class StockItemDetailScreen extends ConsumerWidget {
         _ => const SizedBox.shrink(),
       },
     );
+  }
+
+  Future<void> _editProduct(BuildContext context, Product product) async {
+    final deleted = await context.push<bool>('/products/${product.id}');
+    // The product took this stock item with it.
+    if ((deleted ?? false) && context.mounted) context.pop();
   }
 
   Future<void> _delete(
@@ -115,12 +123,14 @@ class _Details extends StatelessWidget {
     required this.details,
     required this.homeName,
     required this.today,
+    required this.onEditProduct,
     required this.onMarkedOpened,
   });
 
   final StockItemDetails details;
   final String homeName;
   final CalendarDate today;
+  final VoidCallback onEditProduct;
   final VoidCallback onMarkedOpened;
 
   @override
@@ -140,7 +150,22 @@ class _Details extends StatelessWidget {
           child: _ProductPhoto(imagePath: product.imagePath),
         ),
         const SizedBox(height: Spacing.l),
-        Text(product.name, style: Theme.of(context).textTheme.titleLarge),
+        Row(
+          spacing: Spacing.s,
+          children: [
+            Expanded(
+              child: Text(
+                product.name,
+                style: Theme.of(context).textTheme.titleLarge,
+              ),
+            ),
+            IconButton(
+              onPressed: onEditProduct,
+              tooltip: l10n.editProduct,
+              icon: const Icon(Icons.edit_rounded),
+            ),
+          ],
+        ),
         if (expiryBadge != null) ...[
           const SizedBox(height: Spacing.s),
           Align(

@@ -17,3 +17,5 @@ abstract class Product with _$Product {
     @Default(<Nutrient, double>{}) Map<Nutrient, double> nutritionFacts,
   }) = _Product;
 }
+
+bool isValidProductName(String name) => name.trim().isNotEmpty;
