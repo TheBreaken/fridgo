@@ -73,8 +73,30 @@
   "stockItemDetailBestBeforeLabel": "MHD",
   "stockItemDetailNoBestBeforeDate": "Nicht angegeben",
   "stockItemDetailOpenedLabel": "Geöffnet",
-  "stockItemDetailNotOpened": "Noch nicht",
   "stockItemDetailHomeLabel": "Wohnung",
+  "markOpenedToday": "Heute geöffnet",
+  "editStockItem": "Bearbeiten",
+  "editStockItemTitle": "Bestand bearbeiten",
+  "saveStockItem": "Speichern",
+  "deleteStockItem": "Löschen",
+  "deleteStockItemTitle": "{product} löschen?",
+  "@deleteStockItemTitle": {
+    "placeholders": {
+      "product": {
+        "type": "String"
+      }
+    }
+  },
+  "deleteStockItemMessage": "Der Bestand verschwindet aus der Wohnung. Das Produkt bleibt erhalten, du kannst es später wieder eintragen.",
+  "cancel": "Abbrechen",
+  "stockItemDeleted": "{product} gelöscht",
+  "@stockItemDeleted": {
+    "placeholders": {
+      "product": {
+        "type": "String"
+      }
+    }
+  },
   "clearDate": "Datum entfernen",
   "createStockItem": "Hinzufügen",
   "consumeStockItem": "Verbrauchen",

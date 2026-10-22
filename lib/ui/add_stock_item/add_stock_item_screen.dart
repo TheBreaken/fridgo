@@ -12,7 +12,8 @@ import 'package:fridgo/ui/add_stock_item/product_name_field.dart';
 import 'package:fridgo/ui/add_stock_item/product_photo_field.dart';
 import 'package:fridgo/ui/add_stock_item/selected_product_card.dart';
 import 'package:fridgo/ui/core/app_theme.dart';
-import 'package:fridgo/ui/core/calendar_date_display.dart';
+import 'package:fridgo/ui/core/calendar_date_field.dart';
+import 'package:fridgo/ui/core/choice_section.dart';
 import 'package:fridgo/ui/core/stock_unit_display.dart';
 import 'package:fridgo/ui/core/storage_location_kind_display.dart';
 import 'package:go_router/go_router.dart';
@@ -27,9 +28,6 @@ class AddStockItemScreen extends ConsumerStatefulWidget {
 }
 
 class _AddStockItemScreenState extends ConsumerState<AddStockItemScreen> {
-  static final _firstPickableDate = DateTime(2000);
-  static final _lastPickableDate = DateTime(2100);
-
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
   final _quantityController = TextEditingController(text: '1');
@@ -175,7 +173,7 @@ class _AddStockItemScreenState extends ConsumerState<AddStockItemScreen> {
                 ),
               ),
               const SizedBox(height: Spacing.xl),
-              _ChoiceSection(
+              ChoiceSection(
                 label: l10n.stockItemStorageLocationLabel,
                 children: [
                   for (final storageLocation in storageLocations)
@@ -203,7 +201,7 @@ class _AddStockItemScreenState extends ConsumerState<AddStockItemScreen> {
                     : l10n.stockItemQuantityInvalid,
               ),
               const SizedBox(height: Spacing.m),
-              _ChoiceSection(
+              ChoiceSection(
                 label: l10n.stockItemUnitLabel,
                 children: [
                   for (final unit in StockUnit.values)
@@ -216,24 +214,21 @@ class _AddStockItemScreenState extends ConsumerState<AddStockItemScreen> {
                 ],
               ),
               const SizedBox(height: Spacing.xl),
-              _DateField(
+              CalendarDateField(
                 label: l10n.stockItemBestBeforeDateLabel,
                 emptyText: l10n.stockItemWithoutBestBeforeDate,
                 icon: Icons.event_rounded,
                 date: _bestBeforeDate,
                 initialPickerDate: today,
-                firstDate: _firstPickableDate,
-                lastDate: _lastPickableDate,
                 onChanged: (date) => setState(() => _bestBeforeDate = date),
               ),
               const SizedBox(height: Spacing.l),
-              _DateField(
+              CalendarDateField(
                 label: l10n.stockItemOpenedDateLabel,
                 emptyText: l10n.stockItemNotOpened,
                 icon: Icons.lock_open_rounded,
                 date: _openedDate,
                 initialPickerDate: today,
-                firstDate: _firstPickableDate,
                 lastDate: today,
                 onChanged: (date) => setState(() => _openedDate = date),
               ),
@@ -248,25 +243,6 @@ class _AddStockItemScreenState extends ConsumerState<AddStockItemScreen> {
           ),
         ),
       ),
-    );
-  }
-}
-
-class _ChoiceSection extends StatelessWidget {
-  const new({required this.label, required this.children});
-
-  final String label;
-  final List<Widget> children;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      spacing: Spacing.s,
-      children: [
-        Text(label, style: Theme.of(context).textTheme.labelLarge),
-        Wrap(spacing: Spacing.s, runSpacing: Spacing.s, children: children),
-      ],
     );
   }
 }
@@ -293,90 +269,6 @@ class _StorageLocationChip extends StatelessWidget {
       label: Text(storageLocation.name),
       selected: selected,
       onSelected: (_) => onSelected(),
-    );
-  }
-}
-
-class _DateField extends StatefulWidget {
-  const new({
-    required this.label,
-    required this.emptyText,
-    required this.icon,
-    required this.date,
-    required this.initialPickerDate,
-    required this.firstDate,
-    required this.lastDate,
-    required this.onChanged,
-  });
-
-  final String label;
-  final String emptyText;
-  final IconData icon;
-  final CalendarDate? date;
-  final DateTime initialPickerDate;
-  final DateTime firstDate;
-  final DateTime lastDate;
-  final ValueChanged<CalendarDate?> onChanged;
-
-  @override
-  State<_DateField> createState() => _DateFieldState();
-}
-
-class _DateFieldState extends State<_DateField> {
-  final _controller = TextEditingController();
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    _showDate();
-  }
-
-  @override
-  void didUpdateWidget(_DateField oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    _showDate();
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  void _showDate() {
-    _controller.text = widget.date?.format(AppLocalizations.of(context)) ?? '';
-  }
-
-  Future<void> _pick() async {
-    final picked = await showDatePicker(
-      context: context,
-      initialDate: widget.date?.toDateTime() ?? widget.initialPickerDate,
-      firstDate: widget.firstDate,
-      lastDate: widget.lastDate,
-    );
-    if (picked != null) widget.onChanged(CalendarDate.fromDateTime(picked));
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    return TextField(
-      controller: _controller,
-      readOnly: true,
-      onTap: _pick,
-      decoration: InputDecoration(
-        labelText: widget.label,
-        hintText: widget.emptyText,
-        floatingLabelBehavior: FloatingLabelBehavior.always,
-        prefixIcon: Icon(widget.icon),
-        suffixIcon: widget.date == null
-            ? null
-            : IconButton(
-                onPressed: () => widget.onChanged(null),
-                tooltip: l10n.clearDate,
-                icon: const Icon(Icons.close_rounded),
-              ),
-      ),
     );
   }
 }

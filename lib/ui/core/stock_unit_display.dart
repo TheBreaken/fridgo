@@ -13,7 +13,7 @@ extension StockUnitDisplay on StockUnit {
   };
 
   String formatQuantity(double quantity, AppLocalizations l10n) {
-    final number = NumberFormat('0.###', l10n.localeName).format(quantity);
+    final number = formatQuantityNumber(quantity, l10n);
     return switch (this) {
       StockUnit.piece => l10n.stockQuantityPiece(number),
       StockUnit.gram => l10n.stockQuantityGram(number),
@@ -24,3 +24,7 @@ extension StockUnitDisplay on StockUnit {
     };
   }
 }
+
+/// The bare number, as the quantity fields accept it.
+String formatQuantityNumber(double quantity, AppLocalizations l10n) =>
+    NumberFormat('0.###', l10n.localeName).format(quantity);

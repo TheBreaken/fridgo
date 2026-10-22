@@ -265,7 +265,7 @@
     "title": "Bestand bearbeiten, als geöffnet markieren und löschen",
     "type": "feat",
     "priority": "medium",
-    "status": "open",
+    "status": "done",
     "dependsOn": ["T017"],
     "description": "Ziel: In der Detailansicht lassen sich Menge, Einheit, MHD und Öffnungsdatum ändern, der Bestand als heute geöffnet markieren und ein falsch angelegter Bestand löschen.\n\nAbgrenzung: Den Lagerort zu ändern ist Verschieben und steht in `CLAUDE.md` unter Später.",
     "acceptanceCriteria": [

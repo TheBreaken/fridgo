@@ -17,6 +17,7 @@ import 'package:fridgo/ui/core/storage_location_kind_display.dart';
 import 'package:fridgo/ui/stock_item_detail/stock_item_detail_view_model.dart';
 import 'package:fridgo/ui/stock_overview/stock_overview_view_model.dart';
 import 'package:fridgo/ui/storage_locations/storage_locations_view_model.dart';
+import 'package:go_router/go_router.dart';
 
 class StockItemDetailScreen extends ConsumerWidget {
   const new({required this.homeId, required this.stockItemId, super.key});
@@ -30,8 +31,26 @@ class StockItemDetailScreen extends ConsumerWidget {
       stockItemDetailsProvider((homeId: homeId, stockItemId: stockItemId)),
     );
     final homeName = ref.watch(homeProvider(homeId)).value?.name ?? '';
+    final l10n = AppLocalizations.of(context);
+    final shownDetails = details.value;
     return Scaffold(
-      appBar: AppBar(),
+      appBar: AppBar(
+        actions: [
+          if (shownDetails != null) ...[
+            IconButton(
+              onPressed: () =>
+                  context.go('/homes/$homeId/stock-items/$stockItemId/edit'),
+              tooltip: l10n.editStockItem,
+              icon: const Icon(Icons.edit_rounded),
+            ),
+            IconButton(
+              onPressed: () => _delete(context, ref, shownDetails),
+              tooltip: l10n.deleteStockItem,
+              icon: const Icon(Icons.delete_rounded),
+            ),
+          ],
+        ],
+      ),
       body: switch (details) {
         AsyncError(:final error, :final stackTrace) =>
           Error.throwWithStackTrace(error, stackTrace),
@@ -39,10 +58,53 @@ class StockItemDetailScreen extends ConsumerWidget {
           details: value,
           homeName: homeName,
           today: ref.watch(todayProvider),
+          onMarkedOpened: () => ref
+              .read(stockItemDetailViewModelProvider)
+              .markOpenedToday(value.stockItem),
         ),
         _ => const SizedBox.shrink(),
       },
     );
+  }
+
+  Future<void> _delete(
+    BuildContext context,
+    WidgetRef ref,
+    StockItemDetails details,
+  ) async {
+    final l10n = AppLocalizations.of(context);
+    final productName = details.product.name;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(l10n.deleteStockItemTitle(productName)),
+        content: Text(l10n.deleteStockItemMessage),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: Text(l10n.cancel),
+          ),
+          TextButton(
+            style: TextButton.styleFrom(
+              foregroundColor: Theme.of(context).colorScheme.error,
+            ),
+            onPressed: () => Navigator.of(context).pop(true),
+            child: Text(l10n.deleteStockItem),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !context.mounted) return;
+    final messenger = ScaffoldMessenger.of(context);
+    final viewModel = ref.read(stockItemDetailViewModelProvider);
+    // Back first, so the overview shows its card leaving.
+    context.pop();
+    await viewModel.delete(details.stockItem);
+    messenger
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(content: Text(l10n.stockItemDeleted(productName))),
+      );
   }
 }
 
@@ -51,11 +113,13 @@ class _Details extends StatelessWidget {
     required this.details,
     required this.homeName,
     required this.today,
+    required this.onMarkedOpened,
   });
 
   final StockItemDetails details;
   final String homeName;
   final CalendarDate today;
+  final VoidCallback onMarkedOpened;
 
   @override
   Widget build(BuildContext context) {
@@ -91,33 +155,38 @@ class _Details extends StatelessWidget {
                 _DetailRow(
                   leading: const Icon(Icons.scale_rounded),
                   label: l10n.stockItemQuantityLabel,
-                  value: stockItem.unit.formatQuantity(
-                    stockItem.quantity,
-                    l10n,
+                  value: _DetailValue(
+                    stockItem.unit.formatQuantity(stockItem.quantity, l10n),
                   ),
                 ),
                 _DetailRow(
                   leading: const Icon(Icons.event_rounded),
                   label: l10n.stockItemDetailBestBeforeLabel,
-                  value:
-                      bestBeforeDate?.format(l10n) ??
-                      l10n.stockItemDetailNoBestBeforeDate,
+                  value: _DetailValue(
+                    bestBeforeDate?.format(l10n) ??
+                        l10n.stockItemDetailNoBestBeforeDate,
+                  ),
                 ),
                 _DetailRow(
                   leading: const Icon(Icons.lock_open_rounded),
                   label: l10n.stockItemDetailOpenedLabel,
-                  value:
-                      openedDate?.format(l10n) ?? l10n.stockItemDetailNotOpened,
+                  value: openedDate == null
+                      ? FilledButton.tonalIcon(
+                          onPressed: onMarkedOpened,
+                          icon: const Icon(Icons.lock_open_rounded),
+                          label: Text(l10n.markOpenedToday),
+                        )
+                      : _DetailValue(openedDate.format(l10n)),
                 ),
                 _DetailRow(
                   leading: _EmojiIcon(storageLocation.kind.emoji),
                   label: l10n.stockItemStorageLocationLabel,
-                  value: storageLocation.name,
+                  value: _DetailValue(storageLocation.name),
                 ),
                 _DetailRow(
                   leading: const _EmojiIcon(Emoji.house),
                   label: l10n.stockItemDetailHomeLabel,
-                  value: homeName,
+                  value: _DetailValue(homeName),
                 ),
               ],
             ),
@@ -219,7 +288,7 @@ class _DetailRow extends StatelessWidget {
 
   final Widget leading;
   final String label;
-  final String value;
+  final Widget value;
 
   @override
   Widget build(BuildContext context) {
@@ -244,14 +313,28 @@ class _DetailRow extends StatelessWidget {
             ),
           ),
           Expanded(
-            child: Text(
-              value,
-              textAlign: TextAlign.end,
-              style: theme.textTheme.titleMedium,
+            child: Align(
+              alignment: AlignmentDirectional.centerEnd,
+              child: value,
             ),
           ),
         ],
       ),
+    );
+  }
+}
+
+class _DetailValue extends StatelessWidget {
+  const new(this.text);
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      text,
+      textAlign: TextAlign.end,
+      style: Theme.of(context).textTheme.titleMedium,
     );
   }
 }
