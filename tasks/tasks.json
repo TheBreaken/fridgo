@@ -281,7 +281,7 @@
     "title": "Nährwerte am Produkt erfassen und anzeigen",
     "type": "feat",
     "priority": "medium",
-    "status": "open",
+    "status": "done",
     "dependsOn": ["T017"],
     "description": "Ziel: Ein Produkt bekommt optionale Nährwerte je 100 g oder 100 ml. Sie lassen sich beim Anlegen erfassen und stehen in der Detailansicht.\n\nAbgrenzung: Keine Tagesbilanz, kein Kalorientracker.\n\nZu klären: Welche Werte? Vorschlag: Brennwert, Fett, Kohlenhydrate, Zucker, Eiweiß und Salz, weil Open Food Facts sie verlässlich liefert. Vitamine ja oder nein?",
     "acceptanceCriteria": [

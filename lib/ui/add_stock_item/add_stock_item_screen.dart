@@ -2,12 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:fridgo/domain/calendar_date.dart';
+import 'package:fridgo/domain/nutrient.dart';
 import 'package:fridgo/domain/product.dart';
 import 'package:fridgo/domain/product_photo.dart';
 import 'package:fridgo/domain/stock_item.dart';
 import 'package:fridgo/domain/storage_location.dart';
 import 'package:fridgo/l10n/app_localizations.dart';
 import 'package:fridgo/ui/add_stock_item/add_stock_item_view_model.dart';
+import 'package:fridgo/ui/add_stock_item/nutrition_facts_section.dart';
 import 'package:fridgo/ui/add_stock_item/product_name_field.dart';
 import 'package:fridgo/ui/add_stock_item/product_photo_field.dart';
 import 'package:fridgo/ui/add_stock_item/selected_product_card.dart';
@@ -31,6 +33,10 @@ class _AddStockItemScreenState extends ConsumerState<AddStockItemScreen> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
   final _quantityController = TextEditingController(text: '1');
+  final _nutritionFactsExpansion = ExpansibleController();
+  final Map<Nutrient, TextEditingController> _nutrientControllers = {
+    for (final nutrient in Nutrient.values) nutrient: TextEditingController(),
+  };
   String? _storageLocationId;
   StockUnit _unit = StockUnit.piece;
   CalendarDate? _bestBeforeDate;
@@ -46,11 +52,21 @@ class _AddStockItemScreenState extends ConsumerState<AddStockItemScreen> {
   void dispose() {
     _nameController.dispose();
     _quantityController.dispose();
+    _nutritionFactsExpansion.dispose();
+    for (final controller in _nutrientControllers.values) {
+      controller.dispose();
+    }
     super.dispose();
   }
 
   Future<void> _submit(String storageLocationId) async {
-    if (_isSaving || !_formKey.currentState!.validate()) return;
+    if (_isSaving) return;
+    if (!_formKey.currentState!.validate()) {
+      if (_selectedProduct == null && _hasInvalidNutrient) {
+        _nutritionFactsExpansion.expand();
+      }
+      return;
+    }
     setState(() => _isSaving = true);
     final draft = StockItemDraft(
       storageLocationId: storageLocationId,
@@ -65,12 +81,23 @@ class _AddStockItemScreenState extends ConsumerState<AddStockItemScreen> {
         draft,
         productName: _nameController.text,
         pickedPhotoPath: _pickedPhotoPath,
+        nutritionFacts: _nutritionFacts,
       );
     } else {
       await _viewModel.addStockItemForProduct(selectedProduct.id, draft);
     }
     if (mounted) context.pop();
   }
+
+  bool get _hasInvalidNutrient => _nutrientControllers.entries.any(
+    (entry) => !_viewModel.isValidNutrient(entry.value.text, entry.key),
+  );
+
+  Map<Nutrient, double> get _nutritionFacts => {
+    for (final MapEntry(key: nutrient, value: controller)
+        in _nutrientControllers.entries)
+      nutrient: ?_viewModel.parseNutrient(controller.text, nutrient),
+  };
 
   void _selectProduct(Product product) => setState(() {
     _selectedProduct = product;
@@ -232,6 +259,14 @@ class _AddStockItemScreenState extends ConsumerState<AddStockItemScreen> {
                 lastDate: today,
                 onChanged: (date) => setState(() => _openedDate = date),
               ),
+              if (_selectedProduct == null) ...[
+                const SizedBox(height: Spacing.xl),
+                NutritionFactsSection(
+                  expansibleController: _nutritionFactsExpansion,
+                  controllers: _nutrientControllers,
+                  isValidInput: _viewModel.isValidNutrient,
+                ),
+              ],
               const SizedBox(height: Spacing.xxl),
               FilledButton(
                 onPressed: _isSaving || selectedStorageLocationId == null

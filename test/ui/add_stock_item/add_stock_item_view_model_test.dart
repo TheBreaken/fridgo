@@ -8,6 +8,7 @@ import 'package:fridgo/data/repositories/product_image_repository.dart';
 import 'package:fridgo/data/repositories/stock_item_repository.dart';
 import 'package:fridgo/data/repositories/storage_location_repository.dart';
 import 'package:fridgo/domain/calendar_date.dart';
+import 'package:fridgo/domain/nutrient.dart';
 import 'package:fridgo/domain/stock_item.dart';
 import 'package:fridgo/domain/storage_location.dart';
 import 'package:fridgo/ui/add_stock_item/add_stock_item_view_model.dart';
@@ -327,4 +328,52 @@ void main() {
 
     expect(storageLocations, [berlinFridge]);
   });
+
+  test('adding stores the nutrition facts at the new product', () async {
+    final container = _createContainer();
+    final fridge = await _createFridge(container);
+
+    await _viewModel(container, fridge.homeId).addStockItemWithNewProduct(
+      _draft(fridge),
+      productName: 'Milch',
+      nutritionFacts: const {Nutrient.energy: 64, Nutrient.fat: 0},
+    );
+
+    final stored = await _stored(container, fridge.homeId);
+    expect(stored.single.product.nutritionFacts, {
+      Nutrient.energy: 64.0,
+      Nutrient.fat: 0.0,
+    });
+  });
+
+  final rejectedNutritionFacts = {
+    'a negative fat value': (Nutrient.fat, -0.1),
+    'more than 100 g of sugars': (Nutrient.sugars, 100.5),
+    'more than 900 kcal': (Nutrient.energy, 901.0),
+  };
+  for (final MapEntry(key: description, value: (nutrient, value))
+      in rejectedNutritionFacts.entries) {
+    test('adding rejects $description and stores nothing', () async {
+      final productImages = FakeProductImageRepository();
+      final container = _createContainer(productImages: productImages);
+      final fridge = await _createFridge(container);
+
+      await expectLater(
+        _viewModel(container, fridge.homeId).addStockItemWithNewProduct(
+          _draft(fridge),
+          productName: 'Milch',
+          pickedPhotoPath: '/tmp/image_picker_1.jpg',
+          nutritionFacts: {nutrient: value},
+        ),
+        throwsA(
+          isA<ArgumentError>()
+              .having((error) => error.name, 'name', nutrient.name)
+              .having((error) => error.invalidValue, 'invalidValue', value),
+        ),
+      );
+
+      expect(productImages.storedImages, isEmpty);
+      expect(await _stored(container, fridge.homeId), isEmpty);
+    });
+  }
 }

@@ -5,6 +5,7 @@ import 'package:fridgo/data/repositories/home_repository.dart';
 import 'package:fridgo/data/repositories/product_repository.dart';
 import 'package:fridgo/data/repositories/stock_item_repository.dart';
 import 'package:fridgo/data/repositories/storage_location_repository.dart';
+import 'package:fridgo/domain/nutrient.dart';
 import 'package:fridgo/domain/product.dart';
 import 'package:fridgo/domain/stock_item.dart';
 import 'package:fridgo/domain/storage_location.dart';
@@ -14,6 +15,7 @@ Future<StockItem> _addToNewHome(
   required String homeName,
   required String productName,
   String? imagePath,
+  Map<Nutrient, double> nutritionFacts = const {},
 }) async {
   final home = await HomeRepository(database).createHome(homeName);
   final storageLocation = await StorageLocationRepository(database)
@@ -30,6 +32,7 @@ Future<StockItem> _addToNewHome(
     ),
     productName: productName,
     imagePath: imagePath,
+    nutritionFacts: nutritionFacts,
   );
 }
 
@@ -73,5 +76,47 @@ void main() {
         Product(id: butter.productId, name: 'Butter'),
       ]),
     );
+  });
+
+  test('a product keeps exactly the nutrition facts it was given', () async {
+    const nutritionFacts = {
+      Nutrient.energy: 64.0,
+      Nutrient.fat: 3.5,
+      Nutrient.sugars: 0.0,
+      Nutrient.salt: 0.125,
+    };
+    final milk = await _addToNewHome(
+      database,
+      homeName: 'Berlin',
+      productName: 'Milch',
+      nutritionFacts: nutritionFacts,
+    );
+
+    final products = await repository.getProducts();
+
+    expect(products.single.nutritionFacts, nutritionFacts);
+    expect(products.single.id, milk.productId);
+  });
+
+  test('every nutrient is stored in its own column', () async {
+    const nutritionFacts = {
+      Nutrient.energy: 1.0,
+      Nutrient.fat: 2.0,
+      Nutrient.saturatedFat: 3.0,
+      Nutrient.carbohydrates: 4.0,
+      Nutrient.sugars: 5.0,
+      Nutrient.protein: 6.0,
+      Nutrient.salt: 7.0,
+    };
+    await _addToNewHome(
+      database,
+      homeName: 'Berlin',
+      productName: 'Müsli',
+      nutritionFacts: nutritionFacts,
+    );
+
+    final products = await repository.getProducts();
+
+    expect(products.single.nutritionFacts, nutritionFacts);
   });
 }
