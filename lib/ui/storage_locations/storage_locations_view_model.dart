@@ -28,6 +28,29 @@ class StorageLocationsViewModel extends StreamNotifier<List<StorageLocation>> {
         .read(storageLocationRepositoryProvider)
         .createStorageLocation(homeId: homeId, name: name.trim(), kind: kind);
   }
+
+  Future<void> updateStorageLocation(
+    StorageLocation storageLocation,
+    String name,
+    StorageLocationKind kind,
+  ) async {
+    if (!isValidName(name)) {
+      throw ArgumentError.value(name, 'name', 'must not be blank');
+    }
+    await ref
+        .read(storageLocationRepositoryProvider)
+        .updateStorageLocation(
+          storageLocation.copyWith(name: name.trim(), kind: kind),
+        );
+  }
+
+  Future<int> countStockItems(String storageLocationId) => ref
+      .read(storageLocationRepositoryProvider)
+      .countStockItems(storageLocationId);
+
+  Future<void> deleteStorageLocation(String storageLocationId) => ref
+      .read(storageLocationRepositoryProvider)
+      .deleteStorageLocation(storageLocationId);
 }
 
 final StreamNotifierProviderFamily<

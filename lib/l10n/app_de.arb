@@ -280,5 +280,61 @@
         "type": "String"
       }
     }
-  }
+  },
+  "moreActions": "Weitere Aktionen",
+  "renameHome": "Umbenennen",
+  "renameHomeTitle": "Wohnung umbenennen",
+  "saveHome": "Speichern",
+  "deleteHomeTitle": "{home} löschen?",
+  "@deleteHomeTitle": {
+    "placeholders": {
+      "home": {
+        "type": "String"
+      }
+    }
+  },
+  "deleteHomeMessage": "{count, plural, =0{Die Wohnung und ihre Lagerorte werden gelöscht. Bestände liegen keine darin.} =1{Die Wohnung, ihre Lagerorte und 1 Bestand werden gelöscht.} other{Die Wohnung, ihre Lagerorte und {count} Bestände werden gelöscht.}} Die Produkte bleiben in den Vorschlägen.",
+  "@deleteHomeMessage": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "homeDeleted": "{home} gelöscht",
+  "@homeDeleted": {
+    "placeholders": {
+      "home": {
+        "type": "String"
+      }
+    }
+  },
+  "editStorageLocation": "Bearbeiten",
+  "editStorageLocationTitle": "Lagerort bearbeiten",
+  "saveStorageLocation": "Speichern",
+  "deleteStorageLocationTitle": "{storageLocation} löschen?",
+  "@deleteStorageLocationTitle": {
+    "placeholders": {
+      "storageLocation": {
+        "type": "String"
+      }
+    }
+  },
+  "deleteStorageLocationMessage": "{count, plural, =0{Bestände liegen keine darin.} =1{Auch 1 Bestand darin wird gelöscht.} other{Auch {count} Bestände darin werden gelöscht.}} Die Produkte bleiben in den Vorschlägen.",
+  "@deleteStorageLocationMessage": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "storageLocationDeleted": "{storageLocation} gelöscht",
+  "@storageLocationDeleted": {
+    "placeholders": {
+      "storageLocation": {
+        "type": "String"
+      }
+    }
+  },
+  "delete": "Löschen"
 }

@@ -130,4 +130,59 @@ void main() {
       [('Keller', StorageLocationKind.cellar)],
     );
   });
+
+  test(
+    'updating stores the kind and the name without surrounding spaces',
+    () async {
+      final container = _createContainer();
+      final homeId = await _createHome(container, 'Berlin');
+      final viewModel = container.read(
+        storageLocationsViewModelProvider(homeId).notifier,
+      );
+      final fridge = await container
+          .read(storageLocationRepositoryProvider)
+          .createStorageLocation(
+            homeId: homeId,
+            name: 'Kühlschrank',
+            kind: StorageLocationKind.refrigerator,
+          );
+
+      await viewModel.updateStorageLocation(
+        fridge,
+        '  Truhe  ',
+        StorageLocationKind.freezer,
+      );
+
+      final stored = await container
+          .read(storageLocationRepositoryProvider)
+          .watchStorageLocations(homeId)
+          .first;
+      expect(stored, [
+        fridge.copyWith(name: 'Truhe', kind: StorageLocationKind.freezer),
+      ]);
+    },
+  );
+
+  for (final MapEntry(key: description, value: name) in blankNames.entries) {
+    test('updating: $description and the old name stays', () async {
+      final container = _createContainer();
+      final homeId = await _createHome(container, 'Berlin');
+      final fridge = await container
+          .read(storageLocationRepositoryProvider)
+          .createStorageLocation(
+            homeId: homeId,
+            name: 'Kühlschrank',
+            kind: StorageLocationKind.refrigerator,
+          );
+
+      await expectLater(
+        container
+            .read(storageLocationsViewModelProvider(homeId).notifier)
+            .updateStorageLocation(fridge, name, StorageLocationKind.freezer),
+        throwsA(isA<ArgumentError>()),
+      );
+
+      expect(await _storedNames(container, homeId), ['Kühlschrank']);
+    });
+  }
 }

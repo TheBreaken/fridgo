@@ -174,4 +174,76 @@ void main() {
       expect(startHomeId, await _homeIdNamed(container, 'Berlin'));
     });
   }
+
+  test('renaming stores the name without surrounding spaces', () async {
+    final container = _createContainer();
+    final viewModel = container.read(homesViewModelProvider.notifier);
+    await viewModel.createHome('Berlin');
+    final berlin =
+        (await container.read(homeRepositoryProvider).getHomes()).single;
+
+    await viewModel.renameHome(berlin, '  Hamburg  ');
+
+    expect(await _storedHomeNames(container), ['Hamburg']);
+  });
+
+  const blankRenames = {
+    'an empty name is rejected': '',
+    'a name of spaces is rejected': '   ',
+  };
+
+  for (final MapEntry(key: description, value: name) in blankRenames.entries) {
+    test('renaming: $description and the old name stays', () async {
+      final container = _createContainer();
+      final viewModel = container.read(homesViewModelProvider.notifier);
+      await viewModel.createHome('Berlin');
+      final berlin =
+          (await container.read(homeRepositoryProvider).getHomes()).single;
+
+      await expectLater(
+        viewModel.renameHome(berlin, name),
+        throwsA(
+          isA<ArgumentError>().having(
+            (error) => error.invalidValue,
+            'invalidValue',
+            name,
+          ),
+        ),
+      );
+
+      expect(await _storedHomeNames(container), ['Berlin']);
+    });
+  }
+
+  test(
+    'after deleting the selected home another home is the start home',
+    () async {
+      final lastHomes = FakeLastHomeRepository();
+      final container = _createContainer(lastHomes: lastHomes);
+      final viewModel = container.read(homesViewModelProvider.notifier);
+      await viewModel.createHome('Berlin');
+      await viewModel.createHome('Hamburg');
+      final berlin = await _homeIdNamed(container, 'Berlin');
+      await viewModel.selectHome(berlin);
+
+      await viewModel.deleteHome(berlin);
+
+      expect(
+        await viewModel.findStartHomeId(),
+        await _homeIdNamed(container, 'Hamburg'),
+      );
+    },
+  );
+
+  test('after deleting the only home there is no start home', () async {
+    final container = _createContainer();
+    final viewModel = container.read(homesViewModelProvider.notifier);
+    await viewModel.createHome('Berlin');
+    final berlin = await _homeIdNamed(container, 'Berlin');
+    await viewModel.selectHome(berlin);
+
+    await viewModel.deleteHome(berlin);
+
+    expect(await viewModel.findStartHomeId(), isNull);
+  });
 }

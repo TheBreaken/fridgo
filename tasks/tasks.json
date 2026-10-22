@@ -310,7 +310,7 @@
     "title": "Wohnungen und Lagerorte umbenennen und löschen",
     "type": "feat",
     "priority": "medium",
-    "status": "open",
+    "status": "done",
     "dependsOn": ["T007", "T014"],
     "description": "Ziel: Wohnungen und Lagerorte lassen sich umbenennen und löschen.\n\nAbgrenzung: Bestände vor dem Löschen woandershin zu verschieben gehört nicht dazu; das steht in `CLAUDE.md` unter Später.\n\nZu klären: Werden die Bestände beim Löschen nach Rückfrage mitgelöscht, oder ist das Löschen nur bei leerem Lagerort erlaubt?",
     "acceptanceCriteria": [
@@ -504,6 +504,21 @@
       "Die Lizenztexte aus `assets/fonts/nunito/OFL.txt` und `assets/emoji/LICENSE` sind über `LicenseRegistry` registriert",
       "Die Lizenzseite ist aus der App erreichbar und nennt Nunito und Noto Emoji",
       "Ein Test prüft, dass beide Lizenzen registriert sind"
+    ]
+  },
+  {
+    "id": "T034",
+    "title": "Löschdialoge vereinheitlichen",
+    "type": "refactor",
+    "priority": "low",
+    "status": "open",
+    "dependsOn": [
+      "T021"
+    ],
+    "description": "Ziel: Bestand und Produkt fragen vor dem Löschen über `confirmDelete` aus `lib/ui/core/delete_confirmation.dart`, wie Wohnung und Lagerort seit T021. Heute bauen `stock_item_detail_screen.dart` und `edit_product_screen.dart` je einen eigenen `AlertDialog` mit denselben Knöpfen.\n\nAbgrenzung: Texte und Verhalten bleiben gleich; die Schlüssel `deleteStockItem` und `deleteProduct` entfallen zugunsten von `delete`.",
+    "acceptanceCriteria": [
+      "Kein Screen baut mehr einen eigenen Lösch-`AlertDialog`",
+      "Die bestehenden Widget-Tests zum Löschen von Bestand und Produkt laufen unverändert"
     ]
   }
 ]
