@@ -57,20 +57,35 @@ Future<PhotoAction?> showPhotoActionSheet(
   );
 }
 
-class ProductPhotoField extends StatelessWidget {
-  const new({required this.photoPath, required this.onTap, super.key});
+void showPhotoPickError(BuildContext context, PhotoPickException error) {
+  final l10n = AppLocalizations.of(context);
+  ScaffoldMessenger.of(context).showSnackBar(
+    SnackBar(
+      content: Text(switch (error) {
+        PhotoAccessDeniedException(source: PhotoSource.camera) =>
+          l10n.productPhotoCameraAccessDenied,
+        PhotoAccessDeniedException(source: PhotoSource.gallery) =>
+          l10n.productPhotoGalleryAccessDenied,
+        PhotoUnavailableException() => l10n.productPhotoUnavailable,
+      }),
+    ),
+  );
+}
 
-  final String? photoPath;
+class ProductPhotoField extends StatelessWidget {
+  const new({required this.photo, required this.onTap, super.key});
+
+  final File? photo;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final colorScheme = Theme.of(context).colorScheme;
-    final photoPath = this.photoPath;
+    final photo = this.photo;
     return Semantics(
       button: true,
-      label: photoPath == null ? l10n.productPhotoAdd : l10n.productPhotoChange,
+      label: photo == null ? l10n.productPhotoAdd : l10n.productPhotoChange,
       excludeSemantics: true,
       child: Material(
         color: colorScheme.primaryContainer,
@@ -83,9 +98,9 @@ class ProductPhotoField extends StatelessWidget {
             children: [
               AnimatedSwitcher(
                 duration: Durations.medium2,
-                child: photoPath == null
+                child: photo == null
                     ? const _NoPhoto()
-                    : _Photo(key: ValueKey(photoPath), path: photoPath),
+                    : _Photo(key: ValueKey(photo.path), photo: photo),
               ),
               Material(
                 type: MaterialType.transparency,
@@ -127,9 +142,9 @@ class _NoPhoto extends StatelessWidget {
 }
 
 class _Photo extends StatelessWidget {
-  const new({required this.path, super.key});
+  const new({required this.photo, super.key});
 
-  final String path;
+  final File photo;
 
   @override
   Widget build(BuildContext context) {
@@ -138,7 +153,7 @@ class _Photo extends StatelessWidget {
       fit: StackFit.expand,
       children: [
         Image.file(
-          File(path),
+          photo,
           fit: BoxFit.cover,
           errorBuilder: (_, _, _) => const _NoPhoto(),
         ),

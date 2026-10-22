@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fridgo/ui/add_stock_item/add_stock_item_screen.dart';
+import 'package:fridgo/ui/edit_product/edit_product_screen.dart';
 import 'package:fridgo/ui/homes/homes_screen.dart';
 import 'package:fridgo/ui/homes/homes_view_model.dart';
 import 'package:fridgo/ui/stock_item_detail/edit_stock_item_screen.dart';
@@ -65,6 +66,14 @@ final routerProvider = Provider<GoRouter>((ref) {
                 ],
               ),
             ],
+          ),
+          // Pushed from the stock item details and from adding a stock item,
+          // which both wait for it to return.
+          GoRoute(
+            path: 'products/:productId',
+            builder: (context, state) => EditProductScreen(
+              productId: state.pathParameters['productId']!,
+            ),
           ),
         ],
       ),

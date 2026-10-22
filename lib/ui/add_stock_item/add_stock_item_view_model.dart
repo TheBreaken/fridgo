@@ -27,7 +27,7 @@ class AddStockItemViewModel extends StreamNotifier<List<StorageLocation>> {
   CalendarDate get today =>
       CalendarDate.fromDateTime(ref.read(clockProvider)());
 
-  bool isValidName(String name) => name.trim().isNotEmpty;
+  bool isValidName(String name) => isValidProductName(name);
 
   bool isValidQuantity(String quantity) => isValidQuantityInput(quantity);
 
@@ -47,6 +47,9 @@ class AddStockItemViewModel extends StreamNotifier<List<StorageLocation>> {
     query,
   );
 
+  Future<Product?> getProduct(String id) =>
+      ref.read(productRepositoryProvider).getProduct(id);
+
   Future<void> addStockItemWithNewProduct(
     StockItemDraft draft, {
     required String productName,
@@ -61,7 +64,7 @@ class AddStockItemViewModel extends StreamNotifier<List<StorageLocation>> {
       );
     }
     _checkQuantity(draft);
-    _checkNutritionFacts(nutritionFacts);
+    checkNutritionFacts(nutritionFacts);
     final productImages = ref.read(productImageRepositoryProvider);
     final imagePath = pickedPhotoPath == null
         ? null
@@ -94,18 +97,6 @@ class AddStockItemViewModel extends StreamNotifier<List<StorageLocation>> {
   void _checkQuantity(StockItemDraft draft) {
     if (draft.quantity <= 0) {
       throw ArgumentError.value(draft.quantity, 'quantity', 'must be above 0');
-    }
-  }
-
-  void _checkNutritionFacts(Map<Nutrient, double> nutritionFacts) {
-    for (final MapEntry(key: nutrient, :value) in nutritionFacts.entries) {
-      if (!nutrient.isValidValue(value)) {
-        throw ArgumentError.value(
-          value,
-          nutrient.name,
-          'must be from 0 to ${nutrient.maximum}',
-        );
-      }
     }
   }
 }

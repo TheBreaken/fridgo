@@ -4,10 +4,12 @@ import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:fridgo/data/database/app_database.dart';
 import 'package:fridgo/data/repositories/home_repository.dart';
+import 'package:fridgo/data/repositories/product_repository.dart';
 import 'package:fridgo/data/repositories/stock_item_repository.dart';
 import 'package:fridgo/data/repositories/storage_location_repository.dart';
 import 'package:fridgo/domain/calendar_date.dart';
 import 'package:fridgo/domain/nutrient.dart';
+import 'package:fridgo/domain/product.dart';
 import 'package:fridgo/domain/stock_item.dart';
 import 'package:fridgo/domain/storage_location.dart';
 
@@ -274,6 +276,38 @@ void _inOneStorageLocation() {
         .first;
     expect((await listed()).single.product.id, inBerlin.productId);
     expect(inHamburg.single.product.id, inBerlin.productId);
+  });
+
+  test('a change to a product shows in all its stock items', () async {
+    final otherFridge = await _createStorageLocation(
+      database,
+      homeName: 'Hamburg',
+    );
+    final first = await _addWithNewProduct(repository, _milk(fridge));
+    await repository.addStockItemForProduct(first.productId, _milk(fridge));
+    await repository.addStockItemForProduct(
+      first.productId,
+      _milk(otherFridge),
+    );
+    final changed = Product(
+      id: first.productId,
+      name: 'Hafermilch',
+      imagePath: 'product_images/oat_milk.jpg',
+      nutritionFacts: const {Nutrient.fat: 1.5},
+    );
+
+    await ProductRepository(database).updateProduct(changed);
+
+    final inHamburg = await repository
+        .watchStockItems(otherFridge.homeId)
+        .first;
+    expect(
+      [
+        for (final details in [...await listed(), ...inHamburg])
+          details.product,
+      ],
+      [changed, changed, changed],
+    );
   });
 
   test('a stock item for an unknown product is rejected', () async {

@@ -36,6 +36,26 @@ Future<StockItem> _addToNewHome(
   );
 }
 
+Future<String> _createFridge(
+  AppDatabase database, {
+  required String homeName,
+}) async {
+  final home = await HomeRepository(database).createHome(homeName);
+  final storageLocation = await StorageLocationRepository(database)
+      .createStorageLocation(
+        homeId: home.id,
+        name: 'Kühlschrank',
+        kind: StorageLocationKind.refrigerator,
+      );
+  return storageLocation.id;
+}
+
+StockItemDraft _draft(String storageLocationId) => StockItemDraft(
+  storageLocationId: storageLocationId,
+  quantity: 1,
+  unit: StockUnit.piece,
+);
+
 void main() {
   late AppDatabase database;
   late ProductRepository repository;
@@ -118,5 +138,153 @@ void main() {
     final products = await repository.getProducts();
 
     expect(products.single.nutritionFacts, nutritionFacts);
+  });
+
+  test('getting a product returns it with all its fields', () async {
+    final milk = await _addToNewHome(
+      database,
+      homeName: 'Berlin',
+      productName: 'Milch',
+      imagePath: 'product_images/milk.jpg',
+      nutritionFacts: {Nutrient.fat: 3.5},
+    );
+
+    final product = await repository.getProduct(milk.productId);
+
+    expect(
+      product,
+      Product(
+        id: milk.productId,
+        name: 'Milch',
+        imagePath: 'product_images/milk.jpg',
+        nutritionFacts: {Nutrient.fat: 3.5},
+      ),
+    );
+  });
+
+  test('getting an unknown product returns null', () async {
+    expect(await repository.getProduct('unknown'), isNull);
+  });
+
+  test('an update replaces name, image and nutrition facts', () async {
+    final milk = await _addToNewHome(
+      database,
+      homeName: 'Berlin',
+      productName: 'Milch',
+      imagePath: 'product_images/milk.jpg',
+      nutritionFacts: {Nutrient.fat: 3.5, Nutrient.sugars: 4.8},
+    );
+    final updated = Product(
+      id: milk.productId,
+      name: 'Hafermilch',
+      imagePath: 'product_images/oat_milk.jpg',
+      nutritionFacts: {Nutrient.fat: 1.5},
+    );
+
+    await repository.updateProduct(updated);
+
+    expect(await repository.getProduct(milk.productId), updated);
+  });
+
+  test('an update can remove the image', () async {
+    final milk = await _addToNewHome(
+      database,
+      homeName: 'Berlin',
+      productName: 'Milch',
+      imagePath: 'product_images/milk.jpg',
+    );
+
+    await repository.updateProduct(Product(id: milk.productId, name: 'Milch'));
+
+    final product = await repository.getProduct(milk.productId);
+    expect(product?.imagePath, isNull);
+  });
+
+  test('updating an unknown product fails', () async {
+    await expectLater(
+      repository.updateProduct(const Product(id: 'unknown', name: 'Milch')),
+      throwsStateError,
+    );
+  });
+
+  test('the stock of a product counts its stock items and names their '
+      'homes once each, sorted', () async {
+    final milk = await _addToNewHome(
+      database,
+      homeName: 'Hamburg',
+      productName: 'Milch',
+    );
+    final hamburgFridge = milk.storageLocationId;
+    final stockItems = StockItemRepository(database);
+    await stockItems.addStockItemForProduct(
+      milk.productId,
+      _draft(hamburgFridge),
+    );
+    final berlinFridge = await _createFridge(database, homeName: 'berlin');
+    await stockItems.addStockItemForProduct(
+      milk.productId,
+      _draft(berlinFridge),
+    );
+
+    final stock = await repository.getProductStock(milk.productId);
+
+    expect(stock.stockItemCount, 3);
+    expect(stock.homeNames, ['berlin', 'Hamburg']);
+  });
+
+  test('a product whose stock items are gone has no stock', () async {
+    final milk = await _addToNewHome(
+      database,
+      homeName: 'Berlin',
+      productName: 'Milch',
+    );
+    await StockItemRepository(database).deleteStockItem(milk.id);
+
+    final stock = await repository.getProductStock(milk.productId);
+
+    expect(stock.stockItemCount, 0);
+    expect(stock.homeNames, isEmpty);
+  });
+
+  test('deleting a product removes its stock items in every home', () async {
+    final milk = await _addToNewHome(
+      database,
+      homeName: 'Berlin',
+      productName: 'Milch',
+    );
+    final hamburgFridge = await _createFridge(database, homeName: 'Hamburg');
+    final stockItems = StockItemRepository(database);
+    await stockItems.addStockItemForProduct(
+      milk.productId,
+      _draft(hamburgFridge),
+    );
+    final butter = await _addToNewHome(
+      database,
+      homeName: 'München',
+      productName: 'Butter',
+    );
+
+    await repository.deleteProduct(milk.productId);
+
+    expect(await repository.getProduct(milk.productId), isNull);
+    expect(await database.select(database.stockItems).get(), [
+      isA<StockItemRow>().having((row) => row.id, 'id', butter.id),
+    ]);
+    expect(await repository.getProducts(), [
+      Product(id: butter.productId, name: 'Butter'),
+    ]);
+  });
+
+  test('a product without stock items can be deleted', () async {
+    final milk = await _addToNewHome(
+      database,
+      homeName: 'Berlin',
+      productName: 'Milch',
+    );
+    await StockItemRepository(database).deleteStockItem(milk.id);
+
+    await repository.deleteProduct(milk.productId);
+
+    expect(await repository.getProducts(), isEmpty);
   });
 }

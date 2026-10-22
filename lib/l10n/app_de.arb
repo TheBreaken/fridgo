@@ -97,6 +97,49 @@
       }
     }
   },
+  "editProduct": "Produkt bearbeiten",
+  "productChangesApplyToAllStockItems": "Änderungen gelten für alle Bestände dieses Produkts.",
+  "saveProduct": "Speichern",
+  "deleteProduct": "Löschen",
+  "deleteProductTitle": "{product} löschen?",
+  "@deleteProductTitle": {
+    "placeholders": {
+      "product": {
+        "type": "String"
+      }
+    }
+  },
+  "deleteProductMessage": "Das Produkt verschwindet aus den Vorschlägen, sein Foto wird gelöscht.",
+  "deleteProductWithStockMessage": "{count, plural, =1{Auch 1 Bestand in {homes} wird gelöscht.} other{Auch {count} Bestände in {homes} werden gelöscht.}} Das Produkt verschwindet aus den Vorschlägen, sein Foto wird gelöscht.",
+  "@deleteProductWithStockMessage": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "homes": {
+        "type": "String"
+      }
+    }
+  },
+  "homeNameList": "{others} und {last}",
+  "@homeNameList": {
+    "placeholders": {
+      "others": {
+        "type": "String"
+      },
+      "last": {
+        "type": "String"
+      }
+    }
+  },
+  "productDeleted": "{product} gelöscht",
+  "@productDeleted": {
+    "placeholders": {
+      "product": {
+        "type": "String"
+      }
+    }
+  },
   "clearDate": "Datum entfernen",
   "createStockItem": "Hinzufügen",
   "consumeStockItem": "Verbrauchen",
