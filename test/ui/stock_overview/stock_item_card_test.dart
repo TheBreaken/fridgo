@@ -41,6 +41,7 @@ Future<void> _pumpCard(
       body: StockItemCard(
         details: _milk(bestBeforeDate: bestBeforeDate),
         today: _today,
+        onTap: () {},
         onConsume: onConsume ?? () {},
       ),
     ),

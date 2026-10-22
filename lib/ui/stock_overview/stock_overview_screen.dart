@@ -195,7 +195,7 @@ class _StockItemListState extends ConsumerState<_StockItemList> {
       list.removeItem(
         index,
         (context, animation) => IgnorePointer(
-          child: _buildItem(removed, animation, onConsume: () {}),
+          child: _buildItem(removed, animation, onTap: () {}, onConsume: () {}),
         ),
       );
     }
@@ -209,6 +209,7 @@ class _StockItemListState extends ConsumerState<_StockItemList> {
   Widget _buildItem(
     StockItemDetails details,
     Animation<double> animation, {
+    required VoidCallback onTap,
     required VoidCallback onConsume,
   }) {
     final curved = CurvedAnimation(parent: animation, curve: Easing.standard);
@@ -222,6 +223,7 @@ class _StockItemListState extends ConsumerState<_StockItemList> {
             child: StockItemCard(
               details: details,
               today: _today,
+              onTap: onTap,
               onConsume: onConsume,
             ),
           ),
@@ -242,6 +244,10 @@ class _StockItemListState extends ConsumerState<_StockItemList> {
         return _buildItem(
           details,
           animation,
+          onTap: () => context.go(
+            '/homes/${details.storageLocation.homeId}/stock-items/'
+            '${details.stockItem.id}',
+          ),
           onConsume: () => showConsumeStockItemSheet(context, details),
         );
       },

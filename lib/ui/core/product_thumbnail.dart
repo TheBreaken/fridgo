@@ -15,7 +15,12 @@ class ProductThumbnail extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final imagePath = this.imagePath;
-    if (imagePath == null) return const ImagePlaceholder();
+    if (imagePath == null) {
+      return const SizedBox.square(
+        dimension: Sizes.thumbnail,
+        child: ImagePlaceholder(),
+      );
+    }
     return _Photo(imagePath: imagePath);
   }
 }
@@ -25,18 +30,9 @@ class _Photo extends ConsumerWidget {
 
   final String imagePath;
 
-  // Decoding into twice the thumbnail keeps photos up to 2:1 sharp after
-  // cropping them to a square, while the full photo is never decoded.
-  static const _decodeScale = 2;
-
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final file = ref.watch(productImageFileProvider(imagePath)).value;
-    final decodeEdge =
-        (Sizes.thumbnail *
-                MediaQuery.devicePixelRatioOf(context) *
-                _decodeScale)
-            .round();
     return ClipRRect(
       borderRadius: BorderRadius.circular(Corners.small),
       child: ColoredBox(
@@ -46,12 +42,7 @@ class _Photo extends ConsumerWidget {
           child: file == null
               ? null
               : Image(
-                  image: ResizeImage(
-                    FileImage(file),
-                    width: decodeEdge,
-                    height: decodeEdge,
-                    policy: ResizeImagePolicy.fit,
-                  ),
+                  image: productThumbnailImage(context, file),
                   fit: BoxFit.cover,
                   excludeFromSemantics: true,
                   frameBuilder: _fadeIn,
@@ -75,6 +66,26 @@ class _Photo extends ConsumerWidget {
       child: child,
     );
   }
+}
+
+// Decoding into twice the thumbnail keeps photos up to 2:1 sharp after
+// cropping them to a square, while the full photo is never decoded.
+const _thumbnailDecodeScale = 2;
+
+/// The decoded thumbnail; the detail photo shows it from the image cache until
+/// its own, larger decoding is done.
+ImageProvider productThumbnailImage(BuildContext context, File file) {
+  final decodeEdge =
+      (Sizes.thumbnail *
+              MediaQuery.devicePixelRatioOf(context) *
+              _thumbnailDecodeScale)
+          .round();
+  return ResizeImage(
+    FileImage(file),
+    width: decodeEdge,
+    height: decodeEdge,
+    policy: ResizeImagePolicy.fit,
+  );
 }
 
 // Not auto-disposed, so a card scrolled back into view shows its photo without

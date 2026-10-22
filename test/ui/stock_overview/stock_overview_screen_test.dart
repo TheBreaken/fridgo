@@ -5,6 +5,8 @@ import 'package:fridgo/ui/add_stock_item/add_stock_item_screen.dart';
 import 'package:fridgo/ui/core/emoji.dart';
 import 'package:fridgo/ui/core/empty_state.dart';
 import 'package:fridgo/ui/homes/homes_screen.dart';
+import 'package:fridgo/ui/stock_item_detail/stock_item_detail_screen.dart';
+import 'package:fridgo/ui/stock_overview/stock_item_card.dart';
 import 'package:fridgo/ui/stock_overview/stock_overview_screen.dart';
 import 'package:fridgo/ui/stock_overview/switch_home_sheet.dart';
 import 'package:fridgo/ui/storage_locations/create_storage_location_sheet.dart';
@@ -199,5 +201,47 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.byType(HomesScreen), findsOneWidget);
+  });
+
+  testWidgets('tapping a card opens its details, and the photo flies along', (
+    tester,
+  ) async {
+    await pumpApp(tester, now: _today);
+    await createHomeAndOpenIt(tester, 'Berlin');
+    await createStorageLocationAndReturn(tester, 'Kühlschrank');
+    await addStockItem(tester, name: 'Joghurt', quantity: '2');
+    final cardPhoto = tester.widget<Hero>(
+      find.descendant(
+        of: find.byType(StockItemCard),
+        matching: find.byType(Hero),
+      ),
+    );
+
+    await tester.tap(find.text('Joghurt'));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(StockItemDetailScreen), findsOneWidget);
+    final detailPhoto = tester.widget<Hero>(
+      find.descendant(
+        of: find.byType(StockItemDetailScreen),
+        matching: find.byType(Hero),
+      ),
+    );
+    expect(detailPhoto.tag, cardPhoto.tag);
+  });
+
+  testWidgets('back from the details returns to the stock', (tester) async {
+    await pumpApp(tester, now: _today);
+    await createHomeAndOpenIt(tester, 'Berlin');
+    await createStorageLocationAndReturn(tester, 'Kühlschrank');
+    await addStockItem(tester, name: 'Joghurt', quantity: '2');
+    await tester.tap(find.text('Joghurt'));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byType(BackButton));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(StockItemDetailScreen), findsNothing);
+    expect(find.byType(StockItemCard), findsOneWidget);
   });
 }
