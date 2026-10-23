@@ -299,6 +299,9 @@ Systemeinstellung; einen Schalter in der App gibt es nicht.
   Abstände und Radien.
 - Karten liegen auf `surface`, die Seite dahinter auf `surfaceDim`. Die Hauptaktion ist der
   Floating Action Button in `tertiary`.
+- In der Bestandsübersicht ist die Hauptaktion der Kamera-Knopf unten mittig. Er öffnet den
+  Scanner, „Ohne Barcode“ führt von dort ins Formular. Weitere Wege zum Erfassen
+  (Kassenbon, mehrere Barcodes) beginnen ebenfalls dort, nicht an einem zweiten Knopf.
 - Leere Zustände nutzen `EmptyState`, fehlende Bilder `ImagePlaceholder` aus `lib/ui/core/`.
 - Jeder Screen wird hell und dunkel angesehen.
 

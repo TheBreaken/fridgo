@@ -63,11 +63,12 @@ class StockOverviewScreen extends ConsumerWidget {
             _ => const SizedBox.shrink(),
           },
         ),
+        floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
         floatingActionButton: hasStorageLocations
             ? FloatingActionButton(
-                onPressed: () => _openAddStockItem(context, homeId),
-                tooltip: l10n.addStockItem,
-                child: const Icon(Icons.add_rounded),
+                onPressed: () => _openScanner(context, homeId),
+                tooltip: l10n.scanStockItem,
+                child: const Icon(Icons.qr_code_scanner_rounded),
               )
             : null,
       ),
@@ -100,8 +101,8 @@ class _SwitchHomeButton extends StatelessWidget {
   }
 }
 
-void _openAddStockItem(BuildContext context, String homeId) =>
-    context.go('/homes/$homeId/stock-items/new');
+void _openScanner(BuildContext context, String homeId) =>
+    context.go('/homes/$homeId/scan');
 
 class _NoStorageLocation extends StatelessWidget {
   const new({required this.homeId});
@@ -144,7 +145,7 @@ class _EmptyStock extends StatelessWidget {
           title: l10n.stockOverviewEmptyTitle,
           message: l10n.stockOverviewEmptyMessage,
           action: FilledButton(
-            onPressed: () => _openAddStockItem(context, homeId),
+            onPressed: () => _openScanner(context, homeId),
             child: Text(l10n.addStockItem),
           ),
         ),
@@ -237,7 +238,12 @@ class _StockItemListState extends ConsumerState<_StockItemList> {
     _today = ref.watch(todayProvider);
     return AnimatedList(
       key: _listKey,
-      padding: const EdgeInsets.all(Spacing.l),
+      padding: const EdgeInsets.fromLTRB(
+        Spacing.l,
+        Spacing.l,
+        Spacing.l,
+        Sizes.floatingActionButtonClearance,
+      ),
       initialItemCount: _shown.length,
       itemBuilder: (context, index, animation) {
         final details = _shown[index];

@@ -23,8 +23,7 @@ Future<void> _openAddScreen(
   await createHomeAndOpenIt(tester, 'Berlin');
   await createStorageLocationAndReturn(tester, 'Kühlschrank');
   await createStorageLocationAndReturn(tester, 'Gefrierfach');
-  await tester.tap(find.byTooltip('Lebensmittel hinzufügen'));
-  await tester.pumpAndSettle();
+  await openAddStockItem(tester);
 }
 
 Finder _field(String label) => find.widgetWithText(TextField, label);
@@ -72,8 +71,7 @@ Finder _suggestion(String name) => find.widgetWithText(InkWell, name);
 Future<void> _addAndReopen(WidgetTester tester, String name) async {
   await _enter(tester, 'Name', name);
   await _submit(tester);
-  await tester.tap(find.byTooltip('Lebensmittel hinzufügen'));
-  await tester.pumpAndSettle();
+  await openAddStockItem(tester);
 }
 
 Future<void> _type(WidgetTester tester, String name) async {
@@ -453,8 +451,7 @@ void main() {
 
     expect(find.byType(StockOverviewScreen), findsOneWidget);
     expect(find.text('Milch'), findsNWidgets(2));
-    await tester.tap(find.byTooltip('Lebensmittel hinzufügen'));
-    await tester.pumpAndSettle();
+    await openAddStockItem(tester);
     await _type(tester, 'mil');
     expect(_suggestion('Milch'), findsOneWidget);
   });

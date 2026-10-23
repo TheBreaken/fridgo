@@ -434,7 +434,7 @@
     "title": "Barcode scannen und bekanntes Produkt wiederfinden",
     "type": "feat",
     "priority": "high",
-    "status": "open",
+    "status": "done",
     "dependsOn": ["T012"],
     "description": "Ziel: Beim Hinzufügen lässt sich ein Barcode mit der Kamera scannen. Gehört er zu einem bereits angelegten Produkt, wird dieses gewählt; sonst geht es mit dem Barcode ins manuelle Formular. Das funktioniert ohne Netz.\n\nAbgrenzung: Der Abruf bei Open Food Facts folgt in T030.\n\nZu klären: Lässt sich der Barcode auch von Hand eintippen?",
     "acceptanceCriteria": [

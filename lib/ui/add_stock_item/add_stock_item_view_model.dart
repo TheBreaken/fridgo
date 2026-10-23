@@ -50,11 +50,15 @@ class AddStockItemViewModel extends StreamNotifier<List<StorageLocation>> {
   Future<Product?> getProduct(String id) =>
       ref.read(productRepositoryProvider).getProduct(id);
 
+  Future<Product?> findProductByBarcode(String barcode) =>
+      ref.read(productRepositoryProvider).findProductByBarcode(barcode);
+
   Future<void> addStockItemWithNewProduct(
     StockItemDraft draft, {
     required String productName,
     String? pickedPhotoPath,
     Map<Nutrient, double> nutritionFacts = const {},
+    String? barcode,
   }) async {
     if (!isValidName(productName)) {
       throw ArgumentError.value(
@@ -77,6 +81,7 @@ class AddStockItemViewModel extends StreamNotifier<List<StorageLocation>> {
             productName: productName.trim(),
             imagePath: imagePath,
             nutritionFacts: nutritionFacts,
+            barcode: barcode,
           );
     } on Object {
       if (imagePath != null) await productImages.delete(imagePath);
@@ -84,14 +89,16 @@ class AddStockItemViewModel extends StreamNotifier<List<StorageLocation>> {
     }
   }
 
+  /// Also gives the product [barcode], unless it has one already.
   Future<void> addStockItemForProduct(
     String productId,
-    StockItemDraft draft,
-  ) async {
+    StockItemDraft draft, {
+    String? barcode,
+  }) async {
     _checkQuantity(draft);
     await ref
         .read(stockItemRepositoryProvider)
-        .addStockItemForProduct(productId, draft);
+        .addStockItemForProduct(productId, draft, barcode: barcode);
   }
 
   void _checkQuantity(StockItemDraft draft) {

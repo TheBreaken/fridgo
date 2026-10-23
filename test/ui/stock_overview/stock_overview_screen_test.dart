@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:fridgo/ui/add_stock_item/add_stock_item_screen.dart';
 import 'package:fridgo/ui/core/emoji.dart';
 import 'package:fridgo/ui/core/empty_state.dart';
 import 'package:fridgo/ui/homes/homes_screen.dart';
+import 'package:fridgo/ui/scan_barcode/scan_barcode_screen.dart';
 import 'package:fridgo/ui/stock_item_detail/stock_item_detail_screen.dart';
 import 'package:fridgo/ui/stock_overview/stock_item_card.dart';
 import 'package:fridgo/ui/stock_overview/stock_overview_screen.dart';
@@ -109,22 +109,22 @@ void main() {
         ),
         findsOneWidget,
       );
-      expect(find.byTooltip('Lebensmittel hinzufügen'), findsOneWidget);
+      expect(find.byTooltip('Lebensmittel scannen'), findsOneWidget);
     },
   );
 
-  testWidgets('the main action opens the add screen', (tester) async {
+  testWidgets('the main action opens the scanner', (tester) async {
     await pumpApp(tester, now: _today);
     await createHomeAndOpenIt(tester, 'Berlin');
     await createStorageLocationAndReturn(tester, 'Kühlschrank');
 
-    await tester.tap(find.byTooltip('Lebensmittel hinzufügen'));
+    await tester.tap(find.byTooltip('Lebensmittel scannen'));
     await tester.pumpAndSettle();
 
-    expect(find.byType(AddStockItemScreen), findsOneWidget);
+    expect(find.byType(ScanBarcodeScreen), findsOneWidget);
   });
 
-  testWidgets('the empty state action opens the add screen', (tester) async {
+  testWidgets('the empty state action opens the scanner', (tester) async {
     await pumpApp(tester, now: _today);
     await createHomeAndOpenIt(tester, 'Berlin');
     await createStorageLocationAndReturn(tester, 'Kühlschrank');
@@ -134,7 +134,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.byType(AddStockItemScreen), findsOneWidget);
+    expect(find.byType(ScanBarcodeScreen), findsOneWidget);
   });
 
   testWidgets('back returns to the homes', (tester) async {

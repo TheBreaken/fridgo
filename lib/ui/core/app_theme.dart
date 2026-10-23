@@ -115,4 +115,7 @@ abstract final class Sizes {
   static const double thumbnail = 64;
   static const double illustration = 72;
   static const double photo = 176;
+  static const double scanFrameBorder = 3;
+  // A floating action button (56) with its margin (16) and some air (16).
+  static const double floatingActionButtonClearance = 88;
 }

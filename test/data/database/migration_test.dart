@@ -7,6 +7,7 @@ import 'package:fridgo/data/repositories/product_repository.dart';
 import 'package:fridgo/data/repositories/stock_item_repository.dart';
 import 'package:fridgo/data/repositories/storage_location_repository.dart';
 import 'package:fridgo/domain/home.dart';
+import 'package:fridgo/domain/nutrient.dart';
 import 'package:fridgo/domain/product.dart';
 import 'package:fridgo/domain/storage_location.dart';
 
@@ -19,22 +20,22 @@ const _productId = '3a2b1c0d-9e8f-4a7b-b6c5-d4e3f2a1b0c9';
 void main() {
   final verifier = SchemaVerifier(GeneratedHelper());
 
-  test('a new database matches the stored schema version 5', () async {
+  test('a new database matches the stored schema version 6', () async {
     final database = AppDatabase(NativeDatabase.memory());
     addTearDown(database.close);
 
-    await verifier.migrateAndValidate(database, 5);
+    await verifier.migrateAndValidate(database, 6);
   });
 
-  for (final version in [1, 2, 3, 4]) {
+  for (final version in [1, 2, 3, 4, 5]) {
     test(
-      'upgrading from version $version gives the stored schema version 5',
+      'upgrading from version $version gives the stored schema version 6',
       () async {
         final schema = await verifier.schemaAt(version);
         final database = AppDatabase(schema.newConnection());
         addTearDown(database.close);
 
-        await verifier.migrateAndValidate(database, 5);
+        await verifier.migrateAndValidate(database, 6);
       },
     );
   }
@@ -48,7 +49,7 @@ void main() {
     final database = AppDatabase(schema.newConnection());
     addTearDown(database.close);
 
-    await verifier.migrateAndValidate(database, 5);
+    await verifier.migrateAndValidate(database, 6);
 
     expect(await HomeRepository(database).watchHomes().first, [
       const Home(id: _homeId, name: 'Berlin'),
@@ -72,7 +73,7 @@ void main() {
       final database = AppDatabase(schema.newConnection());
       addTearDown(database.close);
 
-      await verifier.migrateAndValidate(database, 5);
+      await verifier.migrateAndValidate(database, 6);
 
       expect(
         await StorageLocationRepository(database)
@@ -123,7 +124,7 @@ void main() {
       final database = AppDatabase(schema.newConnection());
       addTearDown(database.close);
 
-      await verifier.migrateAndValidate(database, 5);
+      await verifier.migrateAndValidate(database, 6);
 
       final listed = await StockItemRepository(database)
           .watchStockItems(_homeId)
@@ -147,7 +148,7 @@ void main() {
       final database = AppDatabase(schema.newConnection());
       addTearDown(database.close);
 
-      await verifier.migrateAndValidate(database, 5);
+      await verifier.migrateAndValidate(database, 6);
 
       expect(await ProductRepository(database).getProducts(), [
         const Product(
@@ -158,4 +159,49 @@ void main() {
       ]);
     },
   );
+
+  test('upgrading from version 5 keeps the products without barcode', () async {
+    final schema = await verifier.schemaAt(5);
+    schema.rawDatabase.execute(
+      'INSERT INTO products (id, name, image_path, fat) VALUES (?, ?, ?, ?)',
+      [_productId, 'Nudeln', 'product_images/nudeln.jpg', 1.5],
+    );
+    final database = AppDatabase(schema.newConnection());
+    addTearDown(database.close);
+
+    await verifier.migrateAndValidate(database, 6);
+
+    expect(await ProductRepository(database).getProducts(), [
+      const Product(
+        id: _productId,
+        name: 'Nudeln',
+        imagePath: 'product_images/nudeln.jpg',
+        nutritionFacts: {Nutrient.fat: 1.5},
+      ),
+    ]);
+  });
+
+  test('after upgrading from version 5 a barcode belongs to one product, '
+      'while many products have none', () async {
+    final schema = await verifier.schemaAt(5);
+    final database = AppDatabase(schema.newConnection());
+    addTearDown(database.close);
+    await verifier.migrateAndValidate(database, 6);
+    const insert = 'INSERT INTO products (id, name, barcode) VALUES (?, ?, ?)';
+
+    await database.customStatement(insert, ['a', 'Nudeln', null]);
+    await database.customStatement(insert, ['b', 'Reis', null]);
+    await database.customStatement(insert, ['c', 'Milch', '4012345678901']);
+
+    await expectLater(
+      database.customStatement(insert, ['d', 'Hafermilch', '4012345678901']),
+      throwsA(
+        isA<SqliteException>().having(
+          (error) => error.message,
+          'message',
+          contains('UNIQUE constraint failed: products.barcode'),
+        ),
+      ),
+    );
+  });
 }

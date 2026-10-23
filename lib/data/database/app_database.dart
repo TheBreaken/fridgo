@@ -29,6 +29,7 @@ class StorageLocations extends Table {
 }
 
 @DataClassName('ProductRow')
+@TableIndex(name: 'products_barcode', columns: {#barcode}, unique: true)
 class Products extends Table {
   TextColumn get id => text()();
   TextColumn get name => text()();
@@ -40,6 +41,7 @@ class Products extends Table {
   RealColumn get sugars => real().nullable()();
   RealColumn get protein => real().nullable()();
   RealColumn get salt => real().nullable()();
+  TextColumn get barcode => text().nullable()();
 
   @override
   Set<Column<Object>> get primaryKey => {id};
@@ -79,7 +81,7 @@ class AppDatabase extends _$AppDatabase {
   new(super.e);
 
   @override
-  int get schemaVersion => 5;
+  int get schemaVersion => 6;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -104,6 +106,11 @@ class AppDatabase extends _$AppDatabase {
         ]) {
           await m.addColumn(products, column);
         }
+      },
+      // SQLite cannot add a UNIQUE column, so the index comes separately.
+      from5To6: (m, schema) async {
+        await m.addColumn(schema.products, schema.products.barcode);
+        await m.createIndex(schema.productsBarcode);
       },
     ),
     // SQLite enforces foreign keys only when this is set on each connection.
