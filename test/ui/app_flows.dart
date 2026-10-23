@@ -2,12 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:fridgo/app/app.dart';
+import 'package:fridgo/data/barcode_scanner.dart';
 import 'package:fridgo/data/clock.dart';
 import 'package:fridgo/data/database/app_database.dart';
 import 'package:fridgo/data/repositories/last_home_repository.dart';
 import 'package:fridgo/data/repositories/product_image_repository.dart';
 
 import '../data/database/test_database.dart';
+import '../data/fake_barcode_scanner.dart';
 import '../data/repositories/fake_last_home_repository.dart';
 import '../data/repositories/fake_product_image_repository.dart';
 
@@ -18,6 +20,7 @@ Future<void> pumpApp(
   WidgetTester tester, {
   required DateTime now,
   FakeProductImageRepository? productImages,
+  FakeBarcodeScanner? barcodeScanner,
 }) async {
   final database = createWidgetTestDatabase();
   addTearDown(database.close);
@@ -29,6 +32,9 @@ Future<void> pumpApp(
         lastHomeRepositoryProvider.overrideWithValue(FakeLastHomeRepository()),
         productImageRepositoryProvider.overrideWithValue(
           productImages ?? FakeProductImageRepository(),
+        ),
+        barcodeScannerProvider.overrideWithValue(
+          barcodeScanner ?? FakeBarcodeScanner(),
         ),
       ],
       child: const FridgoApp(),
@@ -63,17 +69,40 @@ Future<void> createStorageLocationAndReturn(
   await tester.pumpAndSettle();
 }
 
+/// Opens the add screen through the scanner, without a barcode.
+Future<void> openAddStockItem(WidgetTester tester) async {
+  await tester.tap(find.byTooltip('Lebensmittel scannen'));
+  await tester.pumpAndSettle();
+  await tester.tap(find.text('Ohne Barcode'));
+  await tester.pumpAndSettle();
+}
+
+Future<void> scanBarcode(
+  WidgetTester tester,
+  FakeBarcodeScanner scanner,
+  String barcode,
+) async {
+  await tester.tap(find.byTooltip('Lebensmittel scannen'));
+  await tester.pumpAndSettle();
+  scanner.show(barcode);
+  await tester.pumpAndSettle();
+}
+
 Future<void> addStockItem(
   WidgetTester tester, {
   required String name,
   required String quantity,
   String unitLabel = 'Stück',
 }) async {
-  await tester.tap(find.byTooltip('Lebensmittel hinzufügen'));
-  await tester.pumpAndSettle();
+  await openAddStockItem(tester);
   await tester.enterText(find.widgetWithText(TextField, 'Name'), name);
   await tester.enterText(find.widgetWithText(TextField, 'Menge'), quantity);
-  await tester.tap(find.widgetWithText(ChoiceChip, unitLabel));
+  // A focused field scrolls back to its caret after typing; let it finish.
+  await tester.pumpAndSettle();
+  final unit = find.widgetWithText(ChoiceChip, unitLabel);
+  await tester.ensureVisible(unit);
+  await tester.pumpAndSettle();
+  await tester.tap(unit);
   await tester.pump();
   final submit = find.widgetWithText(FilledButton, 'Hinzufügen');
   await tester.ensureVisible(submit);

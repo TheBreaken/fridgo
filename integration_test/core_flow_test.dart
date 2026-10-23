@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:fridgo/app/app.dart';
+import 'package:fridgo/data/barcode_scanner.dart';
 import 'package:fridgo/data/database/app_database.dart';
 import 'package:fridgo/data/repositories/last_home_repository.dart';
 import 'package:fridgo/ui/core/empty_state.dart';
@@ -13,6 +14,7 @@ import 'package:fridgo/ui/stock_overview/stock_overview_screen.dart';
 import 'package:integration_test/integration_test.dart';
 import 'package:path_provider/path_provider.dart';
 
+import '../test/data/fake_barcode_scanner.dart';
 import '../test/data/repositories/fake_last_home_repository.dart';
 import '../test/ui/app_flows.dart';
 
@@ -45,6 +47,8 @@ Future<void> _pumpApp(
       overrides: [
         appDatabaseProvider.overrideWithValue(database),
         lastHomeRepositoryProvider.overrideWithValue(lastHomes),
+        // The flow adds without barcode; a real camera would only slow it.
+        barcodeScannerProvider.overrideWithValue(FakeBarcodeScanner()),
       ],
       child: const FridgoApp(),
     ),

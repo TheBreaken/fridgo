@@ -19,6 +19,7 @@ class StockItemRepository {
     required String productName,
     String? imagePath,
     Map<Nutrient, double> nutritionFacts = const {},
+    String? barcode,
   }) => _database.transaction(() async {
     final productId = const Uuid().v4();
     await _database
@@ -30,13 +31,30 @@ class StockItemRepository {
               name: productName,
               imagePath: imagePath,
               nutritionFacts: nutritionFacts,
+              barcode: barcode,
             ),
           ),
         );
-    return await addStockItemForProduct(productId, draft);
+    return await _insertStockItem(productId, draft);
   });
 
+  /// Also gives the product [barcode], unless it has one already.
   Future<StockItem> addStockItemForProduct(
+    String productId,
+    StockItemDraft draft, {
+    String? barcode,
+  }) => _database.transaction(() async {
+    if (barcode != null) {
+      await (_database.update(_database.products)..where(
+            (product) =>
+                product.id.equals(productId) & product.barcode.isNull(),
+          ))
+          .write(ProductsCompanion(barcode: Value(barcode)));
+    }
+    return await _insertStockItem(productId, draft);
+  });
+
+  Future<StockItem> _insertStockItem(
     String productId,
     StockItemDraft draft,
   ) async {

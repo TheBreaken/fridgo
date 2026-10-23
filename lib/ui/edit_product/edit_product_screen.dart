@@ -8,6 +8,7 @@ import 'package:fridgo/domain/product.dart';
 import 'package:fridgo/domain/product_photo.dart';
 import 'package:fridgo/l10n/app_localizations.dart';
 import 'package:fridgo/ui/core/app_theme.dart';
+import 'package:fridgo/ui/core/info_note.dart';
 import 'package:fridgo/ui/core/nutrition_facts_section.dart';
 import 'package:fridgo/ui/core/product_photo_field.dart';
 import 'package:fridgo/ui/core/product_thumbnail.dart';
@@ -130,6 +131,7 @@ class _EditProductFormState extends ConsumerState<_EditProductForm> {
 
   // The stored photo, null once removed; a picked photo replaces it.
   late String? _imagePath = widget.product.imagePath;
+  late String? _barcode = widget.product.barcode;
   String? _pickedPhotoPath;
   bool _isSaving = false;
 
@@ -157,6 +159,7 @@ class _EditProductFormState extends ConsumerState<_EditProductForm> {
         name: _nameController.text,
         imagePath: _imagePath,
         nutritionFacts: _nutritionFacts,
+        barcode: _barcode,
       ),
       pickedPhotoPath: _pickedPhotoPath,
     );
@@ -213,7 +216,7 @@ class _EditProductFormState extends ConsumerState<_EditProductForm> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final theme = Theme.of(context);
+    final barcode = _barcode;
     return Form(
       key: _formKey,
       autovalidateMode: AutovalidateMode.onUserInteractionIfError,
@@ -233,24 +236,26 @@ class _EditProductFormState extends ConsumerState<_EditProductForm> {
                   : l10n.productNameRequired,
             ),
             const SizedBox(height: Spacing.m),
-            Row(
-              spacing: Spacing.s,
-              children: [
-                Icon(
-                  Icons.info_outline_rounded,
-                  size: Sizes.inlineIcon,
-                  color: theme.colorScheme.onSurfaceVariant,
-                ),
-                Expanded(
-                  child: Text(
-                    l10n.productChangesApplyToAllStockItems,
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant,
+            InfoNote(
+              icon: Icons.info_outline_rounded,
+              text: l10n.productChangesApplyToAllStockItems,
+            ),
+            if (barcode != null)
+              Row(
+                children: [
+                  Expanded(
+                    child: InfoNote(
+                      icon: Icons.qr_code_rounded,
+                      text: l10n.scannedBarcode(barcode),
                     ),
                   ),
-                ),
-              ],
-            ),
+                  IconButton(
+                    onPressed: () => setState(() => _barcode = null),
+                    tooltip: l10n.removeBarcode,
+                    icon: const Icon(Icons.close_rounded),
+                  ),
+                ],
+              ),
             const SizedBox(height: Spacing.xl),
             NutritionFactsSection(
               expansibleController: _nutritionFactsExpansion,

@@ -7,6 +7,7 @@ import 'package:fridgo/ui/stock_item_detail/stock_item_detail_screen.dart';
 import 'package:fridgo/ui/stock_overview/stock_item_card.dart';
 import 'package:fridgo/ui/stock_overview/stock_overview_screen.dart';
 
+import '../../data/fake_barcode_scanner.dart';
 import '../app_flows.dart';
 
 final _today = DateTime(2026, 10, 16, 9);
@@ -52,8 +53,7 @@ Future<void> _save(WidgetTester tester) async {
 }
 
 Future<void> _chooseYoghurtWhenAdding(WidgetTester tester) async {
-  await tester.tap(find.byTooltip('Lebensmittel hinzufügen'));
-  await tester.pumpAndSettle();
+  await openAddStockItem(tester);
   await tester.enterText(_field('Name'), 'jog');
   await tester.pumpAndSettle();
   await tester.tap(_suggestion('Joghurt'));
@@ -85,8 +85,7 @@ void main() {
     tester,
   ) async {
     await _addYoghurt(tester);
-    await tester.tap(find.byTooltip('Lebensmittel hinzufügen'));
-    await tester.pumpAndSettle();
+    await openAddStockItem(tester);
     await tester.enterText(_field('Name'), 'Quark');
     await _tapAndSettle(tester, find.text('Nährwerte (optional)'));
     await tester.ensureVisible(_field('Fett'));
@@ -265,5 +264,39 @@ void main() {
 
     expect(find.byType(EditProductScreen), findsOneWidget);
     expect(_fieldText(tester, 'Name'), 'Joghurt');
+  });
+
+  testWidgets('removing the barcode frees it for another product', (
+    tester,
+  ) async {
+    tester.view
+      ..physicalSize = const Size(1080, 2340)
+      ..devicePixelRatio = 3;
+    addTearDown(tester.view.reset);
+    final scanner = FakeBarcodeScanner();
+    await pumpApp(tester, now: _today, barcodeScanner: scanner);
+    await createHomeAndOpenIt(tester, 'Berlin');
+    await createStorageLocationAndReturn(tester, 'Kühlschrank');
+    await scanBarcode(tester, scanner, '4012345678901');
+    await tester.enterText(_field('Name'), 'Joghurt');
+    await tester.pumpAndSettle();
+    await _tapAndSettle(
+      tester,
+      find.widgetWithText(FilledButton, 'Hinzufügen'),
+    );
+    await tester.tap(find.text('Joghurt'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byTooltip(_editProduct));
+    await tester.pumpAndSettle();
+    expect(find.text('Barcode 4012345678901'), findsOneWidget);
+
+    await _tapAndSettle(tester, find.byTooltip('Barcode entfernen'));
+    await _tapAndSettle(tester, find.widgetWithText(FilledButton, 'Speichern'));
+
+    await tester.tap(find.byType(BackButton));
+    await tester.pumpAndSettle();
+    await scanBarcode(tester, scanner, '4012345678901');
+    expect(find.byType(SelectedProductCard), findsNothing);
+    expect(find.text('Barcode 4012345678901'), findsOneWidget);
   });
 }

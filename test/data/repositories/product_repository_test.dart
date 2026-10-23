@@ -98,6 +98,38 @@ void main() {
     );
   });
 
+  test('a barcode finds the product that has it', () async {
+    final home = await HomeRepository(database).createHome('Berlin');
+    final fridge = await StorageLocationRepository(database)
+        .createStorageLocation(
+          homeId: home.id,
+          name: 'Kühlschrank',
+          kind: StorageLocationKind.refrigerator,
+        );
+    final stockItems = StockItemRepository(database);
+    await stockItems.addStockItemWithNewProduct(
+      _draft(fridge.id),
+      productName: 'Butter',
+      barcode: '4098765432109',
+    );
+    final milk = await stockItems.addStockItemWithNewProduct(
+      _draft(fridge.id),
+      productName: 'Milch',
+      barcode: '4012345678901',
+    );
+
+    expect(
+      await repository.findProductByBarcode('4012345678901'),
+      Product(id: milk.productId, name: 'Milch', barcode: '4012345678901'),
+    );
+  });
+
+  test('an unknown barcode finds no product', () async {
+    await _addToNewHome(database, homeName: 'Berlin', productName: 'Milch');
+
+    expect(await repository.findProductByBarcode('4012345678901'), isNull);
+  });
+
   test('a product keeps exactly the nutrition facts it was given', () async {
     const nutritionFacts = {
       Nutrient.energy: 64.0,

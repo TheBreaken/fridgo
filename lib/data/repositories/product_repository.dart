@@ -24,6 +24,13 @@ class ProductRepository {
     return row == null ? null : productFromRow(row);
   }
 
+  Future<Product?> findProductByBarcode(String barcode) async {
+    final row = await (_database.select(
+      _database.products,
+    )..where((product) => product.barcode.equals(barcode))).getSingleOrNull();
+    return row == null ? null : productFromRow(row);
+  }
+
   Future<ProductStock> getProductStock(String productId) async {
     final stockItems = _database.stockItems;
     final storageLocations = _database.storageLocations;
@@ -78,6 +85,7 @@ Product productFromRow(ProductRow row) => Product(
     Nutrient.protein: ?row.protein,
     Nutrient.salt: ?row.salt,
   },
+  barcode: row.barcode,
 );
 
 ProductsCompanion productToCompanion(Product product) {
@@ -93,6 +101,7 @@ ProductsCompanion productToCompanion(Product product) {
     sugars: Value(nutritionFacts[Nutrient.sugars]),
     protein: Value(nutritionFacts[Nutrient.protein]),
     salt: Value(nutritionFacts[Nutrient.salt]),
+    barcode: Value(product.barcode),
   );
 }
 

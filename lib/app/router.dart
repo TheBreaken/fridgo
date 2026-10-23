@@ -4,6 +4,7 @@ import 'package:fridgo/ui/add_stock_item/add_stock_item_screen.dart';
 import 'package:fridgo/ui/edit_product/edit_product_screen.dart';
 import 'package:fridgo/ui/homes/homes_screen.dart';
 import 'package:fridgo/ui/homes/homes_view_model.dart';
+import 'package:fridgo/ui/scan_barcode/scan_barcode_screen.dart';
 import 'package:fridgo/ui/stock_item_detail/edit_stock_item_screen.dart';
 import 'package:fridgo/ui/stock_item_detail/stock_item_detail_screen.dart';
 import 'package:fridgo/ui/stock_overview/stock_overview_screen.dart';
@@ -45,9 +46,16 @@ final routerProvider = Provider<GoRouter>((ref) {
                 ),
               ),
               GoRoute(
-                path: 'stock-items/new',
+                path: 'scan',
                 builder: (context, state) =>
-                    AddStockItemScreen(homeId: state.pathParameters['homeId']!),
+                    ScanBarcodeScreen(homeId: state.pathParameters['homeId']!),
+              ),
+              GoRoute(
+                path: 'stock-items/new',
+                builder: (context, state) => AddStockItemScreen(
+                  homeId: state.pathParameters['homeId']!,
+                  barcode: state.uri.queryParameters['barcode'],
+                ),
               ),
               GoRoute(
                 path: 'stock-items/:stockItemId',

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -16,6 +17,7 @@ import 'package:fridgo/ui/add_stock_item/selected_product_card.dart';
 import 'package:fridgo/ui/core/app_theme.dart';
 import 'package:fridgo/ui/core/calendar_date_field.dart';
 import 'package:fridgo/ui/core/choice_section.dart';
+import 'package:fridgo/ui/core/info_note.dart';
 import 'package:fridgo/ui/core/nutrition_facts_section.dart';
 import 'package:fridgo/ui/core/product_photo_field.dart';
 import 'package:fridgo/ui/core/stock_unit_display.dart';
@@ -23,9 +25,12 @@ import 'package:fridgo/ui/core/storage_location_kind_display.dart';
 import 'package:go_router/go_router.dart';
 
 class AddStockItemScreen extends ConsumerStatefulWidget {
-  const new({required this.homeId, super.key});
+  const new({required this.homeId, this.barcode, super.key});
 
   final String homeId;
+
+  /// Scanned before; selects the product that has it.
+  final String? barcode;
 
   @override
   ConsumerState<AddStockItemScreen> createState() => _AddStockItemScreenState();
@@ -45,10 +50,26 @@ class _AddStockItemScreenState extends ConsumerState<AddStockItemScreen> {
   CalendarDate? _openedDate;
   String? _pickedPhotoPath;
   Product? _selectedProduct;
+  late String? _barcode = widget.barcode;
   bool _isSaving = false;
 
   AddStockItemViewModel get _viewModel =>
       ref.read(addStockItemViewModelProvider(widget.homeId).notifier);
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.barcode case final barcode?) {
+      unawaited(_selectScannedProduct(barcode));
+    }
+  }
+
+  Future<void> _selectScannedProduct(String barcode) async {
+    final product = await _viewModel.findProductByBarcode(barcode);
+    if (product != null && mounted && _selectedProduct == null) {
+      _selectProduct(product);
+    }
+  }
 
   @override
   void dispose() {
@@ -84,9 +105,14 @@ class _AddStockItemScreenState extends ConsumerState<AddStockItemScreen> {
         productName: _nameController.text,
         pickedPhotoPath: _pickedPhotoPath,
         nutritionFacts: _nutritionFacts,
+        barcode: _barcode,
       );
     } else {
-      await _viewModel.addStockItemForProduct(selectedProduct.id, draft);
+      await _viewModel.addStockItemForProduct(
+        selectedProduct.id,
+        draft,
+        barcode: _barcode,
+      );
     }
     if (mounted) context.pop();
   }
@@ -122,6 +148,8 @@ class _AddStockItemScreenState extends ConsumerState<AddStockItemScreen> {
   }
 
   void _clearSelectedProduct() => setState(() {
+    // The barcode belongs to that product, a new one cannot have it too.
+    if (_selectedProduct?.barcode == _barcode) _barcode = null;
     _selectedProduct = null;
     _nameController.clear();
   });
@@ -152,12 +180,30 @@ class _AddStockItemScreenState extends ConsumerState<AddStockItemScreen> {
 
   Widget _buildProduct(AppLocalizations l10n) {
     final selectedProduct = _selectedProduct;
+    final barcode = _barcode;
     if (selectedProduct != null) {
-      return SelectedProductCard(
-        key: ValueKey(selectedProduct.id),
+      final card = SelectedProductCard(
         product: selectedProduct,
         onEdit: () => _editSelectedProduct(selectedProduct),
         onCleared: _clearSelectedProduct,
+      );
+      final keepsOtherBarcode =
+          barcode != null &&
+          selectedProduct.barcode != null &&
+          selectedProduct.barcode != barcode;
+      return Column(
+        key: ValueKey(selectedProduct.id),
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          card,
+          if (keepsOtherBarcode) ...[
+            const SizedBox(height: Spacing.m),
+            InfoNote(
+              icon: Icons.info_outline_rounded,
+              text: l10n.scannedBarcodeNotAssigned,
+            ),
+          ],
+        ],
       );
     }
     return Column(
@@ -180,6 +226,13 @@ class _AddStockItemScreenState extends ConsumerState<AddStockItemScreen> {
               ? null
               : l10n.productNameRequired,
         ),
+        if (barcode != null) ...[
+          const SizedBox(height: Spacing.m),
+          InfoNote(
+            icon: Icons.qr_code_rounded,
+            text: l10n.scannedBarcode(barcode),
+          ),
+        ],
       ],
     );
   }

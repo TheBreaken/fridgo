@@ -15,6 +15,9 @@ abstract class Product with _$Product {
 
     // Per 100 g or 100 ml, energy in kcal.
     @Default(<Nutrient, double>{}) Map<Nutrient, double> nutritionFacts,
+
+    // At most one product per barcode.
+    String? barcode,
   }) = _Product;
 }
 

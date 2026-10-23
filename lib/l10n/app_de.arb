@@ -51,6 +51,22 @@
     }
   },
   "addStockItem": "Lebensmittel hinzufügen",
+  "scanStockItem": "Lebensmittel scannen",
+  "scanBarcodeTitle": "Barcode scannen",
+  "scanBarcodeHint": "Halte den Barcode in den Rahmen.",
+  "addWithoutBarcode": "Ohne Barcode",
+  "scanCameraAccessDenied": "Fridgo darf die Kamera nicht benutzen. Du kannst das in den Einstellungen erlauben. Bis dahin trägst du das Lebensmittel hier ein.",
+  "scanCameraUnavailable": "Die Kamera ist gerade nicht verfügbar. Trag das Lebensmittel hier ein.",
+  "scannedBarcode": "Barcode {barcode}",
+  "@scannedBarcode": {
+    "placeholders": {
+      "barcode": {
+        "type": "String"
+      }
+    }
+  },
+  "scannedBarcodeNotAssigned": "Das Produkt hat schon einen anderen Barcode, der gescannte wird nicht übernommen.",
+  "removeBarcode": "Barcode entfernen",
   "productPhotoAdd": "Foto hinzufügen",
   "productPhotoChange": "Foto ändern",
   "productPhotoTake": "Foto aufnehmen",

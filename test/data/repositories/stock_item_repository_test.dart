@@ -310,6 +310,81 @@ void _inOneStorageLocation() {
     );
   });
 
+  test('a new product keeps the scanned barcode', () async {
+    final stockItem = await repository.addStockItemWithNewProduct(
+      _milk(fridge),
+      productName: 'Milch',
+      barcode: '4012345678901',
+    );
+
+    final product = await ProductRepository(database)
+        .getProduct(stockItem.productId);
+    expect(product?.barcode, '4012345678901');
+  });
+
+  test('a barcode used by another product is rejected without adding '
+      'anything', () async {
+    await repository.addStockItemWithNewProduct(
+      _milk(fridge),
+      productName: 'Milch',
+      barcode: '4012345678901',
+    );
+
+    await expectLater(
+      repository.addStockItemWithNewProduct(
+        _milk(fridge),
+        productName: 'Hafermilch',
+        barcode: '4012345678901',
+      ),
+      throwsA(
+        isA<SqliteException>().having(
+          (error) => error.message,
+          'message',
+          contains('UNIQUE constraint failed: products.barcode'),
+        ),
+      ),
+    );
+
+    expect(await database.select(database.products).get(), hasLength(1));
+    expect(await database.select(database.stockItems).get(), hasLength(1));
+  });
+
+  test(
+    'adding for a product without barcode gives it the scanned one',
+    () async {
+      final first = await _addWithNewProduct(repository, _milk(fridge));
+
+      await repository.addStockItemForProduct(
+        first.productId,
+        _milk(fridge),
+        barcode: '4012345678901',
+      );
+
+      final product = await ProductRepository(database)
+          .getProduct(first.productId);
+      expect(product?.barcode, '4012345678901');
+    },
+  );
+
+  test('adding for a product with a barcode keeps its own', () async {
+    final first = await repository.addStockItemWithNewProduct(
+      _milk(fridge),
+      productName: 'Milch',
+      barcode: '4012345678901',
+    );
+
+    await repository.addStockItemForProduct(
+      first.productId,
+      _milk(fridge),
+      barcode: '4098765432109',
+    );
+
+    final product = await ProductRepository(database)
+        .getProduct(first.productId);
+    expect(product?.barcode, '4012345678901');
+    expect(await database.select(database.stockItems).get(), hasLength(2));
+  });
+
   test('a stock item for an unknown product is rejected', () async {
     await expectLater(
       repository.addStockItemForProduct(
