@@ -433,7 +433,7 @@
     "id": "T029",
     "title": "Barcode scannen und bekanntes Produkt wiederfinden",
     "type": "feat",
-    "priority": "low",
+    "priority": "high",
     "status": "open",
     "dependsOn": ["T012"],
     "description": "Ziel: Beim Hinzufügen lässt sich ein Barcode mit der Kamera scannen. Gehört er zu einem bereits angelegten Produkt, wird dieses gewählt; sonst geht es mit dem Barcode ins manuelle Formular. Das funktioniert ohne Netz.\n\nAbgrenzung: Der Abruf bei Open Food Facts folgt in T030.\n\nZu klären: Lässt sich der Barcode auch von Hand eintippen?",
@@ -443,6 +443,7 @@
       "Ein unbekannter Barcode öffnet das Formular mit eingetragenem Barcode",
       "Eine verweigerte Kameraberechtigung führt zur manuellen Eingabe",
       "Der Scanner liegt hinter einer Schnittstelle; ViewModel-Test mit Fake",
+      "Tipp-Budget: Ein bekanntes Produkt ist vom Öffnen des Scanners bis zum gespeicherten Bestand in höchstens 4 Tipps erfasst",
       "Auf beiden Plattformen am Gerät geprüft"
     ]
   },
@@ -450,7 +451,7 @@
     "id": "T030",
     "title": "Unbekannten Barcode bei Open Food Facts abrufen",
     "type": "feat",
-    "priority": "low",
+    "priority": "high",
     "status": "open",
     "dependsOn": ["T019", "T029"],
     "description": "Ziel: Für einen unbekannten Barcode holt die App Name und Nährwerte bei Open Food Facts und befüllt das Formular vor. Der Nutzer kann alles korrigieren. Fehlt das Netz oder das Produkt, geht es mit manueller Eingabe weiter.\n\nAbgrenzung: Das Produktbild folgt in T031.\n\nZu klären: Welche Sprache hat beim Produktnamen Vorrang?",
@@ -467,7 +468,7 @@
     "id": "T031",
     "title": "Produktbild von Open Food Facts übernehmen",
     "type": "feat",
-    "priority": "low",
+    "priority": "high",
     "status": "open",
     "dependsOn": ["T011", "T030"],
     "description": "Ziel: Liefert Open Food Facts ein Bild, wird es heruntergeladen und wie ein eigenes Foto dauerhaft abgelegt. Der Nutzer kann es durch ein eigenes Foto ersetzen.\n\nZu klären: Verlangt die Bildlizenz von Open Food Facts einen sichtbaren Hinweis in der App?",
@@ -483,7 +484,7 @@
     "type": "test",
     "priority": "low",
     "status": "open",
-    "dependsOn": ["T001", "T015", "T016", "T020", "T021", "T023", "T025", "T026", "T028", "T031"],
+    "dependsOn": ["T001", "T015", "T016", "T020", "T021", "T023", "T025", "T026", "T028", "T031", "T035", "T036", "T037"],
     "description": "Ziel: Alle Punkte unter Version 1 in `CLAUDE.md` werden einmal vollständig auf einem echten Android- und einem echten iOS-Gerät durchgegangen, dazu die dort genannten besonders zählenden Fälle. Jeder Mangel wird eine eigene Aufgabe.\n\nAbgrenzung: Mängel werden hier erfasst, nicht behoben.",
     "acceptanceCriteria": [
       "Jeder Punkt der Liste Version 1 ist auf beiden Plattformen geprüft; das Ergebnis steht im PR",
@@ -519,6 +520,57 @@
     "acceptanceCriteria": [
       "Kein Screen baut mehr einen eigenen Lösch-`AlertDialog`",
       "Die bestehenden Widget-Tests zum Löschen von Bestand und Produkt laufen unverändert"
+    ]
+  },
+  {
+    "id": "T035",
+    "title": "Haltbarkeit und Lagerort je Produkt merken und vorschlagen",
+    "type": "feat",
+    "priority": "high",
+    "status": "open",
+    "dependsOn": ["T018"],
+    "description": "Ziel: Das Produkt merkt sich, wie lange es üblicherweise hält (Tage zwischen Erfassen und MHD) und in welcher Art Lagerort (`StorageLocationKind`) es zuletzt lag. Beim Hinzufügen sind MHD (heute + Tage) und Lagerort (erster Lagerort dieser Art in der aktuellen Wohnung) vorbelegt und änderbar. Gemerkt wird die Art, nicht die ID, weil Lagerorte je Wohnung verschieden sind. Barcode (T029–T031) und Kassenbon (T036) nutzen dieselben Vorschläge.\n\nAbgrenzung: Keine Haltbarkeitstabelle von außen, keine Haltbarkeit nach dem Öffnen.\n\nZu klären: Gilt der letzte Wert oder ein gemittelter? Lernt auch das Bearbeiten eines Bestands (T018) oder nur das Anlegen?",
+    "acceptanceCriteria": [
+      "Die neuen Felder am Produkt kommen als Migration; bestehende Produkte bleiben ohne Erfahrungswert gültig (Migrationstest)",
+      "Der MHD-Vorschlag ist ein Kalenderdatum aus injizierter Uhr plus Tagen; Unit-Test über eine Sommerzeitgrenze",
+      "Ohne Erfahrungswert bleibt das MHD leer",
+      "Gibt es in der Wohnung keinen Lagerort der gemerkten Art, gilt die bisherige Vorbelegung (Test)",
+      "Tipp-Budget: Ein vorhandenes Produkt mit Erfahrungswert ist vom Hinzufügen-Knopf bis zum gespeicherten Bestand in höchstens 4 Tipps erfasst"
+    ]
+  },
+  {
+    "id": "T036",
+    "title": "Kassenbon fotografieren und als Bestand übernehmen",
+    "type": "feat",
+    "priority": "high",
+    "status": "open",
+    "dependsOn": ["T012", "T035"],
+    "description": "Ziel: Der Nutzer fotografiert einen Papierbon oder wählt ihn aus der Galerie. Die Texterkennung läuft auf dem Gerät (`google_mlkit_text_recognition`), ein Parser in der Domäne zerlegt den Text in Zeilen mit Menge. Eine gelernte Zuordnung (normalisierter Bontext → Produkt oder „ignorieren“, unabhängig vom Laden) ordnet bekannte Zeilen automatisch zu. Eine Prüfliste zeigt alle Zeilen: Bekannte sind ausgefüllt und angehakt, mit MHD und Lagerort aus T035; unbekannte werden einmal zugeordnet (Vorschläge wie in T012 oder neues Produkt mit dem Bontext als Namensvorschlag) oder ignoriert. Ein Knopf speichert alles in einer Transaktion.\n\nAbgrenzung: Kein eBon/PDF, keine Cloud-Erkennung, keine Ladenerkennung, keine Preise, keine Textsuche bei Open Food Facts.\n\nZu klären: Echte Bons des Nutzers als Testdaten (welche Ketten)? Einstieg in der Oberfläche? Normalisierung des Bontexts? Läuft ML Kit auf dem arm64-iOS-Simulator, sonst bricht `make integration-test` dort für die ganze App? Welche Nutzungsdaten sendet ML Kit an Google, und ist das tragbar? Lizenz und Paketfreigabe im Repository dokumentieren.",
+    "acceptanceCriteria": [
+      "Die Zuordnungstabelle kommt als Migration mit Migrationstest",
+      "Parser-Tests mit echten Bontexten: Mengenzeile, Gewicht, Pfand, Rabatt, Summe und Zahlungszeilen",
+      "Eine einmal zugeordnete oder ignorierte Zeile wird beim nächsten Bon automatisch so übernommen (Test)",
+      "Speichern legt alle angehakten Zeilen in einer Transaktion an; scheitert eine, wird keine gespeichert (Datenbanktest)",
+      "Die Texterkennung liegt hinter einer Schnittstelle; ViewModel-Test mit Fake",
+      "Ohne Netz voll funktionsfähig",
+      "Eine verweigerte Kameraberechtigung lässt die Auswahl aus der Galerie benutzbar",
+      "Tipp-Budget: Ein Bon mit nur bekannten Zeilen ist vom Einstieg bis zum gespeicherten Bestand in höchstens 4 Tipps erfasst",
+      "Auf beiden Plattformen am Gerät mit echten Bons geprüft"
+    ]
+  },
+  {
+    "id": "T037",
+    "title": "Mehrere Barcodes nacheinander scannen",
+    "type": "feat",
+    "priority": "high",
+    "status": "open",
+    "dependsOn": ["T030", "T036"],
+    "description": "Ziel: Nach dem Einkauf scannt der Nutzer Barcodes hintereinander, ohne den Scanner zu verlassen. Alles landet in derselben Prüfliste wie beim Kassenbon (T036) und wird mit einem Knopf gespeichert.\n\nAbgrenzung: Kein Verschieben, keine Mengen aus dem Barcode.\n\nZu klären: Wie bestätigt der Scanner einen Treffer (Ton, Vibration, Animation)?",
+    "acceptanceCriteria": [
+      "Derselbe Barcode zweimal gescannt erhöht die Menge, statt eine zweite Zeile anzulegen (Test)",
+      "Unbekannte Barcodes laufen über den Abruf aus T030; ohne Netz bleiben sie zur Zuordnung in der Liste",
+      "Tipp-Budget: Fünf bekannte Produkte sind vom Öffnen des Scanners bis zum gespeicherten Bestand in höchstens 3 Tipps erfasst",
+      "Auf beiden Plattformen am Gerät geprüft"
     ]
   }
 ]

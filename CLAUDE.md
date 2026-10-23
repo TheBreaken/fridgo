@@ -10,9 +10,14 @@ Nutzer pendelt zwischen Wohnungen und will
 - weniger wegwerfen, weil er sieht, was bald abläuft, und
 - gezielt einkaufen, weil er sieht, was in der Zielwohnung liegt.
 
-Die Optik ist ein Kernziel, kein Nachgedanke: Icons, Bilder und Animationen sollen das
-Eintragen und Durchsehen angenehm machen. Eine Änderung, die funktioniert, aber lieblos
-aussieht, ist nicht fertig.
+Optik und müheloses Erfassen sind die beiden Kernziele, keine Nachgedanken.
+
+- **Optik:** Icons, Bilder und Animationen sollen das Eintragen und Durchsehen angenehm
+  machen. Eine Änderung, die funktioniert, aber lieblos aussieht, ist nicht fertig.
+- **Müheloses Erfassen:** Jedes Produkt von Hand einzutippen hält niemand lange durch. Die
+  App nimmt dem Nutzer so viel Eingabe ab wie möglich: Barcode, Kassenbon, Vorschläge aus
+  dem, was sie schon kennt. Eine Erfassung, die mehr Tipps braucht als nötig, ist nicht
+  fertig.
 
 ## Rahmen
 
@@ -20,6 +25,7 @@ aussieht, ist nicht fertig.
 - Alle Daten liegen lokal auf dem Gerät. Die App funktioniert vollständig offline.
 - Netzwerk gibt es nur für den Abruf bei Open Food Facts. Fehlt das Netz oder das Produkt,
   fällt die App auf manuelle Eingabe zurück.
+- Die Texterkennung von Kassenbons läuft auf dem Gerät, ohne Netz.
 - Android und iOS zählen gleich. Jede Änderung wird auf beiden Plattformen geprüft.
 
 ## Umfang
@@ -31,11 +37,13 @@ aussieht, ist nicht fertig.
 - Bestandsübersicht pro Wohnung, nach MHD sortiert
 - Menge reduzieren (Teilverbrauch und vollständiger Verbrauch)
 - lokale Erinnerungen vor Ablauf des MHD
-- Barcode-Scan mit Abruf bei Open Food Facts
+- Barcode-Scan mit Abruf bei Open Food Facts, auch mehrere Barcodes nacheinander
+- MHD und Lagerort beim Erfassen aus Erfahrung vorschlagen
+- Kassenbon fotografieren, Zeilen erkennen und nach Prüfung als Bestand übernehmen
 - Export und Import (Datenbank und Bilder gemeinsam)
 
-Empfohlene Reihenfolge: erst die Basis lauffähig, dann Export/Import, Erinnerungen, zuletzt
-Barcode.
+Empfohlene Reihenfolge: erst die Basis lauffähig, dann Erfassen (Barcode, Kassenbon), dann
+Export/Import, zuletzt Erinnerungen.
 
 **Später**
 
@@ -87,6 +95,7 @@ Rückfrage.
 | Fotos aufnehmen und auswählen   | `image_picker`                              |
 | Bilddateien ablegen             | `path_provider`                             |
 | Barcode-Scanner                 | `mobile_scanner`                            |
+| Texterkennung (Kassenbon)       | `google_mlkit_text_recognition`             |
 | SVG-Grafiken                    | `flutter_svg`                               |
 | Kleine Einstellungen            | `shared_preferences`                        |
 | Erinnerungen                    | `flutter_local_notifications`               |
@@ -255,6 +264,8 @@ Regeln:
   der nächsten freien ID im selben PR, nicht Teil der laufenden Änderung. Was unter
   "Später" oder "Nicht geplant" fällt, wird nur in der Antwort erwähnt.
 - Erledigte Aufgaben bleiben in der Datei stehen.
+- Jede Aufgabe, die das Erfassen berührt, nennt ein Tipp-Budget als Abnahmekriterium: die
+  Zahl der Tipps vom Einstieg bis zum gespeicherten Bestand.
 - Eine Entscheidung, die über die Aufgabe hinaus gilt, wird in dieser Datei festgehalten.
 
 ## Assets
