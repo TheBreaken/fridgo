@@ -1,4 +1,6 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Open Food Facts; debug and profile builds get it from their own manifests. -->
+    <uses-permission android:name="android.permission.INTERNET"/>
     <application
         android:label="Fridgo"
         android:name="${applicationName}"

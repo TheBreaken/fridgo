@@ -181,6 +181,9 @@ in der CI, und nur auf einem Emulator oder Simulator, nicht auf dem eigenen Ger�
 ersetzt die installierte App, erst `make run` stellt die echte wieder her. Das Ger채t w채hlt
 `make integration-test FLUTTER="fvm flutter -d <Ger채te-ID>"`.
 
+`make run-release` startet einen Release-Build, zum Beispiel um zu pr체fen, was nur dort fehlt
+(Berechtigungen im Haupt-Manifest). Er ist bis T028 mit dem Debug-Schl체ssel signiert.
+
 `make update-goldens` erzeugt die Referenzbilder der Golden-Tests neu, mit `TESTS=<Datei>` nur
 f체r einzelne Tests. Die neuen Bilder vor dem Commit ansehen.
 

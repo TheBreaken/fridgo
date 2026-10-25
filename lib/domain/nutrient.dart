@@ -1,5 +1,9 @@
 import 'package:fridgo/domain/stock_quantity.dart';
 
+// The thermochemical calorie. Labels work out kJ from the nutrients instead,
+// so a label can differ from this by a few kJ.
+const double kilojoulesPerKilocalorie = 4.184;
+
 /// The nutrients an EU food label lists, per 100 g or 100 ml.
 enum Nutrient {
   // In kcal; pure fat has about 900 kcal per 100 g, the most any food has.

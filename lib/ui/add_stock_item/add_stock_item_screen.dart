@@ -7,6 +7,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:fridgo/domain/calendar_date.dart';
 import 'package:fridgo/domain/nutrient.dart';
 import 'package:fridgo/domain/product.dart';
+import 'package:fridgo/domain/product_lookup.dart';
 import 'package:fridgo/domain/product_photo.dart';
 import 'package:fridgo/domain/stock_item.dart';
 import 'package:fridgo/domain/storage_location.dart';
@@ -29,7 +30,8 @@ class AddStockItemScreen extends ConsumerStatefulWidget {
 
   final String homeId;
 
-  /// Scanned before; selects the product that has it.
+  /// Scanned before; selects the product that has it, or looks it up at
+  /// Open Food Facts.
   final String? barcode;
 
   @override
@@ -51,6 +53,7 @@ class _AddStockItemScreenState extends ConsumerState<AddStockItemScreen> {
   String? _pickedPhotoPath;
   Product? _selectedProduct;
   late String? _barcode = widget.barcode;
+  _ProductLookup _lookup = _ProductLookup.none;
   bool _isSaving = false;
 
   AddStockItemViewModel get _viewModel =>
@@ -66,10 +69,52 @@ class _AddStockItemScreenState extends ConsumerState<AddStockItemScreen> {
 
   Future<void> _selectScannedProduct(String barcode) async {
     final product = await _viewModel.findProductByBarcode(barcode);
-    if (product != null && mounted && _selectedProduct == null) {
+    if (!mounted || _selectedProduct != null) return;
+    if (product == null) {
+      await _lookUpProduct(barcode);
+    } else {
       _selectProduct(product);
     }
   }
+
+  Future<void> _lookUpProduct(String barcode) async {
+    setState(() => _lookup = _ProductLookup.loading);
+    ProductFacts? facts;
+    _ProductLookup outcome;
+    try {
+      facts = await _viewModel.lookUpProduct(barcode);
+      outcome = facts.name == null
+          ? _ProductLookup.incomplete
+          : _ProductLookup.found;
+    } on ProductLookupException catch (error) {
+      outcome = switch (error) {
+        ProductNotFoundException() => _ProductLookup.notFound,
+        ProductLookupFailedException() => _ProductLookup.failed,
+      };
+    }
+    // Cancelled, or an existing product was chosen meanwhile.
+    if (!mounted || _lookup != _ProductLookup.loading) return;
+    setState(() {
+      _lookup = outcome;
+      if (facts != null) _fillEmptyFields(facts);
+    });
+  }
+
+  void _fillEmptyFields(ProductFacts facts) {
+    if (facts.name case final name? when _nameController.text.trim().isEmpty) {
+      _nameController.text = name;
+    }
+    final l10n = AppLocalizations.of(context);
+    for (final MapEntry(key: nutrient, :value)
+        in facts.nutritionFacts.entries) {
+      final controller = _nutrientControllers[nutrient]!;
+      if (controller.text.trim().isEmpty) {
+        controller.text = formatQuantityNumber(value, l10n);
+      }
+    }
+  }
+
+  void _cancelLookup() => setState(() => _lookup = _ProductLookup.none);
 
   @override
   void dispose() {
@@ -130,6 +175,7 @@ class _AddStockItemScreenState extends ConsumerState<AddStockItemScreen> {
   void _selectProduct(Product product) => setState(() {
     _selectedProduct = product;
     _pickedPhotoPath = null;
+    _lookup = _ProductLookup.none;
   });
 
   Future<void> _editSelectedProduct(Product product) async {
@@ -226,6 +272,10 @@ class _AddStockItemScreenState extends ConsumerState<AddStockItemScreen> {
               ? null
               : l10n.productNameRequired,
         ),
+        if (_buildLookupNote(l10n) case final lookupNote?) ...[
+          const SizedBox(height: Spacing.m),
+          lookupNote,
+        ],
         if (barcode != null) ...[
           const SizedBox(height: Spacing.m),
           InfoNote(
@@ -236,6 +286,27 @@ class _AddStockItemScreenState extends ConsumerState<AddStockItemScreen> {
       ],
     );
   }
+
+  Widget? _buildLookupNote(AppLocalizations l10n) => switch (_lookup) {
+    _ProductLookup.none => null,
+    _ProductLookup.loading => _LookupProgress(onCancel: _cancelLookup),
+    _ProductLookup.found => InfoNote(
+      icon: Icons.public_rounded,
+      text: l10n.productLookupFound,
+    ),
+    _ProductLookup.incomplete => InfoNote(
+      icon: Icons.info_outline_rounded,
+      text: l10n.productLookupIncomplete,
+    ),
+    _ProductLookup.notFound => InfoNote(
+      icon: Icons.search_off_rounded,
+      text: l10n.productLookupNotFound,
+    ),
+    _ProductLookup.failed => InfoNote(
+      icon: Icons.cloud_off_rounded,
+      text: l10n.productLookupFailed,
+    ),
+  };
 
   @override
   Widget build(BuildContext context) {
@@ -343,6 +414,41 @@ class _AddStockItemScreenState extends ConsumerState<AddStockItemScreen> {
           ),
         ),
       ),
+    );
+  }
+}
+
+enum _ProductLookup { none, loading, found, incomplete, notFound, failed }
+
+/// Styled like an [InfoNote], with a spinner for the icon.
+class _LookupProgress extends StatelessWidget {
+  const new({required this.onCancel});
+
+  final VoidCallback onCancel;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context);
+    return Row(
+      spacing: Spacing.s,
+      children: [
+        const SizedBox.square(
+          dimension: Sizes.inlineIcon,
+          child: CircularProgressIndicator(
+            strokeWidth: Sizes.inlineProgressStroke,
+          ),
+        ),
+        Expanded(
+          child: Text(
+            l10n.productLookupLoading,
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
+          ),
+        ),
+        TextButton(onPressed: onCancel, child: Text(l10n.cancel)),
+      ],
     );
   }
 }

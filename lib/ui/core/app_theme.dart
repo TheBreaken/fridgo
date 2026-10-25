@@ -111,6 +111,8 @@ abstract final class Corners {
 
 abstract final class Sizes {
   static const double inlineIcon = 18;
+  // Thin enough for a spinner the size of an inline icon.
+  static const double inlineProgressStroke = 2;
   static const double icon = 48;
   static const double thumbnail = 64;
   static const double illustration = 72;

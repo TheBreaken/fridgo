@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -6,7 +8,10 @@ import 'package:fridgo/data/barcode_scanner.dart';
 import 'package:fridgo/data/clock.dart';
 import 'package:fridgo/data/database/app_database.dart';
 import 'package:fridgo/data/repositories/last_home_repository.dart';
+import 'package:fridgo/data/repositories/open_food_facts_repository.dart';
 import 'package:fridgo/data/repositories/product_image_repository.dart';
+import 'package:http/http.dart' as http;
+import 'package:http/testing.dart';
 
 import '../data/database/test_database.dart';
 import '../data/fake_barcode_scanner.dart';
@@ -21,6 +26,7 @@ Future<void> pumpApp(
   required DateTime now,
   FakeProductImageRepository? productImages,
   FakeBarcodeScanner? barcodeScanner,
+  OpenFoodFactsRepository? openFoodFacts,
 }) async {
   final database = createWidgetTestDatabase();
   addTearDown(database.close);
@@ -35,6 +41,13 @@ Future<void> pumpApp(
         ),
         barcodeScannerProvider.overrideWithValue(
           barcodeScanner ?? FakeBarcodeScanner(),
+        ),
+        // Never the real network; by default no product is known there.
+        openFoodFactsRepositoryProvider.overrideWithValue(
+          openFoodFacts ??
+              OpenFoodFactsRepository(
+                MockClient((_) async => http.Response('', HttpStatus.notFound)),
+              ),
         ),
       ],
       child: const FridgoApp(),

@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/misc.dart';
 import 'package:fridgo/data/clock.dart';
+import 'package:fridgo/data/repositories/open_food_facts_repository.dart';
 import 'package:fridgo/data/repositories/product_image_repository.dart';
 import 'package:fridgo/data/repositories/product_repository.dart';
 import 'package:fridgo/data/repositories/stock_item_repository.dart';
@@ -8,6 +9,7 @@ import 'package:fridgo/data/repositories/storage_location_repository.dart';
 import 'package:fridgo/domain/calendar_date.dart';
 import 'package:fridgo/domain/nutrient.dart';
 import 'package:fridgo/domain/product.dart';
+import 'package:fridgo/domain/product_lookup.dart';
 import 'package:fridgo/domain/product_photo.dart';
 import 'package:fridgo/domain/product_search.dart';
 import 'package:fridgo/domain/stock_item.dart';
@@ -52,6 +54,10 @@ class AddStockItemViewModel extends StreamNotifier<List<StorageLocation>> {
 
   Future<Product?> findProductByBarcode(String barcode) =>
       ref.read(productRepositoryProvider).findProductByBarcode(barcode);
+
+  /// Throws a [ProductLookupException] if Open Food Facts cannot help.
+  Future<ProductFacts> lookUpProduct(String barcode) =>
+      ref.read(openFoodFactsRepositoryProvider).fetchProduct(barcode);
 
   Future<void> addStockItemWithNewProduct(
     StockItemDraft draft, {

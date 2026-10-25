@@ -452,7 +452,7 @@
     "title": "Unbekannten Barcode bei Open Food Facts abrufen",
     "type": "feat",
     "priority": "high",
-    "status": "open",
+    "status": "done",
     "dependsOn": ["T019", "T029"],
     "description": "Ziel: Für einen unbekannten Barcode holt die App Name und Nährwerte bei Open Food Facts und befüllt das Formular vor. Der Nutzer kann alles korrigieren. Fehlt das Netz oder das Produkt, geht es mit manueller Eingabe weiter.\n\nAbgrenzung: Das Produktbild folgt in T031.\n\nZu klären: Welche Sprache hat beim Produktnamen Vorrang?",
     "acceptanceCriteria": [
@@ -461,7 +461,8 @@
       "Die Anfrage sendet einen eigenen User-Agent, wie Open Food Facts es verlangt",
       "Der Ladezustand ist sichtbar und abbrechbar",
       "Der Abruf funktioniert auch im Android-Release-Build (Internet-Berechtigung im Haupt-Manifest)",
-      "Nutzungsbedingungen und Lizenz von Open Food Facts sind geprüft und im Repository dokumentiert"
+      "Nutzungsbedingungen und Lizenz von Open Food Facts sind geprüft und im Repository dokumentiert",
+      "Tipp-Budget: Ein Produkt, das nur Open Food Facts kennt, ist vom Öffnen des Scanners bis zum gespeicherten Bestand in höchstens 4 Tipps erfasst"
     ]
   },
   {
@@ -571,6 +572,19 @@
       "Unbekannte Barcodes laufen über den Abruf aus T030; ohne Netz bleiben sie zur Zuordnung in der Liste",
       "Tipp-Budget: Fünf bekannte Produkte sind vom Öffnen des Scanners bis zum gespeicherten Bestand in höchstens 3 Tipps erfasst",
       "Auf beiden Plattformen am Gerät geprüft"
+    ]
+  },
+  {
+    "id": "T038",
+    "title": "Release-Build stürzt beim Start ab",
+    "type": "fix",
+    "priority": "high",
+    "status": "done",
+    "dependsOn": [],
+    "description": "Ziel: Der Android-Release-Build startet. Bisher bricht der Start-Redirect mit `NoSuchMethodError` in `SharedPreferencesAsyncApiRegistrar.getString` ab und der Bildschirm bleibt schwarz: `shared_preferences_android` 2.5.0 liefert keine R8-Regeln für die Klassen, die es über JNI aufruft. Behoben in 2.5.2.\n\nAbgrenzung: Kein eigener Signierschlüssel (T028).\n\nAufgefallen in T030 beim Prüfen im Release-Build.",
+    "acceptanceCriteria": [
+      "`shared_preferences_android` steht im Lockfile auf mindestens 2.5.2",
+      "`make run-release` startet auf dem Android-Emulator in die Bestandsübersicht der zuletzt gewählten Wohnung"
     ]
   }
 ]

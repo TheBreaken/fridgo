@@ -66,6 +66,11 @@
     }
   },
   "scannedBarcodeNotAssigned": "Das Produkt hat schon einen anderen Barcode, der gescannte wird nicht übernommen.",
+  "productLookupLoading": "Suche bei Open Food Facts …",
+  "productLookupFound": "Name und Nährwerte von Open Food Facts (ODbL). Bitte prüfen.",
+  "productLookupIncomplete": "Open Food Facts kennt das Produkt nur teilweise. Bitte trag den Namen ein.",
+  "productLookupNotFound": "Open Food Facts kennt das Produkt nicht. Bitte trag es selbst ein.",
+  "productLookupFailed": "Open Food Facts ist gerade nicht erreichbar. Bitte trag das Produkt selbst ein.",
   "removeBarcode": "Barcode entfernen",
   "productPhotoAdd": "Foto hinzufügen",
   "productPhotoChange": "Foto ändern",
