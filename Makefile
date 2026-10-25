@@ -2,12 +2,17 @@ FLUTTER ?= fvm flutter
 DART ?= fvm dart
 # Test files or folders for make test; empty runs all.
 TESTS ?=
+# Packages for make upgrade; empty upgrades all within the constraints.
+PACKAGES ?=
 
-.PHONY: setup l10n codegen schema format format-check analyze test update-goldens check integration-test run run-profile build-android build-ios
+.PHONY: setup upgrade l10n codegen schema format format-check analyze test update-goldens check integration-test run run-profile build-android build-ios
 
 setup:
 	fvm install
 	$(FLUTTER) pub get
+
+upgrade:
+	$(FLUTTER) pub upgrade $(PACKAGES)
 
 l10n:
 	$(FLUTTER) gen-l10n
