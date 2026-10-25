@@ -5,7 +5,7 @@ TESTS ?=
 # Packages for make upgrade; empty upgrades all within the constraints.
 PACKAGES ?=
 
-.PHONY: setup upgrade l10n codegen schema format format-check analyze test update-goldens check integration-test run run-profile build-android build-ios
+.PHONY: setup upgrade l10n codegen schema format format-check analyze test update-goldens check integration-test run run-profile run-release build-android build-ios
 
 setup:
 	fvm install
@@ -54,6 +54,10 @@ run: codegen
 # Debug builds always stutter; judge smoothness in profile mode on a device.
 run-profile: codegen
 	$(FLUTTER) run --profile
+
+# Shows what only a release build lacks, such as permissions in the main manifest.
+run-release: codegen
+	$(FLUTTER) run --release
 
 build-android: codegen
 	$(FLUTTER) build apk --debug

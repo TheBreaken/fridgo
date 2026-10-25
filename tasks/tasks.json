@@ -452,7 +452,7 @@
     "title": "Unbekannten Barcode bei Open Food Facts abrufen",
     "type": "feat",
     "priority": "high",
-    "status": "open",
+    "status": "done",
     "dependsOn": ["T019", "T029"],
     "description": "Ziel: Für einen unbekannten Barcode holt die App Name und Nährwerte bei Open Food Facts und befüllt das Formular vor. Der Nutzer kann alles korrigieren. Fehlt das Netz oder das Produkt, geht es mit manueller Eingabe weiter.\n\nAbgrenzung: Das Produktbild folgt in T031.\n\nZu klären: Welche Sprache hat beim Produktnamen Vorrang?",
     "acceptanceCriteria": [
@@ -461,7 +461,8 @@
       "Die Anfrage sendet einen eigenen User-Agent, wie Open Food Facts es verlangt",
       "Der Ladezustand ist sichtbar und abbrechbar",
       "Der Abruf funktioniert auch im Android-Release-Build (Internet-Berechtigung im Haupt-Manifest)",
-      "Nutzungsbedingungen und Lizenz von Open Food Facts sind geprüft und im Repository dokumentiert"
+      "Nutzungsbedingungen und Lizenz von Open Food Facts sind geprüft und im Repository dokumentiert",
+      "Tipp-Budget: Ein Produkt, das nur Open Food Facts kennt, ist vom Öffnen des Scanners bis zum gespeicherten Bestand in höchstens 4 Tipps erfasst"
     ]
   },
   {

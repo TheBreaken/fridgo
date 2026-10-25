@@ -2,10 +2,6 @@ import 'package:fridgo/domain/nutrient.dart';
 import 'package:fridgo/l10n/app_localizations.dart';
 import 'package:fridgo/ui/core/stock_unit_display.dart';
 
-// The thermochemical calorie. Labels work out kJ from the nutrients instead,
-// so a label can differ from this by a few kJ.
-const double _kilojoulesPerKilocalorie = 4.184;
-
 extension NutrientDisplay on Nutrient {
   String label(AppLocalizations l10n) => switch (this) {
     Nutrient.energy => l10n.nutrientEnergy,
@@ -33,7 +29,7 @@ extension NutrientDisplay on Nutrient {
   String formatValue(double value, AppLocalizations l10n) {
     final amount = formatAmount(value, l10n);
     if (this != Nutrient.energy) return amount;
-    final kilojoules = (value * _kilojoulesPerKilocalorie).roundToDouble();
+    final kilojoules = (value * kilojoulesPerKilocalorie).roundToDouble();
     return l10n.nutrientEnergyValue(
       amount,
       formatQuantityNumber(kilojoules, l10n),
