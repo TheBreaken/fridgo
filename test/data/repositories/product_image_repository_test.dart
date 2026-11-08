@@ -40,7 +40,11 @@ void main() {
     addTearDown(() => appDirectory.delete(recursive: true));
     addTearDown(() => temporaryDirectory.delete(recursive: true));
     picker = _FakeImagePicker();
-    repository = ProductImageRepository(picker, () async => appDirectory);
+    repository = ProductImageRepository(
+      picker,
+      () async => appDirectory,
+      () async => temporaryDirectory,
+    );
   });
 
   File pickedPhoto(String name, [List<int> bytes = const [1, 2, 3]]) =>
@@ -181,4 +185,29 @@ void main() {
       ),
     );
   });
+
+  test('a downloaded image waits in the temporary directory', () async {
+    final path = await repository.storeTemporary(Uint8List.fromList([4, 5]));
+
+    expect(path, startsWith(temporaryDirectory.path));
+    expect(File(path).readAsBytesSync(), [4, 5]);
+  });
+
+  test(
+    'a downloaded image is stored like a photo under a relative path',
+    () async {
+      final temporaryPath = await repository.storeTemporary(
+        Uint8List.fromList([4, 5]),
+      );
+
+      final imagePath = await repository.store(temporaryPath);
+
+      expect(
+        imagePath,
+        matches(RegExp(r'^product_images/[0-9a-f-]{36}\.jpg$')),
+      );
+      expect(File('${appDirectory.path}/$imagePath').readAsBytesSync(), [4, 5]);
+      expect(File(temporaryPath).existsSync(), isFalse);
+    },
+  );
 }

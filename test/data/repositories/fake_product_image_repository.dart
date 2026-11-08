@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:fridgo/data/repositories/product_image_repository.dart';
 import 'package:fridgo/domain/product_photo.dart';
@@ -12,6 +13,16 @@ class FakeProductImageRepository implements ProductImageRepository {
 
   @override
   Future<String?> pickPhoto(PhotoSource source) => onPick(source);
+
+  /// Downloaded images by the temporary path each one got.
+  final temporaryImages = <String, Uint8List>{};
+
+  @override
+  Future<String> storeTemporary(Uint8List jpeg) async {
+    final path = '/tmp/downloaded_${temporaryImages.length + 1}.jpg';
+    temporaryImages[path] = jpeg;
+    return path;
+  }
 
   @override
   Future<String> store(String pickedPhotoPath) async {

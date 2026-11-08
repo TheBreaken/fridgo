@@ -8,10 +8,11 @@ import 'package:path_provider/path_provider.dart';
 import 'package:uuid/uuid.dart';
 
 class ProductImageRepository {
-  new(this._picker, this._appDirectory);
+  new(this._picker, this._appDirectory, this._temporaryDirectory);
 
   final ImagePicker _picker;
   final Future<Directory> Function() _appDirectory;
+  final Future<Directory> Function() _temporaryDirectory;
 
   // Sharp enough for a full-screen photo, a fraction of a camera photo's size.
   static const _maxEdge = 1600.0;
@@ -52,6 +53,16 @@ class ProductImageRepository {
     }
   }
 
+  /// Writes a downloaded JPEG to a temporary file and returns its path, like
+  /// [pickPhoto] does.
+  Future<String> storeTemporary(Uint8List jpeg) async {
+    final file = File(
+      '${(await _temporaryDirectory()).path}/${const Uuid().v4()}.jpg',
+    );
+    await file.writeAsBytes(jpeg);
+    return file.path;
+  }
+
   /// Moves a picked photo into the app directory and returns its path
   /// relative to that directory.
   Future<String> store(String pickedPhotoPath) async {
@@ -78,6 +89,9 @@ class ProductImageRepository {
 }
 
 final productImageRepositoryProvider = Provider<ProductImageRepository>(
-  (ref) =>
-      ProductImageRepository(ImagePicker(), getApplicationDocumentsDirectory),
+  (ref) => ProductImageRepository(
+    ImagePicker(),
+    getApplicationDocumentsDirectory,
+    getTemporaryDirectory,
+  ),
 );

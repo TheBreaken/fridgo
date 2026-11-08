@@ -92,12 +92,33 @@ class _AddStockItemScreenState extends ConsumerState<AddStockItemScreen> {
         ProductLookupFailedException() => _ProductLookup.failed,
       };
     }
-    // Cancelled, or an existing product was chosen meanwhile.
-    if (!mounted || _lookup != _ProductLookup.loading) return;
-    setState(() {
-      _lookup = outcome;
-      if (facts != null) _fillEmptyFields(facts);
-    });
+    if (!_isLookupStillWanted) return;
+    if (facts != null) _fillEmptyFields(facts);
+    if (facts?.imageUrl case final imageUrl?
+        when outcome == _ProductLookup.found && _pickedPhotoPath == null) {
+      if (await _downloadImage(imageUrl)) {
+        outcome = _ProductLookup.foundWithImage;
+      }
+      if (!_isLookupStillWanted) return;
+    }
+    setState(() => _lookup = outcome);
+  }
+
+  // False once cancelled, or once an existing product was chosen.
+  bool get _isLookupStillWanted => mounted && _lookup == _ProductLookup.loading;
+
+  /// Takes the image as the photo, unless the user picked one meanwhile.
+  Future<bool> _downloadImage(Uri imageUrl) async {
+    final String path;
+    try {
+      path = await _viewModel.downloadProductImage(imageUrl);
+    } on ProductImageDownloadException {
+      // The product is added without image; name and nutrition facts stay.
+      return false;
+    }
+    if (!_isLookupStillWanted || _pickedPhotoPath != null) return false;
+    setState(() => _pickedPhotoPath = path);
+    return true;
   }
 
   void _fillEmptyFields(ProductFacts facts) {
@@ -294,6 +315,10 @@ class _AddStockItemScreenState extends ConsumerState<AddStockItemScreen> {
       icon: Icons.public_rounded,
       text: l10n.productLookupFound,
     ),
+    _ProductLookup.foundWithImage => InfoNote(
+      icon: Icons.public_rounded,
+      text: l10n.productLookupFoundWithImage,
+    ),
     _ProductLookup.incomplete => InfoNote(
       icon: Icons.info_outline_rounded,
       text: l10n.productLookupIncomplete,
@@ -418,7 +443,15 @@ class _AddStockItemScreenState extends ConsumerState<AddStockItemScreen> {
   }
 }
 
-enum _ProductLookup { none, loading, found, incomplete, notFound, failed }
+enum _ProductLookup {
+  none,
+  loading,
+  found,
+  foundWithImage,
+  incomplete,
+  notFound,
+  failed,
+}
 
 /// Styled like an [InfoNote], with a spinner for the icon.
 class _LookupProgress extends StatelessWidget {

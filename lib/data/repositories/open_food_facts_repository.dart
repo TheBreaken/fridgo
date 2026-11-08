@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fridgo/domain/nutrient.dart';
@@ -33,6 +34,11 @@ class OpenFoodFactsRepository {
     Nutrient.salt: 'salt_100g',
   };
   static const _energyInKilojoulesField = 'energy-kj_100g';
+  static const _selectedImagesField = 'selected_images';
+  static const _frontImageField = 'image_front_url';
+
+  // The API names a 400 px image; the same name with "full" is the upload.
+  static final _displaySize = RegExp(r'\.400\.jpg$');
 
   /// Throws a [ProductLookupException] if there is no answer or no product.
   Future<ProductFacts> fetchProduct(String barcode) async {
@@ -56,23 +62,60 @@ class OpenFoodFactsRepository {
       return ProductFacts(
         name: _name(product),
         nutritionFacts: _nutritionFacts(product['nutriments']),
+        imageUrl: _imageUrl(product),
       );
     }
     throw ProductLookupFailedException(barcode, 'no product in the response');
   }
 
+  /// Throws a [ProductImageDownloadException] if the image does not arrive.
+  Future<Uint8List> fetchImage(Uri url) async {
+    final http.Response response;
+    try {
+      response = await _send(url);
+    } on Exception catch (error) {
+      throw ProductImageDownloadException(url, '$error');
+    }
+    if (response.statusCode != HttpStatus.ok) {
+      throw ProductImageDownloadException(url, 'HTTP ${response.statusCode}');
+    }
+    return response.bodyBytes;
+  }
+
   Future<http.Response> _get(String barcode) async {
     final uri = Uri.https(_host, '/api/v3/product/$barcode', {
-      'fields': [..._nameFields, 'nutriments'].join(','),
+      'fields': [
+        ..._nameFields,
+        'nutriments',
+        _selectedImagesField,
+        _frontImageField,
+      ].join(','),
     });
     try {
-      return await _client
-          .get(uri, headers: {HttpHeaders.userAgentHeader: _userAgent})
-          .timeout(_timeout);
+      return await _send(uri);
     } on Exception catch (error) {
       // No network, a timeout, a failed TLS handshake: all mean no answer.
       throw ProductLookupFailedException(barcode, '$error');
     }
+  }
+
+  Future<http.Response> _send(Uri uri) => _client
+      .get(uri, headers: {HttpHeaders.userAgentHeader: _userAgent})
+      .timeout(_timeout);
+
+  // The front of the pack, in the order of the names.
+  Uri? _imageUrl(Map<String, Object?> product) {
+    final frontImages = switch (product[_selectedImagesField]) {
+      {'front': {'display': final Map<String, Object?> byLanguage}} =>
+        byLanguage,
+      _ => const <String, Object?>{},
+    };
+    return [frontImages['de'], product[_frontImageField], frontImages['en']]
+        .whereType<String>()
+        .map((url) => Uri.tryParse(url.replaceFirst(_displaySize, '.full.jpg')))
+        .nonNulls
+        .where((url) => url.isScheme('https'))
+        .firstOrNull;
   }
 
   String? _name(Map<String, Object?> product) => _nameFields

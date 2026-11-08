@@ -59,6 +59,16 @@ class AddStockItemViewModel extends StreamNotifier<List<StorageLocation>> {
   Future<ProductFacts> lookUpProduct(String barcode) =>
       ref.read(openFoodFactsRepositoryProvider).fetchProduct(barcode);
 
+  /// Returns a temporary path, like [pickPhoto].
+  ///
+  /// Throws a [ProductImageDownloadException] if the image does not arrive.
+  Future<String> downloadProductImage(Uri url) async {
+    final image = await ref
+        .read(openFoodFactsRepositoryProvider)
+        .fetchImage(url);
+    return await ref.read(productImageRepositoryProvider).storeTemporary(image);
+  }
+
   Future<void> addStockItemWithNewProduct(
     StockItemDraft draft, {
     required String productName,
