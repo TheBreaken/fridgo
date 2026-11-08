@@ -234,39 +234,41 @@ Widget-Tests nicht.
 
 ## Aufgaben
 
-Der Weg zu Version 1 steht in `tasks/tasks.json`. Eine Session bearbeitet genau eine Aufgabe.
+Der Weg zu Version 1 steht in den GitHub Issues des Repositorys, gelesen und gepflegt über
+`gh`. Eine Session bearbeitet genau eine Aufgabe.
 
-| Feld                 | Bedeutung                                                     |
-| -------------------- | ------------------------------------------------------------- |
-| `id`                 | `T` und drei Ziffern, fortlaufend, wird nie neu vergeben      |
-| `type`               | einer der Commit-Types aus den globalen Vorgaben              |
-| `priority`           | `high`, `medium` oder `low`                                   |
-| `status`             | `open` oder `done`                                            |
-| `dependsOn`          | IDs der Aufgaben, die vorher `done` sein müssen               |
-| `description`        | Ziel, Abgrenzung und was vor der Umsetzung zu klären ist      |
-| `acceptanceCriteria` | prüfbare Kriterien, zusätzlich zu den Regeln unter "Qualität" |
+| Bestandteil       | Bedeutung                                                      |
+| ----------------- | -------------------------------------------------------------- |
+| Nummer `#N`       | ID der Aufgabe; Aufgaben bis T038 tragen ihre alte ID im Titel |
+| `type: …`         | Label, einer der Commit-Types aus den globalen Vorgaben        |
+| `priority: …`     | Label, `high`, `medium` oder `low`                             |
+| offen/geschlossen | Status; geschlossen als „completed“ heißt erledigt             |
+| „Blocked by“      | Aufgaben, die vorher geschlossen sein müssen                   |
+| Beschreibung      | Ziel, Abgrenzung und was vor der Umsetzung zu klären ist       |
+| Abnahmekriterien  | Checkliste, prüfbar, zusätzlich zu den Regeln unter "Qualität" |
 
 Ablauf einer Session:
 
-1. Von aktuellem `main` starten. Ist keine Aufgabe genannt, gilt unter den Aufgaben mit
-   Status `open` und erfüllten `dependsOn` die mit der höchsten Priorität, bei Gleichstand
-   die erste in der Datei.
-2. Branch `feature/<id>-<kurztitel>` anlegen, bei Aufgaben vom Typ `fix` stattdessen
-   `bugfix/<id>-<kurztitel>`. Der Kurztitel ist englisch, zum Beispiel
-   `feature/T005-add-homes`.
+1. Von aktuellem `main` starten. Ist keine Aufgabe genannt, gilt die erste Zeile von
+   `make tasks`: offen, ohne offene Blocker, höchste Priorität, bei Gleichstand die
+   kleinste Nummer.
+2. Branch `feature/<N>-<kurztitel>` anlegen, bei Aufgaben vom Typ `fix` stattdessen
+   `bugfix/<N>-<kurztitel>`. Der Kurztitel ist englisch, zum Beispiel
+   `feature/61-suggest-shelf-life`.
 3. Erst klären, was die Beschreibung unter "Zu klären" nennt oder sonst offen lässt, dann
    umsetzen.
 4. Sind Abnahmekriterien und "Qualität" erfüllt: nennen, was auf dem Gerät anzusehen ist,
    und auf die Freigabe warten.
-5. Nach der Freigabe `status` auf `done` setzen, committen und einen PR öffnen. Auf `main`
-   gilt die Aufgabe erst mit dem Merge als erledigt; die nächste Aufgabe beginnt danach.
+5. Nach der Freigabe die Checkliste im Issue abhaken, committen und einen PR mit
+   `Closes #N` öffnen. Die Aufgabe gilt erst mit dem Merge als erledigt, GitHub schließt das
+   Issue dann; die nächste Aufgabe beginnt danach.
 
 Regeln:
 
-- Fällt etwas auf, das nicht zur laufenden Aufgabe gehört, wird es eine neue Aufgabe mit
-  der nächsten freien ID im selben PR, nicht Teil der laufenden Änderung. Was unter
+- Fällt etwas auf, das nicht zur laufenden Aufgabe gehört, wird es ein neues Issue mit
+  beiden Labels und gegebenenfalls „Blocked by“, nicht Teil der laufenden Änderung. Was unter
   "Später" oder "Nicht geplant" fällt, wird nur in der Antwort erwähnt.
-- Erledigte Aufgaben bleiben in der Datei stehen.
+- Erledigte Aufgaben werden geschlossen, nie gelöscht.
 - Jede Aufgabe, die das Erfassen berührt, nennt ein Tipp-Budget als Abnahmekriterium: die
   Zahl der Tipps vom Einstieg bis zum gespeicherten Bestand.
 - Eine Entscheidung, die über die Aufgabe hinaus gilt, wird in dieser Datei festgehalten.
