@@ -5,7 +5,7 @@ TESTS ?=
 # Packages for make upgrade; empty upgrades all within the constraints.
 PACKAGES ?=
 
-.PHONY: setup upgrade l10n codegen schema format format-check analyze test update-goldens check integration-test run run-profile run-release build-android build-ios
+.PHONY: setup upgrade l10n codegen schema format format-check analyze test update-goldens check integration-test run run-profile run-release build-android build-ios tasks
 
 setup:
 	fvm install
@@ -64,3 +64,8 @@ build-android: codegen
 
 build-ios: codegen
 	$(FLUTTER) build ios --debug --no-codesign
+
+# Open issues without open blockers, by priority; the first one is next.
+tasks:
+	@gh api graphql -F owner='{owner}' -F repo='{repo}' -f query='query($$owner: String!, $$repo: String!) { repository(owner: $$owner, name: $$repo) { issues(states: OPEN, first: 100) { nodes { number title labels(first: 10) { nodes { name } } issueDependenciesSummary { blockedBy } } } } }' \
+		--jq '.data.repository.issues.nodes | map(select(.issueDependenciesSummary.blockedBy == 0)) | sort_by(([.labels.nodes[].name] | if index("priority: high") then 0 elif index("priority: medium") then 1 else 2 end), .number) | .[] | "#\(.number) \(.title)"'
