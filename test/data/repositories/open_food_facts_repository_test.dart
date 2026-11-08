@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:fridgo/data/repositories/open_food_facts_repository.dart';
@@ -194,6 +195,132 @@ void main() {
       await expectLater(
         repository.fetchProduct(_barcode),
         throwsA(isA<ProductLookupFailedException>()),
+      );
+    });
+  }
+
+  const imageBase =
+      'https://images.openfoodfacts.org/images/products/400/840/040/1621';
+  const imageCases = <String, (Map<String, Object?>, String?)>{
+    'the German front comes first, in full size': (
+      {
+        'selected_images': {
+          'front': {
+            'display': {
+              'en': '$imageBase/front_en.302.400.jpg',
+              'de': '$imageBase/front_de.239.400.jpg',
+            },
+          },
+        },
+        'image_front_url': '$imageBase/front_it.12.400.jpg',
+      },
+      '$imageBase/front_de.239.full.jpg',
+    ),
+    'without German the front on the pack': (
+      {
+        'selected_images': {
+          'front': {
+            'display': {'en': '$imageBase/front_en.302.400.jpg'},
+          },
+        },
+        'image_front_url': '$imageBase/front_it.12.400.jpg',
+      },
+      '$imageBase/front_it.12.full.jpg',
+    ),
+    'English comes last': (
+      {
+        'selected_images': {
+          'front': {
+            'display': {'en': '$imageBase/front_en.302.400.jpg'},
+          },
+        },
+      },
+      '$imageBase/front_en.302.full.jpg',
+    ),
+    'an image of another size is taken as it is': (
+      {'image_front_url': '$imageBase/front_de.239.200.jpg'},
+      '$imageBase/front_de.239.200.jpg',
+    ),
+    'an address without https is ignored': (
+      {'image_front_url': 'http://example.org/front.400.jpg'},
+      null,
+    ),
+    'an address that is not text is ignored': ({'image_front_url': 42}, null),
+    'no image at all': ({}, null),
+  };
+  for (final MapEntry(key: description, value: (product, url))
+      in imageCases.entries) {
+    test('image: $description', () async {
+      final facts = await _repositoryFinding({
+        'product_name': 'Nutella',
+        ...product,
+      }).fetchProduct(_barcode);
+
+      expect(facts.imageUrl?.toString(), url);
+    });
+  }
+
+  test('asks for the image fields', () async {
+    late http.Request sent;
+    final repository = _repositoryAnswering((request) async {
+      sent = request;
+      return http.Response('{"product": {}}', HttpStatus.ok);
+    });
+
+    await repository.fetchProduct(_barcode);
+
+    expect(
+      sent.url.queryParameters['fields']?.split(','),
+      containsAll(['selected_images', 'image_front_url']),
+    );
+  });
+
+  final imageUrl = Uri.parse('$imageBase/front_de.239.full.jpg');
+
+  test('downloads the image with its own user agent', () async {
+    late http.Request sent;
+    final repository = _repositoryAnswering((request) async {
+      sent = request;
+      return http.Response.bytes([1, 2, 3], HttpStatus.ok);
+    });
+
+    final image = await repository.fetchImage(imageUrl);
+
+    expect(image, Uint8List.fromList([1, 2, 3]));
+    expect(sent.url, imageUrl);
+    expect(
+      sent.headers[HttpHeaders.userAgentHeader],
+      'Fridgo/1.0 (https://github.com/TheBreaken/fridgo)',
+    );
+  });
+
+  final imageFailures = <String, OpenFoodFactsRepository>{
+    'no network': _repositoryAnswering(
+      (_) => throw const SocketException('Failed host lookup'),
+    ),
+    'a timeout': _repositoryAnswering(
+      (_) => Completer<http.Response>().future,
+      timeout: const Duration(milliseconds: 1),
+    ),
+    'a missing image': _repositoryAnswering(
+      (_) async => http.Response('', HttpStatus.notFound),
+    ),
+    'a server error': _repositoryAnswering(
+      (_) async => http.Response('', HttpStatus.internalServerError),
+    ),
+  };
+  for (final MapEntry(key: description, value: repository)
+      in imageFailures.entries) {
+    test('image download: $description throws', () async {
+      await expectLater(
+        repository.fetchImage(imageUrl),
+        throwsA(
+          isA<ProductImageDownloadException>().having(
+            (error) => error.url,
+            'url',
+            imageUrl,
+          ),
+        ),
       );
     });
   }

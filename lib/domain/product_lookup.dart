@@ -11,6 +11,8 @@ abstract class ProductFacts with _$ProductFacts {
 
     // Per 100 g or 100 ml, energy in kcal.
     @Default(<Nutrient, double>{}) Map<Nutrient, double> nutritionFacts,
+
+    Uri? imageUrl,
   }) = _ProductFacts;
 }
 
@@ -36,4 +38,15 @@ class ProductLookupFailedException extends ProductLookupException {
   @override
   String toString() =>
       'ProductLookupFailedException: looking up $barcode failed with $reason';
+}
+
+class ProductImageDownloadException implements Exception {
+  const new(this.url, this.reason);
+
+  final Uri url;
+  final String reason;
+
+  @override
+  String toString() =>
+      'ProductImageDownloadException: downloading $url failed with $reason';
 }

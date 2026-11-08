@@ -13,6 +13,7 @@ import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 
 import '../../data/fake_barcode_scanner.dart';
+import '../../data/repositories/fake_product_image_repository.dart';
 import '../app_flows.dart';
 
 final _today = DateTime(2026, 10, 16, 9);
@@ -22,10 +23,19 @@ const _otherBarcode = '4098765432109';
 
 const _lookupFoundHint =
     'Name und Nährwerte von Open Food Facts (ODbL). Bitte prüfen.';
+const _lookupFoundWithImageHint =
+    'Name, Nährwerte und Bild von Open Food Facts (ODbL, Bild CC BY-SA). '
+    'Bitte prüfen.';
+
+const _imageUrl =
+    'https://images.openfoodfacts.org/images/products/401/234/567/8901/front_de.3.400.jpg';
+const _fullImageUrl =
+    'https://images.openfoodfacts.org/images/products/401/234/567/8901/front_de.3.full.jpg';
 
 Future<FakeBarcodeScanner> _openFridge(
   WidgetTester tester, {
   OpenFoodFactsRepository? openFoodFacts,
+  FakeProductImageRepository? productImages,
 }) async {
   final scanner = FakeBarcodeScanner();
   await pumpApp(
@@ -33,6 +43,7 @@ Future<FakeBarcodeScanner> _openFridge(
     now: _today,
     barcodeScanner: scanner,
     openFoodFacts: openFoodFacts,
+    productImages: productImages,
   );
   await createHomeAndOpenIt(tester, 'Berlin');
   await createStorageLocationAndReturn(tester, 'Kühlschrank');
@@ -48,6 +59,23 @@ Future<http.Response> _productFound(Map<String, Object?> product) async =>
       utf8.encode(jsonEncode({'product': product})),
       HttpStatus.ok,
     );
+
+/// Finds milk with an image and answers the image request with [image].
+OpenFoodFactsRepository _openFoodFactsWithImage(
+  Future<http.Response> Function() image,
+) => OpenFoodFactsRepository(
+  MockClient(
+    (request) => request.url.toString() == _fullImageUrl
+        ? image()
+        : _productFound({
+            'product_name_de': 'Bio-Vollmilch',
+            'image_front_url': _imageUrl,
+          }),
+  ),
+);
+
+Future<http.Response> _jpeg() async =>
+    http.Response.bytes([0xFF, 0xD8, 0xFF], HttpStatus.ok);
 
 /// Scans without settling, which the spinner of the lookup would prevent.
 Future<void> _scanWhileLookingUp(
@@ -373,4 +401,104 @@ void main() {
       expect(find.widgetWithText(StockItemCard, 'Milch'), findsOneWidget);
     });
   }
+
+  testWidgets('the image from Open Food Facts becomes the product photo', (
+    tester,
+  ) async {
+    final productImages = FakeProductImageRepository();
+    final scanner = await _openFridge(
+      tester,
+      openFoodFacts: _openFoodFactsWithImage(_jpeg),
+      productImages: productImages,
+    );
+
+    await scanBarcode(tester, scanner, _milkBarcode);
+    expect(find.bySemanticsLabel('Foto ändern'), findsOneWidget);
+    expect(find.text(_lookupFoundWithImageHint), findsOneWidget);
+    await _submit(tester);
+
+    expect(productImages.temporaryImages.values.single, [0xFF, 0xD8, 0xFF]);
+    expect(productImages.storedImages.values.single, '/tmp/downloaded_1.jpg');
+  });
+
+  final imageFailureCases = <String, Future<http.Response> Function()>{
+    'a missing image': () async => http.Response('', HttpStatus.notFound),
+    'no network for the image': () =>
+        throw const SocketException('Failed host lookup'),
+  };
+  for (final MapEntry(key: description, value: image)
+      in imageFailureCases.entries) {
+    testWidgets('$description adds the product without photo', (tester) async {
+      final productImages = FakeProductImageRepository();
+      final scanner = await _openFridge(
+        tester,
+        openFoodFacts: _openFoodFactsWithImage(image),
+        productImages: productImages,
+      );
+
+      await scanBarcode(tester, scanner, _milkBarcode);
+      expect(find.bySemanticsLabel('Foto hinzufügen'), findsOneWidget);
+      expect(find.text(_lookupFoundHint), findsOneWidget);
+      await _submit(tester);
+
+      expect(productImages.storedImages, isEmpty);
+      expect(
+        find.widgetWithText(StockItemCard, 'Bio-Vollmilch'),
+        findsOneWidget,
+      );
+    });
+  }
+
+  testWidgets(
+    'cancelling while the image loads keeps the name, not the image',
+    (tester) async {
+      final image = Completer<http.Response>();
+      final productImages = FakeProductImageRepository();
+      final scanner = await _openFridge(
+        tester,
+        openFoodFacts: _openFoodFactsWithImage(() => image.future),
+        productImages: productImages,
+      );
+      await _scanWhileLookingUp(tester, scanner, _milkBarcode);
+      expect(_fieldText(tester, 'Name'), 'Bio-Vollmilch');
+
+      await tester.tap(find.widgetWithText(TextButton, 'Abbrechen'));
+      await tester.pumpAndSettle();
+      image.complete(await _jpeg());
+      await tester.pumpAndSettle();
+
+      expect(find.bySemanticsLabel('Foto hinzufügen'), findsOneWidget);
+      expect(find.text(_lookupFoundWithImageHint), findsNothing);
+      await _submit(tester);
+      expect(productImages.storedImages, isEmpty);
+    },
+  );
+
+  testWidgets('a photo taken while the image loads is kept', (tester) async {
+    final image = Completer<http.Response>();
+    final productImages = FakeProductImageRepository();
+    final scanner = await _openFridge(
+      tester,
+      openFoodFacts: _openFoodFactsWithImage(() => image.future),
+      productImages: productImages,
+    );
+    await _scanWhileLookingUp(tester, scanner, _milkBarcode);
+
+    await tester.tap(find.bySemanticsLabel('Foto hinzufügen'));
+    for (var frame = 0; frame < 10; frame++) {
+      await tester.pump(const Duration(milliseconds: 100));
+    }
+    await tester.tap(find.text('Foto aufnehmen'));
+    for (var frame = 0; frame < 10; frame++) {
+      await tester.pump(const Duration(milliseconds: 100));
+    }
+    image.complete(await _jpeg());
+    await tester.pumpAndSettle();
+    await _submit(tester);
+
+    expect(
+      productImages.storedImages.values.single,
+      '/tmp/picked_from_camera.jpg',
+    );
+  });
 }

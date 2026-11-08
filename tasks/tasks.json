@@ -333,6 +333,7 @@
       "Die Exportdatei enthält die Schemaversion",
       "Die Datenbank wird in einem konsistenten Zustand gesichert",
       "Eine fehlende Bilddatei bricht den Export nicht ab (Test)",
+      "Ein von Open Food Facts übernommenes Bild ist im Export enthalten (Test)",
       "Die Datei lässt sich auf Android und iOS aus der App heraus speichern oder teilen"
     ]
   },
@@ -470,13 +471,13 @@
     "title": "Produktbild von Open Food Facts übernehmen",
     "type": "feat",
     "priority": "high",
-    "status": "open",
+    "status": "done",
     "dependsOn": ["T011", "T030"],
     "description": "Ziel: Liefert Open Food Facts ein Bild, wird es heruntergeladen und wie ein eigenes Foto dauerhaft abgelegt. Der Nutzer kann es durch ein eigenes Foto ersetzen.\n\nZu klären: Verlangt die Bildlizenz von Open Food Facts einen sichtbaren Hinweis in der App?",
     "acceptanceCriteria": [
       "Das Bild liegt als Datei im App-Verzeichnis mit relativem Pfad und ist danach ohne Netz sichtbar",
       "Ein fehlgeschlagener Download legt das Produkt ohne Bild an (Test)",
-      "Das Bild ist im Export enthalten (Test)"
+      "Tipp-Budget: Ein Produkt, das nur Open Food Facts kennt, ist samt Bild vom Öffnen des Scanners bis zum gespeicherten Bestand in höchstens 4 Tipps erfasst"
     ]
   },
   {
