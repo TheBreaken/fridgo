@@ -264,8 +264,9 @@ Ablauf einer Session:
 4. Sind Abnahmekriterien und "Qualität" erfüllt: nennen, was auf dem Gerät anzusehen ist,
    und auf die Freigabe warten.
 5. Nach der Freigabe die Checkliste im Issue abhaken, committen und einen PR mit
-   `Closes #N` öffnen. Die Aufgabe gilt erst mit dem Merge als erledigt, GitHub schließt das
-   Issue dann; die nächste Aufgabe beginnt danach.
+   `Closes #N` öffnen. `PROJECT_MEMORY.md` ist eingecheckt; was die Session dort ergänzt,
+   geht im selben Commit mit. Die Aufgabe gilt erst mit dem Merge als erledigt, GitHub
+   schließt das Issue dann; die nächste Aufgabe beginnt danach.
 
 Regeln:
 
@@ -276,6 +277,25 @@ Regeln:
 - Jede Aufgabe, die das Erfassen berührt, nennt ein Tipp-Budget als Abnahmekriterium: die
   Zahl der Tipps vom Einstieg bis zum gespeicherten Bestand.
 - Eine Entscheidung, die über die Aufgabe hinaus gilt, wird in dieser Datei festgehalten.
+
+## Projektgedächtnis
+
+`PROJECT_MEMORY.md` hält fest, was eine Session gelernt hat und was weder hier noch im Code
+steht, damit die nächste Session es nicht neu herausfinden muss. Diese Datei hier enthält
+die Regeln, `PROJECT_MEMORY.md` das Erfahrungswissen dahinter.
+
+| Abschnitt                   | Inhalt                                                          |
+| --------------------------- | --------------------------------------------------------------- |
+| Overview                    | zwei, drei Sätze zur App, Verweis auf diese Datei               |
+| Architecture & Conventions  | Entscheidungen je Aufgabe samt verworfener Alternativen         |
+| Bugs Fixed & Gotchas        | Fallstricke mit Ursache und Lösung, Emulator- und Gerätetricks  |
+| Open Tasks & Known Issues   | bekannte Grenzen und Absichten, die in keinem Issue stehen      |
+
+- Zu Beginn einer Session lesen, am Ende nur ergänzen, was ohne Erinnerung an die Session
+  noch zählt. Einträge kurz halten; Überholtes ändern oder löschen statt danebenzuschreiben.
+- Nicht hinein: offene Aufgaben (die stehen in den Issues), Zwischenstände einer Session und
+  was schon hier oder im Code steht.
+- Das Repository ist öffentlich: keine persönlichen Angaben, Gerätenamen oder Zugangsdaten.
 
 ## Assets
 
