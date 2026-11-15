@@ -385,6 +385,115 @@ void _inOneStorageLocation() {
     expect(await database.select(database.stockItems).get(), hasLength(2));
   });
 
+  Future<Product?> product(String id) =>
+      ProductRepository(database).getProduct(id);
+
+  test(
+    'a new product learns its shelf life and storage location kind',
+    () async {
+      final added = await repository.addStockItemWithNewProduct(
+        _milk(fridge),
+        productName: 'Milch',
+        shelfLifeDays: 7,
+      );
+
+      final learned = await product(added.productId);
+      expect(learned?.shelfLifeDays, 7);
+      expect(learned?.storageLocationKind, StorageLocationKind.refrigerator);
+    },
+  );
+
+  test('adding for a product replaces its shelf life and storage location kind '
+      'with the latest', () async {
+    final first = await repository.addStockItemWithNewProduct(
+      _milk(fridge),
+      productName: 'Milch',
+      shelfLifeDays: 7,
+    );
+    final freezer = await StorageLocationRepository(database)
+        .createStorageLocation(
+          homeId: fridge.homeId,
+          name: 'Gefrierfach',
+          kind: StorageLocationKind.freezer,
+        );
+
+    await repository.addStockItemForProduct(
+      first.productId,
+      _milk(freezer),
+      shelfLifeDays: 90,
+    );
+
+    final learned = await product(first.productId);
+    expect(learned?.shelfLifeDays, 90);
+    expect(learned?.storageLocationKind, StorageLocationKind.freezer);
+  });
+
+  test('adding without shelf life keeps the learned one', () async {
+    final first = await repository.addStockItemWithNewProduct(
+      _milk(fridge),
+      productName: 'Milch',
+      shelfLifeDays: 7,
+    );
+
+    await repository.addStockItemForProduct(first.productId, _milk(fridge));
+
+    expect((await product(first.productId))?.shelfLifeDays, 7);
+  });
+
+  test('learning leaves other products alone', () async {
+    final milk = await repository.addStockItemWithNewProduct(
+      _milk(fridge),
+      productName: 'Milch',
+      shelfLifeDays: 7,
+    );
+    final butter = await repository.addStockItemWithNewProduct(
+      _milk(fridge),
+      productName: 'Butter',
+      shelfLifeDays: 30,
+    );
+
+    await repository.addStockItemForProduct(
+      milk.productId,
+      _milk(fridge),
+      shelfLifeDays: 5,
+    );
+
+    expect((await product(butter.productId))?.shelfLifeDays, 30);
+  });
+
+  test('a stock item in an unknown storage location is rejected without '
+      'learning', () async {
+    final first = await repository.addStockItemWithNewProduct(
+      _milk(fridge),
+      productName: 'Milch',
+      shelfLifeDays: 7,
+    );
+    const unknown = StorageLocation(
+      id: '00000000-0000-4000-8000-000000000000',
+      homeId: 'unknown',
+      name: 'Unbekannt',
+      kind: StorageLocationKind.freezer,
+    );
+
+    await expectLater(
+      repository.addStockItemForProduct(
+        first.productId,
+        _milk(unknown),
+        shelfLifeDays: 90,
+      ),
+      throwsA(
+        isA<SqliteException>().having(
+          (error) => error.message,
+          'message',
+          contains('FOREIGN KEY constraint failed'),
+        ),
+      ),
+    );
+
+    expect((await product(first.productId))?.shelfLifeDays, 7);
+    expect(await database.select(database.stockItems).get(), hasLength(1));
+  });
+
   test('a stock item for an unknown product is rejected', () async {
     await expectLater(
       repository.addStockItemForProduct(

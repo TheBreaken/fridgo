@@ -86,6 +86,8 @@ Product productFromRow(ProductRow row) => Product(
     Nutrient.salt: ?row.salt,
   },
   barcode: row.barcode,
+  shelfLifeDays: row.shelfLifeDays,
+  storageLocationKind: row.storageLocationKind,
 );
 
 ProductsCompanion productToCompanion(Product product) {
@@ -102,6 +104,8 @@ ProductsCompanion productToCompanion(Product product) {
     protein: Value(nutritionFacts[Nutrient.protein]),
     salt: Value(nutritionFacts[Nutrient.salt]),
     barcode: Value(product.barcode),
+    shelfLifeDays: Value(product.shelfLifeDays),
+    storageLocationKind: Value(product.storageLocationKind),
   );
 }
 

@@ -14,6 +14,7 @@ import 'package:fridgo/domain/product_photo.dart';
 import 'package:fridgo/domain/product_search.dart';
 import 'package:fridgo/domain/stock_item.dart';
 import 'package:fridgo/domain/stock_quantity.dart';
+import 'package:fridgo/domain/stock_suggestion.dart' as stock_suggestion;
 import 'package:fridgo/domain/storage_location.dart';
 
 class AddStockItemViewModel extends StreamNotifier<List<StorageLocation>> {
@@ -40,6 +41,14 @@ class AddStockItemViewModel extends StreamNotifier<List<StorageLocation>> {
 
   double? parseNutrient(String input, Nutrient nutrient) =>
       parseNutrientInput(input, nutrient);
+
+  CalendarDate? suggestBestBeforeDate(Product product) =>
+      stock_suggestion.suggestBestBeforeDate(product, today);
+
+  StorageLocation? suggestStorageLocation(
+    Product product,
+    List<StorageLocation> storageLocations,
+  ) => stock_suggestion.suggestStorageLocation(product, storageLocations);
 
   Future<String?> pickPhoto(PhotoSource source) =>
       ref.read(productImageRepositoryProvider).pickPhoto(source);
@@ -98,6 +107,10 @@ class AddStockItemViewModel extends StreamNotifier<List<StorageLocation>> {
             imagePath: imagePath,
             nutritionFacts: nutritionFacts,
             barcode: barcode,
+            shelfLifeDays: stock_suggestion.shelfLifeDays(
+              today,
+              draft.bestBeforeDate,
+            ),
           );
     } on Object {
       if (imagePath != null) await productImages.delete(imagePath);
@@ -114,7 +127,15 @@ class AddStockItemViewModel extends StreamNotifier<List<StorageLocation>> {
     _checkQuantity(draft);
     await ref
         .read(stockItemRepositoryProvider)
-        .addStockItemForProduct(productId, draft, barcode: barcode);
+        .addStockItemForProduct(
+          productId,
+          draft,
+          barcode: barcode,
+          shelfLifeDays: stock_suggestion.shelfLifeDays(
+            today,
+            draft.bestBeforeDate,
+          ),
+        );
   }
 
   void _checkQuantity(StockItemDraft draft) {

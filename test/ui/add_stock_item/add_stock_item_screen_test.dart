@@ -589,4 +589,177 @@ void main() {
 
     expect(find.text(_nutritionFactsTitle), findsNothing);
   });
+
+  group('a product with experience', () {
+    const bestBeforeDateLabel = 'Mindestens haltbar bis';
+    const bothSuggested =
+        'MHD und Lagerort wie beim letzten Mal vorgeschlagen. Bitte prüfen.';
+
+    // Milk once kept for a week in the refrigerator, which is not the first
+    // storage location; the add screen is open again afterwards.
+    Future<void> learnMilk(WidgetTester tester) async {
+      await _enter(tester, 'Name', 'Milch');
+      await tester.tap(find.widgetWithText(ChoiceChip, 'Kühlschrank'));
+      await _pickDay(tester, bestBeforeDateLabel, '23');
+      await _submit(tester);
+      await openAddStockItem(tester);
+    }
+
+    Future<void> chooseMilk(WidgetTester tester) async {
+      await _type(tester, 'mil');
+      await tester.tap(_suggestion('Milch'));
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('suggests its best-before date and storage location', (
+      tester,
+    ) async {
+      await _openAddScreen(tester);
+      await learnMilk(tester);
+
+      await chooseMilk(tester);
+
+      expect(_fieldText(tester, bestBeforeDateLabel), '23.10.2026');
+      expect(_isSelected(tester, 'Kühlschrank'), isTrue);
+      expect(_isSelected(tester, 'Gefrierfach'), isFalse);
+      expect(find.text(bothSuggested), findsOneWidget);
+    });
+
+    testWidgets('without shelf life leaves the best-before date empty', (
+      tester,
+    ) async {
+      await _openAddScreen(tester);
+      await _enter(tester, 'Name', 'Milch');
+      await tester.tap(find.widgetWithText(ChoiceChip, 'Kühlschrank'));
+      await _submit(tester);
+      await openAddStockItem(tester);
+
+      await chooseMilk(tester);
+
+      expect(_fieldText(tester, bestBeforeDateLabel), isEmpty);
+      expect(_isSelected(tester, 'Kühlschrank'), isTrue);
+      expect(
+        find.text('Lagerort wie beim letzten Mal vorgeschlagen. Bitte prüfen.'),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('keeps a best-before date picked before choosing it', (
+      tester,
+    ) async {
+      await _openAddScreen(tester);
+      await learnMilk(tester);
+      await _pickDay(tester, bestBeforeDateLabel, '25');
+
+      await chooseMilk(tester);
+
+      expect(_fieldText(tester, bestBeforeDateLabel), '25.10.2026');
+      expect(_isSelected(tester, 'Kühlschrank'), isTrue);
+      expect(
+        find.text('Lagerort wie beim letzten Mal vorgeschlagen. Bitte prüfen.'),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('keeps a storage location chosen before choosing it', (
+      tester,
+    ) async {
+      await _openAddScreen(tester);
+      await learnMilk(tester);
+      await tester.tap(find.widgetWithText(ChoiceChip, 'Gefrierfach'));
+      await tester.pump();
+
+      await chooseMilk(tester);
+
+      expect(_isSelected(tester, 'Gefrierfach'), isTrue);
+      expect(_fieldText(tester, bestBeforeDateLabel), '23.10.2026');
+      expect(
+        find.text('MHD wie beim letzten Mal vorgeschlagen. Bitte prüfen.'),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('changes nothing once cleared again', (tester) async {
+      await _openAddScreen(tester);
+      await learnMilk(tester);
+      await chooseMilk(tester);
+
+      await tester.tap(find.byTooltip('Anderes Produkt eintragen'));
+      await tester.pumpAndSettle();
+
+      expect(_fieldText(tester, bestBeforeDateLabel), isEmpty);
+      expect(_isSelected(tester, 'Gefrierfach'), isTrue);
+      expect(find.text(bothSuggested), findsNothing);
+    });
+
+    testWidgets('a removed suggested date is saved without date', (
+      tester,
+    ) async {
+      await _openAddScreen(tester);
+      await learnMilk(tester);
+      await chooseMilk(tester);
+
+      await tester.ensureVisible(find.byTooltip('Datum entfernen'));
+      await tester.tap(find.byTooltip('Datum entfernen'));
+      await tester.pumpAndSettle();
+      await _submit(tester);
+
+      expect(find.text('1 Stück'), findsOneWidget);
+      expect(find.text('1 Stück · MHD 23.10.2026'), findsOneWidget);
+    });
+
+    testWidgets('in a home without its kind of storage location the first one '
+        'stays preselected', (tester) async {
+      await _openAddScreen(tester);
+      await learnMilk(tester);
+      await tester.tap(find.byType(BackButton));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byType(BackButton));
+      await tester.pumpAndSettle();
+      await createHomeAndOpenIt(tester, 'Hamburg');
+      await createStorageLocationAndReturn(tester, 'Vorrat');
+      await createStorageLocationAndReturn(tester, 'Gefrierfach');
+      await openAddStockItem(tester);
+
+      await chooseMilk(tester);
+
+      expect(_isSelected(tester, 'Gefrierfach'), isTrue);
+      expect(_isSelected(tester, 'Vorrat'), isFalse);
+      expect(_fieldText(tester, bestBeforeDateLabel), '23.10.2026');
+    });
+
+    testWidgets('is added in at most 4 taps from the camera button', (
+      tester,
+    ) async {
+      await _openAddScreen(tester);
+      await learnMilk(tester);
+      await tester.tap(find.byType(BackButton));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byTooltip('Lebensmittel scannen')); // 1
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Ohne Barcode')); // 2
+      await tester.pumpAndSettle();
+      await tester.enterText(_field('Name'), 'mil');
+      await tester.pumpAndSettle();
+      await tester.tap(_suggestion('Milch')); // 3
+      await tester.pumpAndSettle();
+      final submit = find.widgetWithText(FilledButton, 'Hinzufügen');
+      await tester.ensureVisible(submit);
+      await tester.pumpAndSettle();
+      await tester.tap(submit); // 4
+      await tester.pumpAndSettle();
+
+      expect(find.byType(StockOverviewScreen), findsOneWidget);
+      final cards = find.ancestor(
+        of: find.text('1 Stück · MHD 23.10.2026'),
+        matching: find.byType(Card),
+      );
+      expect(cards, findsNWidgets(2));
+      expect(
+        find.descendant(of: cards, matching: find.text('Kühlschrank')),
+        findsNWidgets(2),
+      );
+    });
+  });
 }

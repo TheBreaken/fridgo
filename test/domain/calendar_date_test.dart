@@ -132,6 +132,25 @@ void main() {
     });
   }
 
+  const addedDays = {
+    'adding zero days keeps the day': ('2026-10-16', 0, '2026-10-16'),
+    'adding one day gives the next day': ('2026-10-16', 1, '2026-10-17'),
+    'across the start of summer time': ('2026-03-28', 2, '2026-03-30'),
+    'across the end of summer time': ('2026-10-24', 2, '2026-10-26'),
+    'across the end of a month': ('2026-04-30', 1, '2026-05-01'),
+    'across a leap day': ('2028-02-28', 2, '2028-03-01'),
+    'across the turn of the year': ('2026-12-31', 1, '2027-01-01'),
+    'a whole year of days': ('2026-10-16', 365, '2027-10-16'),
+    'negative days go back': ('2026-03-30', -2, '2026-03-28'),
+  };
+
+  for (final MapEntry(key: description, value: (from, days, to))
+      in addedDays.entries) {
+    test('add days: $description', () {
+      expect(CalendarDate.parse(from).addDays(days), CalendarDate.parse(to));
+    });
+  }
+
   test('two dates of the same day are equal', () {
     expect(CalendarDate(2026, 10, 25), CalendarDate.parse('2026-10-25'));
     expect(

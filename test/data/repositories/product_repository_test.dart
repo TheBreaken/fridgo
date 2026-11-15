@@ -16,6 +16,7 @@ Future<StockItem> _addToNewHome(
   required String productName,
   String? imagePath,
   Map<Nutrient, double> nutritionFacts = const {},
+  int? shelfLifeDays,
 }) async {
   final home = await HomeRepository(database).createHome(homeName);
   final storageLocation = await StorageLocationRepository(database)
@@ -33,6 +34,7 @@ Future<StockItem> _addToNewHome(
     productName: productName,
     imagePath: imagePath,
     nutritionFacts: nutritionFacts,
+    shelfLifeDays: shelfLifeDays,
   );
 }
 
@@ -92,8 +94,13 @@ void main() {
           id: milk.productId,
           name: 'Milch',
           imagePath: 'product_images/milk.jpg',
+          storageLocationKind: StorageLocationKind.refrigerator,
         ),
-        Product(id: butter.productId, name: 'Butter'),
+        Product(
+          id: butter.productId,
+          name: 'Butter',
+          storageLocationKind: StorageLocationKind.refrigerator,
+        ),
       ]),
     );
   });
@@ -120,7 +127,12 @@ void main() {
 
     expect(
       await repository.findProductByBarcode('4012345678901'),
-      Product(id: milk.productId, name: 'Milch', barcode: '4012345678901'),
+      Product(
+        id: milk.productId,
+        name: 'Milch',
+        barcode: '4012345678901',
+        storageLocationKind: StorageLocationKind.refrigerator,
+      ),
     );
   });
 
@@ -190,6 +202,7 @@ void main() {
         name: 'Milch',
         imagePath: 'product_images/milk.jpg',
         nutritionFacts: {Nutrient.fat: 3.5},
+        storageLocationKind: StorageLocationKind.refrigerator,
       ),
     );
   });
@@ -216,6 +229,22 @@ void main() {
     await repository.updateProduct(updated);
 
     expect(await repository.getProduct(milk.productId), updated);
+  });
+
+  test('editing a loaded product keeps what it learned', () async {
+    final milk = await _addToNewHome(
+      database,
+      homeName: 'Berlin',
+      productName: 'Milch',
+      shelfLifeDays: 7,
+    );
+    final loaded = await repository.getProduct(milk.productId);
+
+    await repository.updateProduct(loaded!.copyWith(name: 'Vollmilch'));
+
+    final edited = await repository.getProduct(milk.productId);
+    expect(edited?.shelfLifeDays, 7);
+    expect(edited?.storageLocationKind, StorageLocationKind.refrigerator);
   });
 
   test('an update can remove the image', () async {
@@ -303,7 +332,11 @@ void main() {
       isA<StockItemRow>().having((row) => row.id, 'id', butter.id),
     ]);
     expect(await repository.getProducts(), [
-      Product(id: butter.productId, name: 'Butter'),
+      Product(
+        id: butter.productId,
+        name: 'Butter',
+        storageLocationKind: StorageLocationKind.refrigerator,
+      ),
     ]);
   });
 

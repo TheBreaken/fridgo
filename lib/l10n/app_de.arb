@@ -66,6 +66,9 @@
     }
   },
   "scannedBarcodeNotAssigned": "Das Produkt hat schon einen anderen Barcode, der gescannte wird nicht übernommen.",
+  "suggestedBestBeforeDateAndStorageLocation": "MHD und Lagerort wie beim letzten Mal vorgeschlagen. Bitte prüfen.",
+  "suggestedBestBeforeDate": "MHD wie beim letzten Mal vorgeschlagen. Bitte prüfen.",
+  "suggestedStorageLocation": "Lagerort wie beim letzten Mal vorgeschlagen. Bitte prüfen.",
   "productLookupLoading": "Suche bei Open Food Facts …",
   "productLookupFound": "Name und Nährwerte von Open Food Facts (ODbL). Bitte prüfen.",
   "productLookupFoundWithImage": "Name, Nährwerte und Bild von Open Food Facts (ODbL, Bild CC BY-SA). Bitte prüfen.",
