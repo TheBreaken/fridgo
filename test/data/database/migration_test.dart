@@ -20,22 +20,22 @@ const _productId = '3a2b1c0d-9e8f-4a7b-b6c5-d4e3f2a1b0c9';
 void main() {
   final verifier = SchemaVerifier(GeneratedHelper());
 
-  test('a new database matches the stored schema version 6', () async {
+  test('a new database matches the stored schema version 7', () async {
     final database = AppDatabase(NativeDatabase.memory());
     addTearDown(database.close);
 
-    await verifier.migrateAndValidate(database, 6);
+    await verifier.migrateAndValidate(database, 7);
   });
 
-  for (final version in [1, 2, 3, 4, 5]) {
+  for (final version in [1, 2, 3, 4, 5, 6]) {
     test(
-      'upgrading from version $version gives the stored schema version 6',
+      'upgrading from version $version gives the stored schema version 7',
       () async {
         final schema = await verifier.schemaAt(version);
         final database = AppDatabase(schema.newConnection());
         addTearDown(database.close);
 
-        await verifier.migrateAndValidate(database, 6);
+        await verifier.migrateAndValidate(database, 7);
       },
     );
   }
@@ -49,7 +49,7 @@ void main() {
     final database = AppDatabase(schema.newConnection());
     addTearDown(database.close);
 
-    await verifier.migrateAndValidate(database, 6);
+    await verifier.migrateAndValidate(database, 7);
 
     expect(await HomeRepository(database).watchHomes().first, [
       const Home(id: _homeId, name: 'Berlin'),
@@ -73,7 +73,7 @@ void main() {
       final database = AppDatabase(schema.newConnection());
       addTearDown(database.close);
 
-      await verifier.migrateAndValidate(database, 6);
+      await verifier.migrateAndValidate(database, 7);
 
       expect(
         await StorageLocationRepository(database)
@@ -124,7 +124,7 @@ void main() {
       final database = AppDatabase(schema.newConnection());
       addTearDown(database.close);
 
-      await verifier.migrateAndValidate(database, 6);
+      await verifier.migrateAndValidate(database, 7);
 
       final listed = await StockItemRepository(database)
           .watchStockItems(_homeId)
@@ -148,7 +148,7 @@ void main() {
       final database = AppDatabase(schema.newConnection());
       addTearDown(database.close);
 
-      await verifier.migrateAndValidate(database, 6);
+      await verifier.migrateAndValidate(database, 7);
 
       expect(await ProductRepository(database).getProducts(), [
         const Product(
@@ -169,7 +169,7 @@ void main() {
     final database = AppDatabase(schema.newConnection());
     addTearDown(database.close);
 
-    await verifier.migrateAndValidate(database, 6);
+    await verifier.migrateAndValidate(database, 7);
 
     expect(await ProductRepository(database).getProducts(), [
       const Product(
@@ -186,7 +186,7 @@ void main() {
     final schema = await verifier.schemaAt(5);
     final database = AppDatabase(schema.newConnection());
     addTearDown(database.close);
-    await verifier.migrateAndValidate(database, 6);
+    await verifier.migrateAndValidate(database, 7);
     const insert = 'INSERT INTO products (id, name, barcode) VALUES (?, ?, ?)';
 
     await database.customStatement(insert, ['a', 'Nudeln', null]);
@@ -203,5 +203,22 @@ void main() {
         ),
       ),
     );
+  });
+
+  test('upgrading from version 6 keeps the products without shelf life and '
+      'storage location kind', () async {
+    final schema = await verifier.schemaAt(6);
+    schema.rawDatabase.execute(
+      'INSERT INTO products (id, name, barcode) VALUES (?, ?, ?)',
+      [_productId, 'Milch', '4012345678901'],
+    );
+    final database = AppDatabase(schema.newConnection());
+    addTearDown(database.close);
+
+    await verifier.migrateAndValidate(database, 7);
+
+    expect(await ProductRepository(database).getProducts(), [
+      const Product(id: _productId, name: 'Milch', barcode: '4012345678901'),
+    ]);
   });
 }

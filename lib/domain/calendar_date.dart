@@ -43,6 +43,9 @@ final class CalendarDate {
   int daysUntil(CalendarDate other) =>
       other._utcMidnight.difference(_utcMidnight).inDays;
 
+  CalendarDate addDays(int days) =>
+      CalendarDate.fromDateTime(_utcMidnight.add(Duration(days: days)));
+
   // UTC days all last 24 hours; local days around a daylight saving time
   // change do not, which would make inDays round one day off.
   DateTime get _utcMidnight => DateTime.utc(year, month, day);

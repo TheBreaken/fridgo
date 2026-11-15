@@ -140,6 +140,28 @@ void main() {
     expect(find.byType(SelectedProductCard), findsNothing);
   });
 
+  testWidgets('a known barcode with experience is added in two taps with its '
+      'suggested best-before date', (tester) async {
+    final scanner = await _openFridge(tester);
+    await scanBarcode(tester, scanner, _milkBarcode);
+    await tester.enterText(_field('Name'), 'Milch');
+    await tester.pumpAndSettle();
+    final bestBeforeDate = _field('Mindestens haltbar bis');
+    await tester.ensureVisible(bestBeforeDate);
+    await tester.tap(bestBeforeDate);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('23'));
+    await tester.tap(find.text('OK'));
+    await tester.pumpAndSettle();
+    await _submit(tester);
+
+    await scanBarcode(tester, scanner, _milkBarcode); // tap 1
+    expect(_fieldText(tester, 'Mindestens haltbar bis'), '23.10.2026');
+    await _submit(tester); // tap 2
+
+    expect(find.text('1 Stück · MHD 23.10.2026'), findsNWidgets(2));
+  });
+
   testWidgets('a known barcode selects its product', (tester) async {
     final scanner = await _openFridge(tester);
     await _addScanned(tester, scanner, barcode: _milkBarcode, name: 'Milch');

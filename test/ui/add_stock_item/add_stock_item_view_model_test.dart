@@ -312,6 +312,71 @@ void main() {
     });
   }
 
+  test('adding learns the shelf life from the clock, across the end of '
+      'summer time', () async {
+    final container = _createContainer(
+      clock: () => DateTime(2026, 10, 24, 23, 30),
+    );
+    final fridge = await _createFridge(container);
+
+    await _viewModel(container, fridge.homeId).addStockItemWithNewProduct(
+      _draft(fridge).copyWith(bestBeforeDate: CalendarDate(2026, 10, 31)),
+      productName: 'Milch',
+    );
+
+    final milk = (await _stored(container, fridge.homeId)).single.product;
+    expect(milk.shelfLifeDays, 7);
+    expect(milk.storageLocationKind, StorageLocationKind.refrigerator);
+  });
+
+  test(
+    'the next addition of a product suggests what the last one learned',
+    () async {
+      final container = _createContainer(clock: () => DateTime(2026, 10, 24));
+      final fridge = await _createFridge(container);
+      final viewModel = _viewModel(container, fridge.homeId);
+      await viewModel.addStockItemWithNewProduct(
+        _draft(fridge),
+        productName: 'Milch',
+      );
+      final milk = (await _stored(container, fridge.homeId)).single.product;
+
+      await viewModel.addStockItemForProduct(
+        milk.id,
+        _draft(fridge).copyWith(bestBeforeDate: CalendarDate(2026, 11, 3)),
+      );
+
+      final learned = (await _stored(container, fridge.homeId)).first.product;
+      expect(
+        viewModel.suggestBestBeforeDate(learned),
+        CalendarDate(2026, 11, 3),
+      );
+      expect(viewModel.suggestStorageLocation(learned, [fridge]), fridge);
+    },
+  );
+
+  test('adding expired stock keeps the learned shelf life', () async {
+    final container = _createContainer(clock: () => DateTime(2026, 10, 24));
+    final fridge = await _createFridge(container);
+    final viewModel = _viewModel(container, fridge.homeId);
+    await viewModel.addStockItemWithNewProduct(
+      _draft(fridge).copyWith(bestBeforeDate: CalendarDate(2026, 10, 31)),
+      productName: 'Milch',
+    );
+    final milk = (await _stored(container, fridge.homeId)).single.product;
+
+    await viewModel.addStockItemForProduct(
+      milk.id,
+      _draft(fridge).copyWith(bestBeforeDate: CalendarDate(2026, 10, 20)),
+    );
+
+    final stored = await _stored(container, fridge.homeId);
+    expect(
+      [for (final details in stored) details.product.shelfLifeDays],
+      [7, 7],
+    );
+  });
+
   test('the state lists only the storage locations of its home', () async {
     final container = _createContainer();
     final berlinFridge = await _createFridge(container);

@@ -167,6 +167,10 @@ Feste Regeln:
   unvollständig.
 - Die aktuelle Zeit kommt über eine injizierte Uhr, damit Ablauf und Erinnerungen testbar
   sind.
+- Jedes Erfassen (Formular, Kassenbon, Serienscan) belegt MHD und Lagerort über
+  `lib/domain/stock_suggestion.dart` vor und lernt beim Anlegen über dieselben Funktionen.
+  Gemerkt werden am Produkt die letzte Haltbarkeit in Tagen und die Lagerort-Art, nicht die ID.
+  Was der Nutzer selbst einstellt, hat Vorrang vor dem Vorschlag.
 
 ## Kommandos
 

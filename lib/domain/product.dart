@@ -1,5 +1,6 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:fridgo/domain/nutrient.dart';
+import 'package:fridgo/domain/storage_location.dart';
 
 part 'product.freezed.dart';
 
@@ -18,6 +19,11 @@ abstract class Product with _$Product {
 
     // At most one product per barcode.
     String? barcode,
+
+    // Learned when stock is added, to suggest the next best-before date and
+    // storage location.
+    int? shelfLifeDays,
+    StorageLocationKind? storageLocationKind,
   }) = _Product;
 }
 

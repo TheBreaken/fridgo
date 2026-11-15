@@ -42,6 +42,9 @@ class Products extends Table {
   RealColumn get protein => real().nullable()();
   RealColumn get salt => real().nullable()();
   TextColumn get barcode => text().nullable()();
+  IntColumn get shelfLifeDays => integer().nullable()();
+  TextColumn get storageLocationKind =>
+      textEnum<StorageLocationKind>().nullable()();
 
   @override
   Set<Column<Object>> get primaryKey => {id};
@@ -81,7 +84,7 @@ class AppDatabase extends _$AppDatabase {
   new(super.e);
 
   @override
-  int get schemaVersion => 6;
+  int get schemaVersion => 7;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -111,6 +114,10 @@ class AppDatabase extends _$AppDatabase {
       from5To6: (m, schema) async {
         await m.addColumn(schema.products, schema.products.barcode);
         await m.createIndex(schema.productsBarcode);
+      },
+      from6To7: (m, schema) async {
+        await m.addColumn(schema.products, schema.products.shelfLifeDays);
+        await m.addColumn(schema.products, schema.products.storageLocationKind);
       },
     ),
     // SQLite enforces foreign keys only when this is set on each connection.

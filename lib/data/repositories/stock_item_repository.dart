@@ -14,12 +14,14 @@ class StockItemRepository {
 
   final AppDatabase _database;
 
+  /// The product learns [shelfLifeDays] and the kind of storage location.
   Future<StockItem> addStockItemWithNewProduct(
     StockItemDraft draft, {
     required String productName,
     String? imagePath,
     Map<Nutrient, double> nutritionFacts = const {},
     String? barcode,
+    int? shelfLifeDays,
   }) => _database.transaction(() async {
     final productId = const Uuid().v4();
     await _database
@@ -32,6 +34,8 @@ class StockItemRepository {
               imagePath: imagePath,
               nutritionFacts: nutritionFacts,
               barcode: barcode,
+              shelfLifeDays: shelfLifeDays,
+              storageLocationKind: await _storageLocationKind(draft),
             ),
           ),
         );
@@ -39,10 +43,14 @@ class StockItemRepository {
   });
 
   /// Also gives the product [barcode], unless it has one already.
+  ///
+  /// The product learns the kind of storage location, and [shelfLifeDays]
+  /// unless they are null.
   Future<StockItem> addStockItemForProduct(
     String productId,
     StockItemDraft draft, {
     String? barcode,
+    int? shelfLifeDays,
   }) => _database.transaction(() async {
     if (barcode != null) {
       await (_database.update(_database.products)..where(
@@ -51,8 +59,30 @@ class StockItemRepository {
           ))
           .write(ProductsCompanion(barcode: Value(barcode)));
     }
+    await (_database.update(
+      _database.products,
+    )..where((product) => product.id.equals(productId))).write(
+      ProductsCompanion(
+        shelfLifeDays: Value.absentIfNull(shelfLifeDays),
+        storageLocationKind: Value(await _storageLocationKind(draft)),
+      ),
+    );
     return await _insertStockItem(productId, draft);
   });
+
+  // Null for an unknown storage location; the stock item insert then fails
+  // on the foreign key and rolls the transaction back.
+  Future<StorageLocationKind?> _storageLocationKind(
+    StockItemDraft draft,
+  ) async {
+    final row =
+        await (_database.select(_database.storageLocations)..where(
+              (storageLocation) =>
+                  storageLocation.id.equals(draft.storageLocationId),
+            ))
+            .getSingleOrNull();
+    return row?.kind;
+  }
 
   Future<StockItem> _insertStockItem(
     String productId,

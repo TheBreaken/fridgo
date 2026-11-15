@@ -49,6 +49,8 @@ class _AddStockItemScreenState extends ConsumerState<AddStockItemScreen> {
   String? _storageLocationId;
   StockUnit _unit = StockUnit.piece;
   CalendarDate? _bestBeforeDate;
+  // Until then, the best-before date is suggested from the selected product.
+  bool _hasChosenBestBeforeDate = false;
   CalendarDate? _openedDate;
   String? _pickedPhotoPath;
   Product? _selectedProduct;
@@ -148,7 +150,10 @@ class _AddStockItemScreenState extends ConsumerState<AddStockItemScreen> {
     super.dispose();
   }
 
-  Future<void> _submit(String storageLocationId) async {
+  Future<void> _submit(
+    String storageLocationId,
+    CalendarDate? bestBeforeDate,
+  ) async {
     if (_isSaving) return;
     if (!_formKey.currentState!.validate()) {
       if (_selectedProduct == null && _hasInvalidNutrient) {
@@ -161,7 +166,7 @@ class _AddStockItemScreenState extends ConsumerState<AddStockItemScreen> {
       storageLocationId: storageLocationId,
       quantity: _viewModel.parseQuantity(_quantityController.text),
       unit: _unit,
-      bestBeforeDate: _bestBeforeDate,
+      bestBeforeDate: bestBeforeDate,
       openedDate: _openedDate,
     );
     final selectedProduct = _selectedProduct;
@@ -245,7 +250,7 @@ class _AddStockItemScreenState extends ConsumerState<AddStockItemScreen> {
     }
   }
 
-  Widget _buildProduct(AppLocalizations l10n) {
+  Widget _buildProduct(AppLocalizations l10n, {String? suggestionNote}) {
     final selectedProduct = _selectedProduct;
     final barcode = _barcode;
     if (selectedProduct != null) {
@@ -263,6 +268,10 @@ class _AddStockItemScreenState extends ConsumerState<AddStockItemScreen> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           card,
+          if (suggestionNote != null) ...[
+            const SizedBox(height: Spacing.m),
+            InfoNote(icon: Icons.history_rounded, text: suggestionNote),
+          ],
           if (keepsOtherBarcode) ...[
             const SizedBox(height: Spacing.m),
             InfoNote(
@@ -338,8 +347,31 @@ class _AddStockItemScreenState extends ConsumerState<AddStockItemScreen> {
     final l10n = AppLocalizations.of(context);
     final storageLocations =
         ref.watch(addStockItemViewModelProvider(widget.homeId)).value ?? [];
+    final selectedProduct = _selectedProduct;
+    final suggestedStorageLocationId = selectedProduct == null
+        ? null
+        : _viewModel
+              .suggestStorageLocation(selectedProduct, storageLocations)
+              ?.id;
+    final suggestedBestBeforeDate = selectedProduct == null
+        ? null
+        : _viewModel.suggestBestBeforeDate(selectedProduct);
     final selectedStorageLocationId =
-        _storageLocationId ?? storageLocations.firstOrNull?.id;
+        _storageLocationId ??
+        suggestedStorageLocationId ??
+        storageLocations.firstOrNull?.id;
+    final bestBeforeDate = _hasChosenBestBeforeDate
+        ? _bestBeforeDate
+        : suggestedBestBeforeDate;
+    final suggestionNote = switch ((
+      !_hasChosenBestBeforeDate && suggestedBestBeforeDate != null,
+      _storageLocationId == null && suggestedStorageLocationId != null,
+    )) {
+      (true, true) => l10n.suggestedBestBeforeDateAndStorageLocation,
+      (true, false) => l10n.suggestedBestBeforeDate,
+      (false, true) => l10n.suggestedStorageLocation,
+      (false, false) => null,
+    };
     final today = _viewModel.today.toDateTime();
     return Scaffold(
       appBar: AppBar(title: Text(l10n.addStockItem)),
@@ -357,7 +389,7 @@ class _AddStockItemScreenState extends ConsumerState<AddStockItemScreen> {
                 alignment: Alignment.topCenter,
                 child: AnimatedSwitcher(
                   duration: Durations.medium2,
-                  child: _buildProduct(l10n),
+                  child: _buildProduct(l10n, suggestionNote: suggestionNote),
                 ),
               ),
               const SizedBox(height: Spacing.xl),
@@ -406,9 +438,12 @@ class _AddStockItemScreenState extends ConsumerState<AddStockItemScreen> {
                 label: l10n.stockItemBestBeforeDateLabel,
                 emptyText: l10n.stockItemWithoutBestBeforeDate,
                 icon: Icons.event_rounded,
-                date: _bestBeforeDate,
+                date: bestBeforeDate,
                 initialPickerDate: today,
-                onChanged: (date) => setState(() => _bestBeforeDate = date),
+                onChanged: (date) => setState(() {
+                  _bestBeforeDate = date;
+                  _hasChosenBestBeforeDate = true;
+                }),
               ),
               const SizedBox(height: Spacing.l),
               CalendarDateField(
@@ -432,7 +467,7 @@ class _AddStockItemScreenState extends ConsumerState<AddStockItemScreen> {
               FilledButton(
                 onPressed: _isSaving || selectedStorageLocationId == null
                     ? null
-                    : () => _submit(selectedStorageLocationId),
+                    : () => _submit(selectedStorageLocationId, bestBeforeDate),
                 child: Text(l10n.createStockItem),
               ),
             ],
